@@ -1,6 +1,7 @@
 import { cn } from '@trama/ui';
 import { Handle, Position, type NodeProps } from '@xyflow/react';
 import { BlockView } from './block-views';
+import { ContextBar } from './context-bar';
 import { useCanvas } from './canvas-context';
 import type { BlockNode as BlockNodeType, FrameNode as FrameNodeType } from './convert';
 import { EditableText } from './EditableText';
@@ -39,16 +40,21 @@ function SideHandles({ visible }: { visible: boolean }) {
 export function BlockNode({ id, data, selected }: NodeProps<BlockNodeType>) {
   const { editingId, startEditing } = useCanvas();
   const editing = editingId === id;
+  const { block } = data;
   return (
     <div
-      onDoubleClick={() => startEditing(id)}
+      onDoubleClick={() => {
+        // Bloco travado não muda até destravar (clique direito).
+        if (!block.locked) startEditing(id);
+      }}
       className={cn(
         'relative size-full',
         selected && 'rounded-block outline-2 outline-offset-4 outline-selection',
       )}
     >
-      <BlockView block={data.block} editing={editing} />
+      <BlockView block={block} editing={editing} />
       <SideHandles visible={selected && !editing} />
+      <ContextBar id={id} block={block} hidden={editing || block.locked} />
     </div>
   );
 }
@@ -91,6 +97,7 @@ export function FrameNode({ id, data, selected }: NodeProps<FrameNodeType>) {
         </EditableText>
       </div>
       <SideHandles visible={selected} />
+      <ContextBar id={id} hidden={editing || frame.locked} />
     </div>
   );
 }
