@@ -219,7 +219,9 @@ export function driveRoutes() {
     const { deps, token } = c.var;
     const env = c.env ?? {};
     const available = deps.google(env) !== null && (await deps.vault(env)) !== null;
-    return c.json(statusOf(await deps.drive(env, token).get(), available));
+    // Sem as chaves do Google, nem consulta o banco: o ambiente pode ainda não ter a tabela.
+    if (!available) return c.json(statusOf(null, false));
+    return c.json(statusOf(await deps.drive(env, token).get(), true));
   });
 
   /** Desconectar: revoga o acesso no Google (se der) e apaga a conexão. Os arquivos ficam no Drive. */

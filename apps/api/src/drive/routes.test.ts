@@ -6,7 +6,7 @@ import {
   parseTramaFile,
 } from '@trama/core';
 import { videoFlowExample } from '@trama/core/fixtures';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import type { Identity } from '../account/identity';
 import { defaultDeps } from '../deps';
 import type { Env } from '../env';
@@ -277,6 +277,16 @@ describe('estado e desconexão', () => {
       available: false,
       connected: false,
     });
+  });
+
+  it('sem as chaves do Google, o estado nem consulta o banco (a tabela pode não existir ainda)', async () => {
+    const bare = setup({ ...ENV, GOOGLE_CLIENT_ID: undefined });
+    vi.spyOn(bare.drive, 'get').mockRejectedValue(
+      new Error('relation "drive_connections" does not exist'),
+    );
+    const response = await bare.call('/drive/status');
+    expect(response.status).toBe(200);
+    expect(driveStatusSchema.parse(await response.json()).available).toBe(false);
   });
 
   it('desconectar revoga o acesso no Google e apaga a conexão, mas não os arquivos', async () => {
