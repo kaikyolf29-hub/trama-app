@@ -193,3 +193,7 @@ Não apague: escreva uma linha nova dizendo o que substitui.
 - 2026-11-27 · **A tela Início reproduz a tela 4: saudação em Inter negrito (como na imagem, e não em Lora), barra lateral com Início ativo e Buscar, Templates e Configurações desligados ("em breve"), modelos em grade de 3 colunas e "Recentes" numa tabela.** Motivo: a tela de referência manda; os itens das próximas etapas ficam no lugar certo sem prometer uma tela que não existe.
 - 2026-11-27 · **Cada linha dos recentes renomeia (Enter ou sair do campo confirmam, Esc cancela), muda o status por um menu e apaga depois de uma confirmação na própria linha ("não dá para desfazer").** Motivo: igual à edição de texto do quadro; a confirmação na linha dispensa janela e funciona com teclado e leitor de tela.
 - 2026-11-27 · **A faixa do Google Drive é o componente `DriveStatus`, hoje com "Google Drive · conectar em breve".** Motivo: a etapa do Drive troca só esse componente (conectado, pasta "Trama", "Abrir pasta no Drive") sem mexer no Início.
+
+## Etapa 1.6 — Google Drive
+
+- 2026-11-27 · **O arquivo da cópia é `projeto.trama`, um JSON com `format: "trama"`, `version: 1`, `savedAt`, os dados do projeto (id, título, status, datas) e o `content` validado por `flowContentSchema`. Só fluxos por enquanto.** Motivo: a pessoa pode baixar, mover e abrir de novo no app; o contrato fica em `packages/core/src/drive.ts`, e roteiros e cadernos entram com a V1.
