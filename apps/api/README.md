@@ -1,6 +1,6 @@
 # apps/api — Worker da API
 
-Dono: **Claude Code** · Revisor: Codex · Entra na Fase 0 (login e deploy)
+Feito pelo Claude Code, revisado pelo Codex no fim · Entra na Fase 0 (login e deploy)
 
 A única porta para o banco, o Drive, os e-mails e as IAs. Hono em Cloudflare Workers:
 

@@ -1,6 +1,6 @@
 # packages/ai — IA
 
-Dono: **Claude Code** · Revisor: Codex · Entra na Fase 3
+Feito pelo Claude Code, revisado pelo Codex no fim · Entra na Fase 3
 
 Uma interface só para Claude, Gemini e ChatGPT, com os SDKs oficiais. Traduz o esforço da tela
 (Rápido, Equilibrado, Caprichado) para o parâmetro de cada provedor e sempre o envia de forma
