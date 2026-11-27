@@ -1,6 +1,6 @@
 # apps/mcp — Conector MCP
 
-Dono: **Claude Code** · Revisor: Codex · Entra na Fase 3
+Feito pelo Claude Code, revisado pelo Codex no fim · Entra na Fase 3
 
 Worker separado com `@cloudflare/workers-oauth-provider`. Outras IAs leem e criam fluxos,
 roteiros e estudos com o login e a permissão da pessoa. As ferramentas (`listar_projetos`,

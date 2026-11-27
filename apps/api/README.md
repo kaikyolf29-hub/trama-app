@@ -1,6 +1,6 @@
 # apps/api — Worker da API
 
-Dono: **Claude Code** · Revisor: Codex · Entra na Fase 0 (login e deploy)
+Feito pelo Claude Code, revisado pelo Codex no fim · Entra na Fase 0 (login e deploy)
 
 A única porta para o banco, o Drive, os e-mails e as IAs. Hono em Cloudflare Workers:
 
@@ -8,4 +8,7 @@ A única porta para o banco, o Drive, os e-mails e as IAs. Hono em Cloudflare Wo
 - chamadas de IA com a chave da própria pessoa, lida só aqui;
 - e-mails pelo Resend e o resumo semanal (Cron Trigger).
 
-Usa a lógica de `@trama/core`; nunca duplica regras de lá. Ainda vazio.
+Usa a lógica de `@trama/core`; nunca duplica regras de lá.
+
+Por enquanto só tem `GET /health`. Roda com `pnpm dev` em http://localhost:8787 e vai para o ar
+com o site (`docs/DEPLOY.md`).

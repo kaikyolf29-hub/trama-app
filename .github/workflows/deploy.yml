@@ -1,0 +1,86 @@
+name: Deploy
+
+# Produção a cada merge na main; um preview do site em cada PR (docs/DEPLOY.md).
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: deploy-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  deploy:
+    name: Cloudflare
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      WORKERS_SUBDOMAIN: ${{ vars.CLOUDFLARE_WORKERS_SUBDOMAIN }}
+      # Sem telemetria do wrangler.
+      WRANGLER_SEND_METRICS: 'false'
+    steps:
+      # Sem os segredos (ainda não configurados, ou PR de fork), o deploy é pulado sem erro.
+      - name: Conferir os segredos da Cloudflare
+        id: gate
+        run: |
+          if [ -n "$CLOUDFLARE_API_TOKEN" ] && [ -n "$CLOUDFLARE_ACCOUNT_ID" ]; then
+            echo "ok=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "ok=false" >> "$GITHUB_OUTPUT"
+            echo "::notice title=Deploy pulado::Faltam os segredos CLOUDFLARE_API_TOKEN e CLOUDFLARE_ACCOUNT_ID (docs/DEPLOY.md)."
+          fi
+
+      - uses: actions/checkout@v7
+        if: steps.gate.outputs.ok == 'true'
+        with:
+          persist-credentials: false
+
+      - uses: pnpm/action-setup@v6
+        if: steps.gate.outputs.ok == 'true'
+
+      - uses: actions/setup-node@v7
+        if: steps.gate.outputs.ok == 'true'
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - name: Instalar e construir o site
+        if: steps.gate.outputs.ok == 'true'
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm --filter @trama/web build
+
+      - name: Publicar o site e a API (produção)
+        if: steps.gate.outputs.ok == 'true' && github.event_name == 'push'
+        run: |
+          pnpm --filter @trama/web exec wrangler deploy
+          pnpm --filter @trama/api exec wrangler deploy
+
+      - name: Publicar o preview do PR
+        id: preview
+        if: steps.gate.outputs.ok == 'true' && github.event_name == 'pull_request'
+        env:
+          ALIAS: pr-${{ github.event.pull_request.number }}
+        run: |
+          pnpm --filter @trama/web exec wrangler versions upload --preview-alias "$ALIAS"
+          if [ -n "$WORKERS_SUBDOMAIN" ]; then
+            echo "url=https://$ALIAS-trama.$WORKERS_SUBDOMAIN.workers.dev" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Comentar o endereço do preview
+        if: steps.preview.outputs.url != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR: ${{ github.event.pull_request.number }}
+          URL: ${{ steps.preview.outputs.url }}
+        run: |
+          body="Preview deste PR: $URL"
+          gh pr comment "$PR" --repo "$GITHUB_REPOSITORY" --edit-last --body "$body" \
+            || gh pr comment "$PR" --repo "$GITHUB_REPOSITORY" --body "$body"

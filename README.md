@@ -7,6 +7,7 @@ transformar ideias faladas em fluxos organizados com IA.
 - Telas de referência: [`docs/telas/`](docs/telas/)
 - Regras para quem programa (pessoas e agentes): [`AGENTS.md`](AGENTS.md)
 - Decisões tomadas: [`docs/DECISIONS.md`](docs/DECISIONS.md)
+- Como o site vai para o ar: [`docs/DEPLOY.md`](docs/DEPLOY.md)
 
 ## Começar
 
@@ -24,7 +25,7 @@ pnpm install
 pnpm dev
 ```
 
-O site abre em http://localhost:5173. Para rodar os testes:
+O site abre em http://localhost:5173 e a API em http://localhost:8787. Para rodar os testes:
 
 ```bash
 pnpm test

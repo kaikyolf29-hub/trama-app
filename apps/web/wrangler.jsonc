@@ -1,0 +1,15 @@
+// O site no Cloudflare Workers, só com os arquivos estáticos do build (plano grátis).
+// Produção: https://trama.<subdomínio>.workers.dev · Preview de PR: https://pr-<n>-trama.<subdomínio>.workers.dev
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "trama",
+  "compatibility_date": "2026-11-20",
+  "assets": {
+    "directory": "./dist",
+    // App de página única: qualquer caminho sem arquivo abre o index.html, e o roteador decide.
+    "not_found_handling": "single-page-application",
+  },
+  "workers_dev": true,
+  "preview_urls": true,
+  "observability": { "enabled": true },
+}
