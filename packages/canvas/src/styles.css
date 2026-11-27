@@ -5,3 +5,9 @@
 .trama-canvas[data-creating] .react-flow__pane {
   cursor: crosshair;
 }
+
+/* Os pontos de conexão aparecem com o ponteiro sobre o bloco e, na ferramenta Seta, em todos. */
+.trama-canvas .react-flow__node:hover .react-flow__handle,
+.trama-canvas[data-connecting] .react-flow__handle {
+  opacity: 1;
+}

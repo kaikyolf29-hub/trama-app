@@ -28,9 +28,14 @@ describe('toReactFlow', () => {
       target: 'imagem-thumbnail',
       sourceHandle: 'bottom',
       targetHandle: 'top',
-      type: 'straight',
+      type: 'arrow',
     });
-    expect(edges.find((edge) => edge.id === 'seta-projeto-video')?.type).toBe('default');
+    expect(edges.find((edge) => edge.id === 'seta-projeto-thumbnail')?.data?.arrow.route).toBe(
+      'straight',
+    );
+    expect(edges.find((edge) => edge.id === 'seta-projeto-video')?.data?.arrow.route).toBe(
+      'curved',
+    );
   });
 });
 

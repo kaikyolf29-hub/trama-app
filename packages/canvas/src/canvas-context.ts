@@ -1,4 +1,4 @@
-import type { Block, Frame } from '@trama/core';
+import type { Arrow, Block, Frame } from '@trama/core';
 import { createContext, useContext } from 'react';
 import type { CanvasMedia } from './media';
 
@@ -10,6 +10,7 @@ export interface CanvasActions {
   stopEditing: () => void;
   updateBlock: (next: Block) => void;
   updateFrame: (next: Frame) => void;
+  updateArrow: (next: Arrow) => void;
   /** Endereço para mostrar uma imagem guardada (veja `CanvasMedia`). */
   resolveImage: CanvasMedia['resolveImage'];
 }

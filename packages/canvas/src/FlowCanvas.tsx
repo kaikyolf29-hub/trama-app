@@ -1,4 +1,4 @@
-import type { Block, FlowContent, Frame } from '@trama/core';
+import type { Arrow, Block, FlowContent, Frame } from '@trama/core';
 import { cn } from '@trama/ui';
 import {
   AiIcon,
@@ -27,6 +27,7 @@ import {
   ReactFlowProvider,
   useReactFlow,
   useViewport,
+  type Connection,
   type EdgeChangeset,
   type NodeChangeset,
 } from '@xyflow/react';
@@ -41,8 +42,10 @@ import {
   type MouseEvent,
   type ReactNode,
 } from 'react';
+import { canConnect, sideOf } from './arrows';
 import { CanvasContext, type CanvasActions } from './canvas-context';
 import {
+  arrowToEdge,
   blockToNode,
   frameToNode,
   fromReactFlow,
@@ -51,6 +54,7 @@ import {
   type CanvasNode,
 } from './convert';
 import {
+  createArrow,
   createBlock,
   createFrame,
   createImageBlock,
@@ -66,11 +70,11 @@ import {
   MAX_IMAGE_BYTES,
   type CanvasMedia,
 } from './media';
-import { nodeTypes } from './node-types';
+import { edgeTypes, nodeTypes } from './node-types';
 import { removeNodes } from './remove';
 
-/** Selecionar, mover o quadro, ou criar um tipo de bloco no próximo clique. */
-export type CanvasTool = 'select' | 'pan' | CreatableKind;
+/** Selecionar, mover o quadro, ligar com setas, ou criar um tipo de bloco no próximo clique. */
+export type CanvasTool = 'select' | 'pan' | 'arrow' | CreatableKind;
 type ToolAction = 'image' | 'link';
 type ScreenPoint = { x: number; y: number };
 
@@ -93,7 +97,8 @@ const FIT_VIEW = {
 } as const;
 // Distância das barras flutuantes até a borda da tela (16 px, como na tela 1).
 const PANEL = 'm-4!';
-const ARROW_STYLE = { stroke: colors.arrow, strokeWidth: 1.5 };
+const CONNECTION_LINE_STYLE = { stroke: colors.selection, strokeWidth: 1.5 };
+const MULTI_SELECT_KEYS = ['Shift', 'Meta', 'Control'];
 const DELETE_KEYS = ['Backspace', 'Delete'];
 
 /** Teclas que escolhem a ferramenta (docs/PLAN.md, "Blocos" e "Interações"). */
@@ -104,6 +109,7 @@ const SHORTCUTS: Partial<Record<string, CanvasTool>> = {
   c: 'card',
   n: 'sticky',
   r: 'shape',
+  s: 'arrow',
   e: 'checklist',
   f: 'frame',
 };
@@ -189,6 +195,47 @@ function Canvas({ flow, onFlowChange, media = localMedia, topLeft, topRight }: F
       });
     },
     [commit],
+  );
+
+  const updateArrow = useCallback(
+    (next: Arrow) => {
+      setEdges((current) =>
+        current.map((edge) =>
+          edge.id === next.id ? { ...arrowToEdge(next), selected: edge.selected } : edge,
+        ),
+      );
+      const base = content.current;
+      commit({
+        ...base,
+        arrows: base.arrows.map((arrow) => (arrow.id === next.id ? next : arrow)),
+      });
+    },
+    [commit],
+  );
+
+  const isValidConnection = useCallback(
+    (connection: Connection | CanvasEdge) =>
+      canConnect(content.current.arrows, connection.source, connection.target),
+    [],
+  );
+
+  // Puxar o ponto azul até outro bloco cria a seta (docs/PLAN.md, "Interações").
+  const onConnect = useCallback(
+    (connection: Connection) => {
+      if (!isValidConnection(connection)) return;
+      const arrow = createArrow(
+        { nodeId: connection.source, ...sideOf(connection.sourceHandle) },
+        { nodeId: connection.target, ...sideOf(connection.targetHandle) },
+      );
+      setEdges((current) => [
+        ...current.map((edge) => (edge.selected ? { ...edge, selected: false } : edge)),
+        { ...arrowToEdge(arrow), selected: true },
+      ]);
+      const base = content.current;
+      commit({ ...base, arrows: [...base.arrows, arrow] });
+      setTool((current) => (current === 'arrow' ? 'select' : current));
+    },
+    [commit, isValidConnection],
   );
 
   /** Põe um bloco novo no quadro, selecionado (e em edição, se pedir). */
@@ -308,7 +355,9 @@ function Canvas({ flow, onFlowChange, media = localMedia, topLeft, topRight }: F
   const onPaneClick = useCallback(
     (event: MouseEvent) => {
       setLinkOpen(false);
-      if (tool !== 'select' && tool !== 'pan') create(tool, { x: event.clientX, y: event.clientY });
+      if (tool !== 'select' && tool !== 'pan' && tool !== 'arrow') {
+        create(tool, { x: event.clientX, y: event.clientY });
+      }
     },
     [tool, create],
   );
@@ -410,13 +459,14 @@ function Canvas({ flow, onFlowChange, media = localMedia, topLeft, topRight }: F
       stopEditing: () => setEditingId(null),
       updateBlock,
       updateFrame,
+      updateArrow,
       resolveImage: media.resolveImage,
     }),
-    [editingId, updateBlock, updateFrame, media],
+    [editingId, updateBlock, updateFrame, updateArrow, media],
   );
 
   const panning = tool === 'pan';
-  const creating = tool !== 'select' && !panning;
+  const creating = tool !== 'select' && !panning && tool !== 'arrow';
 
   return (
     <CanvasContext.Provider value={actions}>
@@ -425,6 +475,7 @@ function Canvas({ flow, onFlowChange, media = localMedia, topLeft, topRight }: F
         className="trama-canvas relative size-full bg-canvas"
         data-testid="quadro"
         data-creating={creating || undefined}
+        data-connecting={tool === 'arrow' || undefined}
         onDoubleClick={onDoubleClick}
         onDragOver={onDragOver}
         onDrop={onDrop}
@@ -452,11 +503,19 @@ function Canvas({ flow, onFlowChange, media = localMedia, topLeft, topRight }: F
           nodes={nodes}
           edges={edges}
           nodeTypes={nodeTypes}
+          edgeTypes={edgeTypes}
           onNodesChange={onNodesChange}
           onEdgesChange={onEdgesChange}
           onNodeDragStop={onNodeDragStop}
           onDelete={onDelete}
           onPaneClick={onPaneClick}
+          onConnect={onConnect}
+          isValidConnection={isValidConnection}
+          onEdgeDoubleClick={(_, edge) => setEditingId(edge.id)}
+          connectionLineStyle={CONNECTION_LINE_STYLE}
+          nodesDraggable={tool !== 'arrow'}
+          multiSelectionKeyCode={MULTI_SELECT_KEYS}
+          selectionKeyCode={null}
           deleteKeyCode={DELETE_KEYS}
           connectionMode={ConnectionMode.Loose}
           snapToGrid
@@ -472,7 +531,7 @@ function Canvas({ flow, onFlowChange, media = localMedia, topLeft, topRight }: F
           zoomOnPinch
           zoomOnDoubleClick={false}
           defaultEdgeOptions={{
-            style: ARROW_STYLE,
+            type: 'arrow',
             markerEnd: { type: MarkerType.ArrowClosed, color: colors.arrow, width: 14, height: 14 },
           }}
           proOptions={{ hideAttribution: true }}
@@ -611,7 +670,7 @@ const TOOLS: ToolButton[] = [
   { label: 'Texto', icon: TextIcon, tool: 'text', shortcut: 'T' },
   { label: 'Nota adesiva', icon: StickyIcon, tool: 'sticky', shortcut: 'N' },
   { label: 'Forma', icon: ShapeIcon, tool: 'shape', shortcut: 'R' },
-  { label: 'Seta', icon: ArrowIcon },
+  { label: 'Seta', icon: ArrowIcon, tool: 'arrow', shortcut: 'S' },
   { label: 'Imagem', icon: ImageIcon, action: 'image' },
   { label: 'Vídeo ou link', icon: VideoIcon, action: 'link' },
   { label: 'Moldura', icon: FrameIcon, tool: 'frame', shortcut: 'F' },
