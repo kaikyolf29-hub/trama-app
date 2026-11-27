@@ -90,3 +90,12 @@ Não apague: escreva uma linha nova dizendo o que substitui.
 - 2026-11-27 · **`apps/web/.env` entra no repositório, só com a URL e a chave publicável do Supabase.** Motivo: são valores públicos (vão para o navegador), e assim `pnpm dev` já fala com o login de verdade; segredos continuam fora.
 - 2026-11-27 · **Configuração do login versionada em `supabase/config.toml`; no projeto, os mesmos valores vão pelo painel, com o endereço publicado no lugar de localhost.** Motivo: o conector do Supabase não muda a configuração do login, então o painel é ajustado pelo Codex, seguindo este arquivo.
 - 2026-11-27 · **E-mails do login pelo SMTP do Resend, remetente `onboarding@resend.dev` até existir um domínio.** Motivo: domínio é pago; sem ele, o Resend grátis só entrega no e-mail do dono da conta, o que basta para testar.
+
+## Etapa 0.6 — Deploy na Cloudflare
+
+- 2026-11-27 · **O site vai para o Cloudflare Workers como arquivos estáticos (`assets` com `single-page-application`), não para o Pages.** Motivo: plano grátis, a mesma plataforma da API, e preview por PR com as `preview_urls` do Workers.
+- 2026-11-27 · **Produção a cada merge na `main`; preview do site em cada PR com `wrangler versions upload --preview-alias pr-<n>`, com o link num comentário do PR.** Motivo: é o "preview em todo PR" do plano, sem serviço extra.
+- 2026-11-27 · **Sem os segredos da Cloudflare (ou em PR de fork), o deploy é pulado com um aviso, e o CI continua verde.** Motivo: o repositório funciona antes da conta existir, e um fork nunca recebe os segredos.
+- 2026-11-27 · **A API ganha o esqueleto em Hono (`GET /health`) e sobe junto com o site.** Motivo: o plano põe site e API no ar na Fase 0; as rotas chegam etapa por etapa.
+- 2026-11-27 · **O script de instalação do workerd (do wrangler) fica negado, como o do esbuild; todas as permissões de dependência ficam em `permissions` no `pnpm-workspace.yaml`.** Motivo: o binário já vem no pacote da plataforma, e uma seção só é mais fácil de revisar.
+- 2026-11-27 · **Sem telemetria do wrangler no deploy (`WRANGLER_SEND_METRICS=false`).** Motivo: nada sai do CI além do próprio deploy.

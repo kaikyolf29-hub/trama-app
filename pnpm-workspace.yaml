@@ -3,11 +3,6 @@ packages:
   - packages/*
   - tooling
 
-# Scripts de instalação de dependências: o pnpm 12 recusa os que não estão listados aqui.
-# O esbuild (do tsx) não precisa do seu: o binário já vem no pacote da plataforma.
-allowBuilds:
-  esbuild: false
-
 # Versões compartilhadas por vários pacotes. No package.json use "catalog:".
 catalog:
   '@types/node': ^24.19.4
@@ -18,8 +13,16 @@ catalog:
   vitest: ^5.1.2
   zod: ^4.6.7
 
-# "Skills" de agente que dependências trazem ficam negadas: são instruções para o Claude
-# Code e o Codex vindas de fora do repositório. As regras dos agentes estão no AGENTS.md.
+# O que as dependências podem fazer. O pnpm 12 recusa instalar enquanto houver pedido sem
+# decisão (`pnpm approve` para decidir).
+# - build: scripts de instalação. O esbuild (do tsx) e o workerd (do wrangler) não precisam
+#   dos seus: o binário já vem no pacote da plataforma.
+# - skills: instruções para agentes de IA vindas de fora do repositório. Negadas: as regras
+#   dos agentes estão no AGENTS.md.
 permissions:
   '@tanstack/react-router':
     skills: false
+  esbuild:
+    build: false
+  workerd:
+    build: false

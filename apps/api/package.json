@@ -5,9 +5,16 @@
   "description": "Worker da API (Hono na Cloudflare): projetos, Drive, IA, e-mails e tarefas agendadas.",
   "type": "module",
   "scripts": {
-    "typecheck": "tsc --noEmit"
+    "dev": "wrangler dev --port 8787",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "hono": "^4.13.0"
   },
   "devDependencies": {
-    "typescript": "catalog:"
+    "typescript": "catalog:",
+    "vitest": "catalog:",
+    "wrangler": "^4.168.0"
   }
 }

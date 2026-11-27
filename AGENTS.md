@@ -33,7 +33,7 @@ Rode sempre da raiz.
 | Comando          | O que faz                                                     |
 | ---------------- | ------------------------------------------------------------- |
 | `pnpm install`   | Instala tudo                                                  |
-| `pnpm dev`       | Sobe o site em http://localhost:5173                          |
+| `pnpm dev`       | Sobe o site (localhost:5173) e a API (localhost:8787)         |
 | `pnpm test`      | Testes de todos os pacotes (Vitest)                           |
 | `pnpm typecheck` | Checagem de tipos de todos os pacotes                         |
 | `pnpm lint`      | ESLint no código e Stylelint nas folhas de estilo             |
@@ -42,7 +42,8 @@ Rode sempre da raiz.
 | `pnpm check`     | Tipos + lint + formatação + testes: rode antes de abrir um PR |
 
 Um pacote só: `pnpm --filter @trama/core test`. O CI roda typecheck, lint, formatação,
-testes e build em todo PR (`.github/workflows/ci.yml`).
+testes e build em todo PR (`.github/workflows/ci.yml`); o deploy na Cloudflare publica a `main`
+e um preview de cada PR (`docs/DEPLOY.md`).
 
 ## Quem faz o quê
 
