@@ -8,4 +8,9 @@
   "workers_dev": true,
   "preview_urls": true,
   "observability": { "enabled": true },
+  // Valores públicos (os mesmos do apps/web/.env): com o token da pessoa, o banco aplica a RLS.
+  "vars": {
+    "SUPABASE_URL": "https://jebksiyftodpbvhndoqf.supabase.co",
+    "SUPABASE_PUBLISHABLE_KEY": "sb_publishable_OSFV9POclQok-BaNlc-agw_LJ0vnssB",
+  },
 }
