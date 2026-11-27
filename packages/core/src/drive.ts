@@ -84,6 +84,8 @@ export function parseTramaFile(
 
 /** Estado da conexão com o Drive, para a tela Início e o aviso do quadro. */
 export const driveStatusSchema = z.object({
+  /** false quando este ambiente ainda não tem as chaves do Google (a tela explica). */
+  available: z.boolean(),
   connected: z.boolean(),
   /** Conta do Google conectada. */
   email: z.string().nullable(),

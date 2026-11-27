@@ -75,6 +75,7 @@ describe('contrato do Drive', () => {
   it('o estado desconectado é válido', () => {
     expect(
       driveStatusSchema.safeParse({
+        available: true,
         connected: false,
         email: null,
         folderUrl: null,
