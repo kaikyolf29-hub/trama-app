@@ -37,7 +37,7 @@ function SideHandles({ visible }: { visible: boolean }) {
 }
 
 /** Um bloco no quadro. Clique duplo edita o texto. */
-export function BlockNode({ id, data, selected }: NodeProps<BlockNodeType>) {
+export function BlockNode({ id, data, selected, dragging }: NodeProps<BlockNodeType>) {
   const { editingId, startEditing } = useCanvas();
   const editing = editingId === id;
   const { block } = data;
@@ -54,13 +54,13 @@ export function BlockNode({ id, data, selected }: NodeProps<BlockNodeType>) {
     >
       <BlockView block={block} editing={editing} />
       <SideHandles visible={selected && !editing} />
-      <ContextBar id={id} block={block} hidden={editing || block.locked} />
+      <ContextBar id={id} block={block} hidden={editing || block.locked || dragging} />
     </div>
   );
 }
 
 /** Moldura: agrupa blocos e dá nome à seção. O nome fica acima da borda e edita no clique duplo. */
-export function FrameNode({ id, data, selected }: NodeProps<FrameNodeType>) {
+export function FrameNode({ id, data, selected, dragging }: NodeProps<FrameNodeType>) {
   const { editingId, startEditing, stopEditing, updateFrame } = useCanvas();
   const editing = editingId === id;
   const { frame } = data;
@@ -97,7 +97,7 @@ export function FrameNode({ id, data, selected }: NodeProps<FrameNodeType>) {
         </EditableText>
       </div>
       <SideHandles visible={selected} />
-      <ContextBar id={id} hidden={editing || frame.locked} />
+      <ContextBar id={id} hidden={editing || frame.locked || dragging} />
     </div>
   );
 }

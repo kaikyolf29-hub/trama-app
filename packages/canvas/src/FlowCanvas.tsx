@@ -33,9 +33,11 @@ import {
   ReactFlowProvider,
   useReactFlow,
   useViewport,
+  ViewportPortal,
   type Connection,
   type EdgeChangeset,
   type NodeChangeset,
+  type PositionChange,
 } from '@xyflow/react';
 import {
   useCallback,
@@ -80,6 +82,7 @@ import {
 import { ContextMenu, type MenuItem } from './context-menu';
 import { duplicateNodes, groupIntoFrame, History } from './edit';
 import { edgeTypes, nodeTypes } from './node-types';
+import { alignmentGuides, type Guides, type Rect } from './guides';
 import { removeNodes } from './remove';
 import { setNodeStep, type StepTarget } from './steps';
 
@@ -112,6 +115,11 @@ const PANEL = 'm-4!';
 const CONNECTION_LINE_STYLE = { stroke: colors.selection, strokeWidth: 1.5 };
 const MULTI_SELECT_KEYS = ['Shift', 'Meta', 'Control'];
 const DELETE_KEYS = ['Backspace', 'Delete'];
+/** Distância (px na tela) em que o bloco arrastado encaixa numa guia. */
+const GUIDE_THRESHOLD = 6;
+const NO_GUIDES: Guides = { vertical: [], horizontal: [] };
+/** As linhas das guias atravessam o quadro todo. */
+const GUIDE_REACH = 100_000;
 
 /** Teclas que escolhem a ferramenta (docs/PLAN.md, "Blocos" e "Interações"). */
 const SHORTCUTS: Partial<Record<string, CanvasTool>> = {
@@ -465,15 +473,80 @@ function Canvas({ flow, onFlowChange, media = localMedia, topLeft, topRight }: F
     [addBlock, media, toFlow],
   );
 
-  const onNodesChange = useCallback((changes: NodeChangeset<CanvasNode>) => {
-    setNodes((current) => changes.applyTo(current));
-  }, []);
+  // Guias de alinhamento: só ao arrastar um nó sozinho (docs/PLAN.md, "Interações").
+  const dragging = useRef<string | null>(null);
+  const [guides, setGuides] = useState<Guides>(NO_GUIDES);
+
+  /** Retângulo de um nó em coordenadas absolutas do quadro. */
+  const rectOf = useCallback(
+    (node: CanvasNode): Rect | null => {
+      const internal = reactFlow.getInternalNode(node.id);
+      if (!internal) return null;
+      const { x, y } = internal.internals.positionAbsolute;
+      return {
+        x,
+        y,
+        width: internal.measured.width ?? node.width ?? 0,
+        height: internal.measured.height ?? node.height ?? 0,
+      };
+    },
+    [reactFlow],
+  );
+
+  /** Encaixa o nó arrastado nas bordas e no meio dos vizinhos e mostra as linhas. */
+  const snapToGuides = useCallback(
+    (changes: NodeChangeset<CanvasNode>) => {
+      const id = dragging.current;
+      if (!id) return;
+      const change = changes
+        .getForNode(id)
+        .find((item): item is PositionChange => item.type === 'position' && item.dragging === true);
+      const node = reactFlow.getNode(id);
+      if (!change?.position || !node) return;
+      const parent = node.parentId ? reactFlow.getInternalNode(node.parentId) : undefined;
+      const origin = parent?.internals.positionAbsolute ?? { x: 0, y: 0 };
+      const size = rectOf(node);
+      if (!size) return;
+      const moving = {
+        ...size,
+        x: origin.x + change.position.x,
+        y: origin.y + change.position.y,
+      };
+      const others = reactFlow
+        .getNodes()
+        .filter((other) => other.id !== id && other.parentId !== id)
+        .map(rectOf)
+        .filter((rect): rect is Rect => rect !== null);
+      const found = alignmentGuides(moving, others, GUIDE_THRESHOLD / reactFlow.getZoom());
+      if (found.x !== undefined || found.y !== undefined) {
+        changes.remove(change);
+        changes.add({
+          ...change,
+          position: { x: (found.x ?? moving.x) - origin.x, y: (found.y ?? moving.y) - origin.y },
+        });
+      }
+      setGuides(found);
+    },
+    [reactFlow, rectOf],
+  );
+
+  const onNodesChange = useCallback(
+    (changes: NodeChangeset<CanvasNode>) => {
+      snapToGuides(changes);
+      setNodes((current) => changes.applyTo(current));
+    },
+    [snapToGuides],
+  );
 
   const onEdgesChange = useCallback((changes: EdgeChangeset<CanvasEdge>) => {
     setEdges((current) => changes.applyTo(current));
   }, []);
 
-  const onNodeDragStop = useCallback(() => commit(content.current), [commit]);
+  const onNodeDragStop = useCallback(() => {
+    dragging.current = null;
+    setGuides(NO_GUIDES);
+    commit(content.current);
+  }, [commit]);
 
   // Delete ou Backspace: some com os nós (e os filhos de uma moldura) e com o que apontava para eles.
   const onDelete = useCallback(
@@ -681,6 +754,9 @@ function Canvas({ flow, onFlowChange, media = localMedia, topLeft, topRight }: F
           edgeTypes={edgeTypes}
           onNodesChange={onNodesChange}
           onEdgesChange={onEdgesChange}
+          onNodeDragStart={(_, node, dragged) => {
+            dragging.current = dragged.length === 1 ? node.id : null;
+          }}
           onNodeDragStop={onNodeDragStop}
           onDelete={onDelete}
           onPaneClick={onPaneClick}
@@ -735,6 +811,7 @@ function Canvas({ flow, onFlowChange, media = localMedia, topLeft, topRight }: F
             color={colors.canvasDot}
             bgColor={colors.canvas}
           />
+          <GuideLines guides={guides} />
           {topLeft && (
             <Panel position="top-left" className={PANEL}>
               {topLeft}
@@ -921,6 +998,46 @@ function buildMenuItems({ x, y, node }: MenuState, actions: MenuHandlers): MenuI
     });
   }
   return items;
+}
+
+/** As linhas azuis das guias, desenhadas no próprio quadro (acompanham zoom e movimento). */
+function GuideLines({ guides }: { guides: Guides }) {
+  if (guides.vertical.length === 0 && guides.horizontal.length === 0) return null;
+  return (
+    <ViewportPortal>
+      <svg
+        aria-hidden
+        className="pointer-events-none absolute top-0 left-0 overflow-visible"
+        width={1}
+        height={1}
+      >
+        {guides.vertical.map((x) => (
+          <line
+            key={`v${x}`}
+            x1={x}
+            x2={x}
+            y1={-GUIDE_REACH}
+            y2={GUIDE_REACH}
+            stroke={colors.selection}
+            strokeWidth={1}
+            vectorEffect="non-scaling-stroke"
+          />
+        ))}
+        {guides.horizontal.map((y) => (
+          <line
+            key={`h${y}`}
+            x1={-GUIDE_REACH}
+            x2={GUIDE_REACH}
+            y1={y}
+            y2={y}
+            stroke={colors.selection}
+            strokeWidth={1}
+            vectorEffect="non-scaling-stroke"
+          />
+        ))}
+      </svg>
+    </ViewportPortal>
+  );
 }
 
 type ToolButton = {
