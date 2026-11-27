@@ -35,6 +35,8 @@ export const colors = {
   frameBorder: '#2C2C2C',
   /** Traço das setas no quadro. */
   arrow: '#5E5E5E',
+  /** Fundo do vídeo e do selo de duração no bloco de vídeo (tela 1). */
+  media: '#000000',
   /** Véu do minimapa sobre o que está fora da tela. */
   overlay: 'rgba(22, 22, 22, 0.6)',
   border: '#333333',

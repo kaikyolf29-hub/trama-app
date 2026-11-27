@@ -1,5 +1,6 @@
 import type { Block, Frame } from '@trama/core';
 import { createContext, useContext } from 'react';
+import type { CanvasMedia } from './media';
 
 /** O que um bloco ou moldura pode pedir ao quadro. */
 export interface CanvasActions {
@@ -9,6 +10,8 @@ export interface CanvasActions {
   stopEditing: () => void;
   updateBlock: (next: Block) => void;
   updateFrame: (next: Frame) => void;
+  /** Endereço para mostrar uma imagem guardada (veja `CanvasMedia`). */
+  resolveImage: CanvasMedia['resolveImage'];
 }
 
 export const CanvasContext = createContext<CanvasActions | null>(null);

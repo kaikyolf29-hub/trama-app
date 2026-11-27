@@ -111,3 +111,15 @@ Não apague: escreva uma linha nova dizendo o que substitui.
 - 2026-11-27 · **O texto solto não tem caixa nem fundo; fonte, tamanho e cor valem para o bloco todo, e as linhas "- " e "1. " viram listas.** Motivo: é como o texto aparece na tela 1 e a convenção de listas do core.
 - 2026-11-27 · **O selo de status do cartão é uma caixa de marcar (`role="checkbox"`) que guarda a data em que foi marcado.** Motivo: marcar "Vídeo pronto" é um clique, e a data mostra quando ficou pronto.
 - 2026-11-27 · **A edição é um campo de texto no lugar do texto, com a mesma fonte; sair do campo ou Esc confirmam, e Enter confirma nos campos de uma linha (título do cartão, nome da moldura).** Motivo: editar parece escrever direto no quadro, sem caixa de diálogo.
+
+## Etapa 1.3 — Imagem, vídeo ou link, e etapas
+
+- 2026-11-27 · **O quadro não sabe onde as imagens moram: quem usa o `FlowCanvas` passa um `CanvasMedia` (subir o arquivo e resolver o endereço). Sem ele, a imagem vale só enquanto a aba estiver aberta.** Motivo: o mesmo quadro serve o exemplo sem login, o app com o Supabase Storage e, depois, o Drive.
+- 2026-11-27 · **Imagens aceitas: PNG, JPG, WebP e GIF, até 10 MB. SVG fica de fora.** Motivo: SVG pode carregar script; os outros quatro todo navegador mostra com segurança.
+- 2026-11-27 · **O bloco de imagem tem até 280 × 360 px, na proporção da imagem, sem esticar imagem pequena; embaixo vão o nome (ou a legenda) e o tamanho original.** Motivo: é o bloco da thumbnail na tela 1.
+- 2026-11-27 · **YouTube e Vimeo só carregam o player depois do clique em tocar (YouTube pelo `youtube-nocookie.com`).** Motivo: o quadro abre rápido mesmo com muitos vídeos, e nada do Google ou do Vimeo carrega antes de a pessoa pedir.
+- 2026-11-27 · **Link comum vira cartão com o nome do site; título, descrição e imagem de prévia vêm depois, pela API.** Motivo: o navegador não pode ler outro site (CORS); a prévia precisa do Worker.
+- 2026-11-27 · **Colar (fora de um campo) uma imagem ou um link que começa com http cria o bloco onde está o ponteiro. Arrastar arquivos ou links para o quadro também.** Motivo: "colar imagem ou link direto no quadro cria o bloco certo" (plano). Texto comum colado não vira nada.
+- 2026-11-27 · **Etapas entram pela tecla E até o menu de blocos chegar com o clique direito (etapa 1.4).** Motivo: a barra da tela 1 não tem botão de etapas.
+- 2026-11-27 · **A lista de etapas muda de altura com o número de etapas (56 px + 32 px por etapa + 16 px).** Motivo: as 5 etapas da tela 1 cabem certinho, e nenhuma etapa fica escondida.
+- 2026-11-27 · **Token novo `media` (preto) para o fundo do vídeo e o selo de duração.** Motivo: na tela 1 o vídeo é preto, mais escuro que o quadro.
