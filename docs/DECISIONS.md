@@ -90,3 +90,14 @@ Não apague: escreva uma linha nova dizendo o que substitui.
 - 2026-11-27 · **`apps/web/.env` entra no repositório, só com a URL e a chave publicável do Supabase.** Motivo: são valores públicos (vão para o navegador), e assim `pnpm dev` já fala com o login de verdade; segredos continuam fora.
 - 2026-11-27 · **Configuração do login versionada em `supabase/config.toml`; no projeto, os mesmos valores vão pelo painel, com o endereço publicado no lugar de localhost.** Motivo: o conector do Supabase não muda a configuração do login, então o painel é ajustado pelo Codex, seguindo este arquivo.
 - 2026-11-27 · **E-mails do login pelo SMTP do Resend, remetente `onboarding@resend.dev` até existir um domínio.** Motivo: domínio é pago; sem ele, o Resend grátis só entrega no e-mail do dono da conta, o que basta para testar.
+
+## Etapa 1.1 — Quadro base
+
+- 2026-11-27 · **React Flow 13 (`@xyflow/react`, MIT), com as mudanças aplicadas por `NodeChangeset.applyTo`.** Motivo: é o quadro do plano; na versão 13 o `applyNodeChanges` deu lugar ao `NodeChangeset`.
+- 2026-11-27 · **A conversão entre o core e o React Flow fica em `packages/canvas/src/convert.ts`: posição absoluta no core, relativa à moldura no React Flow (`parentId`), e de volta encaixada na grade de 8 px.** Motivo: o resto do app só conhece o formato do core.
+- 2026-11-27 · **Molduras ficam numa camada abaixo de todos os blocos.** Motivo: a moldura é o fundo da seção e nunca cobre um bloco.
+- 2026-11-27 · **Os pontos de conexão ficam no meio de cada borda e servem de saída e de chegada (modo de conexão solto).** Motivo: a seta "sai do meio da borda" (plano) e pode ligar qualquer lado a qualquer lado.
+- 2026-11-27 · **Ícones da Lucide (ISC, traço fino), reexportados por `@trama/ui/icons` com nomes do Trama.** Motivo: o mesmo estilo de ícone da tela 1 em todo o app.
+- 2026-11-27 · **Tokens novos da tela 1: fundo e borda da moldura, traço da seta e o véu do minimapa.** Motivo: o quadro desenha essas cores, e cor só existe nos tokens.
+- 2026-11-27 · **Ferramentas das próximas etapas aparecem desativadas ("em breve"), na ordem da tela 1.** Motivo: a barra já fica no lugar certo e cada etapa só liga a sua ferramenta.
+- 2026-11-27 · **`/exemplo` abre o fluxo de vídeo da tela 1 no quadro, sem login.** Motivo: dá para ver e testar o quadro (e o preview de cada PR) antes de os projetos da pessoa chegarem na etapa 1.5.

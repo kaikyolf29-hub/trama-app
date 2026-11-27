@@ -2,6 +2,7 @@ import '@fontsource-variable/inter';
 import '@fontsource-variable/lora';
 import '@fontsource-variable/jetbrains-mono';
 import '@fontsource-variable/caveat';
+import '@trama/canvas/styles.css';
 import './styles.css';
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';

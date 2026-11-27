@@ -3,6 +3,7 @@
 
 /* Os componentes de packages/ui também usam classes do Tailwind. */
 @source '../../../packages/ui/src';
+@source '../../../packages/canvas/src';
 
 @layer base {
   html {

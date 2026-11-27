@@ -30,6 +30,13 @@ export const colors = {
   field: '#252525',
   /** Item ativo ou com o cursor em cima. */
   hover: '#2C2C2C',
+  /** Fundo e borda das molduras do quadro (tela 1). */
+  frame: 'rgba(255, 255, 255, 0.025)',
+  frameBorder: '#2C2C2C',
+  /** Traço das setas no quadro. */
+  arrow: '#5E5E5E',
+  /** Véu do minimapa sobre o que está fora da tela. */
+  overlay: 'rgba(22, 22, 22, 0.6)',
   border: '#333333',
   borderSubtle: '#2B2B2B',
   textStrong: '#F0F0F0',
@@ -72,6 +79,8 @@ export const GRID = 8;
 export const radius = {
   /** Blocos e painéis. */
   block: '12px',
+  /** Molduras do quadro. */
+  frame: '16px',
   /** Botões e campos. */
   control: '8px',
   /** Etiquetas e selos. */

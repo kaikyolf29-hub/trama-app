@@ -8,14 +8,16 @@
   "exports": {
     ".": "./src/index.ts",
     "./tokens": "./tokens.ts",
-    "./tailwind-theme": "./src/tailwind-theme.ts"
+    "./tailwind-theme": "./src/tailwind-theme.ts",
+    "./icons": "./src/icons.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",
     "test": "vitest run"
   },
   "dependencies": {
-    "@trama/core": "workspace:*"
+    "@trama/core": "workspace:*",
+    "lucide-react": "^1.80.0"
   },
   "peerDependencies": {
     "react": "^19.0.0"

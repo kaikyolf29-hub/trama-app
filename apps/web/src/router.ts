@@ -9,6 +9,7 @@ import {
 import { safeReturnPath } from './auth/return-path';
 import type { AuthClient } from './auth/types';
 import { DesignPreview } from './DesignPreview';
+import { ExampleBoardPage } from './pages/ExampleBoardPage';
 import { ForgotPasswordPage } from './pages/ForgotPasswordPage';
 import { HomePage } from './pages/HomePage';
 import { NewPasswordPage } from './pages/NewPasswordPage';
@@ -77,6 +78,12 @@ const newPasswordRoute = createRoute({
   component: NewPasswordPage,
 });
 
+const exampleBoardRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/exemplo',
+  component: ExampleBoardPage,
+});
+
 const designRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/design',
@@ -89,6 +96,7 @@ const routeTree = rootRoute.addChildren([
   signUpRoute,
   forgotPasswordRoute,
   newPasswordRoute,
+  exampleBoardRoute,
   designRoute,
 ]);
 
