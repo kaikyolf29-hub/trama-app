@@ -37,6 +37,7 @@
     "tailwindcss": "^4.3.5",
     "typescript": "catalog:",
     "vite": "^8.3.8",
-    "vitest": "catalog:"
+    "vitest": "catalog:",
+    "wrangler": "^4.168.0"
   }
 }

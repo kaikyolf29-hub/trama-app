@@ -4,7 +4,7 @@ Tokens, regras visuais e componentes. Os valores moram em
 [`packages/ui/tokens.ts`](../packages/ui/tokens.ts), o único arquivo com cores escritas; este
 documento explica o que cada um é e quando usar. As telas de referência estão em
 [`docs/telas/`](telas/), e a vitrine viva dos componentes abre em `pnpm dev` →
-http://localhost:5173/#design.
+http://localhost:5173/design.
 
 ## Princípios
 

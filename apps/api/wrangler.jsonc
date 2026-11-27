@@ -1,0 +1,11 @@
+// A API do Trama no Cloudflare Workers (plano grátis): https://trama-api.<subdomínio>.workers.dev
+// Segredos (SUPABASE_SECRET_KEY, RESEND_API_KEY) nunca aqui: `wrangler secret put` ou o deploy.
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "trama-api",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-11-20",
+  "workers_dev": true,
+  "preview_urls": true,
+  "observability": { "enabled": true },
+}

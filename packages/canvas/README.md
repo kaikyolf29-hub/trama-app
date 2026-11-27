@@ -1,6 +1,6 @@
 # packages/canvas — O quadro
 
-Dono: **Claude Code** · Revisor: Codex · Entra na Fase 1 (MVP)
+Feito pelo Claude Code, revisado pelo Codex no fim · Entra na Fase 1 (MVP)
 
 Blocos, setas, molduras, seleção, atalhos, minimapa e modo aula, sobre React Flow
 (`@xyflow/react`). Referência visual: `docs/telas/1-editor.png` e `docs/telas/2-modo-aula.png`.
