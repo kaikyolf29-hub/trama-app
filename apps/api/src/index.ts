@@ -1,51 +1,36 @@
 import { Hono } from 'hono';
 import { bodyLimit } from 'hono/body-limit';
 import { cors } from 'hono/cors';
+import { accountRoutes } from './account/routes';
+import { defaultDeps, type Deps } from './deps';
+import { driveRoutes } from './drive/routes';
+import type { Env } from './env';
+import { isAllowedOrigin } from './origin';
 import { projectRoutes } from './projects/routes';
 import { SessionError, type ProjectStore } from './projects/store';
-import { createSupabaseStore } from './projects/supabase-store';
 
-/** Variáveis e segredos do Worker (wrangler.jsonc e `wrangler secret put`). */
-export interface Env {
-  APP_URL?: string;
-  SUPABASE_URL?: string;
-  /** Chave publicável (pública): com o token da pessoa, o banco aplica a RLS. */
-  SUPABASE_PUBLISHABLE_KEY?: string;
-  SUPABASE_SECRET_KEY?: string;
-  RESEND_API_KEY?: string;
-  EMAIL_FROM?: string;
-  /** Subdomínio workers.dev da conta: libera o site e os previews dos PRs no CORS. */
-  WORKERS_SUBDOMAIN?: string;
-}
+export type { Env } from './env';
+export { isAllowedOrigin } from './origin';
 
 /** Até 5 MB por pedido, o mesmo limite do conteúdo no banco. */
 const MAX_BODY = 5 * 1024 * 1024;
-const LOCAL_ORIGINS = new Set(['http://localhost:5173', 'http://127.0.0.1:5173']);
-
-/** Só o site do Trama (produção e previews dos PRs) e o `pnpm dev` chamam a API. */
-export function isAllowedOrigin(origin: string, env: Env): boolean {
-  if (LOCAL_ORIGINS.has(origin)) return true;
-  if (env.APP_URL && origin === new URL(env.APP_URL).origin) return true;
-  const sub = env.WORKERS_SUBDOMAIN;
-  if (!sub || !/^[a-z0-9-]+$/.test(sub)) return false;
-  return new RegExp(`^https://(?:pr-\\d+-)?trama\\.${sub}\\.workers\\.dev$`).test(origin);
-}
 
 type StoreFactory = (env: Env, token: string) => ProjectStore;
 
-const supabaseStore: StoreFactory = (env, token) => {
-  if (!env.SUPABASE_URL || !env.SUPABASE_PUBLISHABLE_KEY) {
-    throw new Error('Faltam SUPABASE_URL e SUPABASE_PUBLISHABLE_KEY no Worker.');
-  }
-  return createSupabaseStore(env.SUPABASE_URL, env.SUPABASE_PUBLISHABLE_KEY, token);
-};
+type Variables = { store: ProjectStore; token: string; deps: Deps };
 
 /**
  * A API do Trama: a única porta para o banco, o Drive, os e-mails e as IAs
- * (docs/PLAN.md, "Stack técnica e arquitetura"). `storeFor` existe para os testes.
+ * (docs/PLAN.md, "Stack técnica e arquitetura"). `storeFor` e `overrides` existem para os
+ * testes trocarem o banco, o Google e o Resend por versões falsas.
  */
-export function createApp(storeFor: StoreFactory = supabaseStore) {
-  const app = new Hono<{ Bindings: Env; Variables: { store: ProjectStore } }>();
+export function createApp(storeFor?: StoreFactory, overrides: Partial<Deps> = {}) {
+  const deps: Deps = {
+    ...defaultDeps(),
+    ...(storeFor ? { projects: storeFor } : {}),
+    ...overrides,
+  };
+  const app = new Hono<{ Bindings: Env; Variables: Variables }>();
 
   app.use(
     '*',
@@ -68,16 +53,37 @@ export function createApp(storeFor: StoreFactory = supabaseStore) {
       onError: (c) => c.json({ error: 'O projeto passou de 5 MB.' }, 413),
     }),
   );
+  // Drive e conta só trocam pedidos pequenos (ids, bilhete); o conteúdo grande vem do Google.
+  for (const prefix of ['/drive/*', '/account/*']) {
+    app.use(
+      prefix,
+      bodyLimit({
+        maxSize: 64 * 1024,
+        onError: (c) => c.json({ error: 'Pedido grande demais.' }, 413),
+      }),
+    );
+  }
 
-  // Toda rota de projeto precisa do token de login (Supabase) da pessoa.
-  app.use('/projects/*', async (c, next) => {
+  // Quase toda rota precisa do token de login (Supabase) da pessoa. A exceção é o retorno do
+  // Google (`/drive/callback`), que chega do navegador sem ele (veja drive/routes.ts).
+  app.use('*', async (c, next) => {
+    const path = new URL(c.req.url).pathname;
+    const needsLogin =
+      path.startsWith('/projects') ||
+      path.startsWith('/account') ||
+      (path.startsWith('/drive') && path !== '/drive/callback');
+    c.set('deps', deps);
+    if (!needsLogin || c.req.method === 'OPTIONS') return next();
     const token = /^Bearer (\S+)$/.exec(c.req.header('Authorization') ?? '')?.[1];
     if (!token) return c.json({ error: 'Entre na sua conta para continuar.' }, 401);
-    c.set('store', storeFor(c.env ?? {}, token));
+    c.set('token', token);
+    if (path.startsWith('/projects')) c.set('store', deps.projects(c.env ?? {}, token));
     await next();
   });
 
   app.route('/projects', projectRoutes());
+  app.route('/drive', driveRoutes());
+  app.route('/account', accountRoutes());
 
   app.notFound((c) => c.json({ error: 'Rota não encontrada.' }, 404));
 

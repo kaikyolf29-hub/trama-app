@@ -34,6 +34,8 @@ export interface ProjectStore {
   /** Renomeia e/ou muda o status; o conteúdo e a revisão ficam como estão. */
   update(id: string, patch: UpdateProjectRequest): Promise<ProjectSummary | null>;
   save(id: string, request: SaveProjectRequest): Promise<SaveProjectResponse | null>;
+  /** Guarda o id do `projeto.trama` no Drive (não conta como mudança no projeto). */
+  setDriveFileId(id: string, driveFileId: string): Promise<void>;
   remove(id: string): Promise<boolean>;
   versions(id: string): Promise<ProjectVersion[] | null>;
   restore(id: string, versionId: number): Promise<{ revision: number; updatedAt: string } | null>;
