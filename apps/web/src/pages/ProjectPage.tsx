@@ -171,6 +171,7 @@ function ProjectBoard({ project, api }: { project: FlowProject; api: ProjectsApi
       <FlowCanvas
         flow={project.content}
         media={media}
+        title={project.title}
         onFlowChange={(next) => {
           saver.current?.push(next);
           copier.current?.markDirty();
@@ -187,7 +188,7 @@ function ProjectBoard({ project, api }: { project: FlowProject; api: ProjectsApi
             }
           />
         }
-        topRight={<PresentButton />}
+        topRight={({ present }) => <PresentButton onPresent={present} />}
       />
     </div>
   );

@@ -38,11 +38,11 @@ export function BoardTitle({
   );
 }
 
-/** Botão "Apresentar" do canto de cima à direita; o modo aula chega na etapa 1.7. */
-export function PresentButton() {
+/** Botão "Apresentar" do canto de cima à direita (tela 1): abre o modo aula (tela 2). */
+export function PresentButton({ onPresent }: { onPresent: () => void }) {
   return (
     <div className={cn(panel, 'px-1.5')}>
-      <Button disabled title="Em breve: modo aula" className="gap-1.5">
+      <Button onClick={onPresent} className="gap-1.5">
         <PlayIcon size={12} aria-hidden fill="currentColor" />
         Apresentar
       </Button>
