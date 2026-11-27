@@ -143,3 +143,8 @@ Não apague: escreva uma linha nova dizendo o que substitui.
 - 2026-11-27 · **O menu do clique direito abre no corpo da página e muda de lado perto da borda.** Motivo: perto do rodapé ele saía da tela (achado no teste no navegador).
 - 2026-11-27 · **Guias de alinhamento ao arrastar um nó sozinho: bordas e meio contra bordas e meio dos outros nós, encaixando a até 6 px na tela, e só quando o encaixe fica na grade de 8 px. As linhas azuis atravessam o quadro e somem ao soltar; a barra de contexto some durante o arraste.** Motivo: alinhar sem sair da grade é o que deixa o quadro "premium" (plano); um encaixe fora da grade voltaria 4 px ao salvar.
 - 2026-11-27 · **O encaixe troca a mudança de posição antes de o React Flow aplicar (`NodeChangeset.getForNode`, `remove`, `add`).** Motivo: o bloco já aparece no lugar certo durante o arraste, sem pular depois.
+
+## Etapa 1.5 — Salvamento
+
+- 2026-11-27 · **O contrato da API de projetos fica em `packages/core/src/api.ts`: criar (só fluxo até a V1, título padrão "Sem título"), salvar com `baseRevision`, resumo da lista e versão do histórico.** Motivo: site, API e MCP validam a mesma coisa; mudança no core entra antes, num PR só dela.
+- 2026-11-27 · **O projeto ganha `revision`, que sobe 1 a cada gravação. Salvar diz em qual revisão o site se baseou; se o projeto mudou em outro lugar, vale a gravação mais nova e a outra vai para o histórico.** Motivo: é a regra do plano para conflito ("vale a versão mais nova, e a anterior fica no histórico"), sem travar ninguém.
