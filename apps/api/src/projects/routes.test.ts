@@ -1,5 +1,6 @@
 import {
   createEmptyFlow,
+  flowContentSchema,
   projectSummarySchema,
   projectVersionSchema,
   saveProjectResponseSchema,
@@ -126,6 +127,73 @@ describe('API de projetos', () => {
     );
   });
 
+  it('renomeia e muda o status sem mexer no conteúdo nem na revisão', async () => {
+    const store = createMemoryStore();
+    const { call, json } = setup(store);
+    const created = await json<{ id: string }>(
+      await call('/projects', {
+        method: 'POST',
+        body: JSON.stringify({ kind: 'flow', title: 'Antes', content: videoFlowExample }),
+      }),
+    );
+    const patch = (body: unknown) =>
+      call(`/projects/${created.id}`, { method: 'PATCH', body: JSON.stringify(body) });
+
+    const renamed = await patch({ title: '  Depois  ' });
+    expect(renamed.status).toBe(200);
+    expect(projectSummarySchema.parse(await renamed.json())).toMatchObject({
+      id: created.id,
+      title: 'Depois',
+      status: 'draft',
+      revision: 1,
+    });
+
+    const done = projectSummarySchema.parse(await (await patch({ status: 'done' })).json());
+    expect(done).toMatchObject({ title: 'Depois', status: 'done', revision: 1 });
+
+    const stored = store.projects.get(created.id);
+    expect(stored).toMatchObject({ title: 'Depois', status: 'done', revision: 1 });
+    expect(flowContentSchema.parse(stored?.content).blocks).toHaveLength(
+      videoFlowExample.blocks.length,
+    );
+  });
+
+  it('PATCH recusa corpo vazio, título em branco e status desconhecido', async () => {
+    const store = createMemoryStore();
+    const { call, json } = setup(store);
+    const { id } = await json<{ id: string }>(
+      await call('/projects', { method: 'POST', body: JSON.stringify({ kind: 'flow' }) }),
+    );
+    for (const body of [{}, { title: '   ' }, { status: 'arquivado' }, { title: 3 }]) {
+      const response = await call(`/projects/${id}`, {
+        method: 'PATCH',
+        body: JSON.stringify(body),
+      });
+      expect(response.status).toBe(400);
+    }
+    expect((await call(`/projects/${id}`, { method: 'PATCH', body: '{não é json' })).status).toBe(
+      400,
+    );
+    expect(store.projects.get(id)).toMatchObject({ title: 'Sem título', status: 'draft' });
+  });
+
+  it('PATCH de projeto que não existe, ou de id que não é uuid, é 404', async () => {
+    const { call } = setup();
+    const patch = (id: string) =>
+      call(`/projects/${id}`, { method: 'PATCH', body: JSON.stringify({ title: 'x' }) });
+    expect((await patch('00000000-0000-4000-8000-000000000000')).status).toBe(404);
+    expect((await patch('nao-e-uuid')).status).toBe(404);
+  });
+
+  it('PATCH exige o token de login', async () => {
+    const { app } = setup();
+    const response = await app.request('/projects/00000000-0000-4000-8000-000000000000', {
+      method: 'PATCH',
+      body: JSON.stringify({ title: 'x' }),
+    });
+    expect(response.status).toBe(401);
+  });
+
   it('id que não é uuid é 404, sem ir ao banco', async () => {
     const { call } = setup();
     expect((await call('/projects/nao-e-uuid')).status).toBe(404);
@@ -169,6 +237,22 @@ describe('CORS', () => {
     expect(isAllowedOrigin('https://trama.conta.workers.dev', { WORKERS_SUBDOMAIN: 'a.*' })).toBe(
       false,
     );
+  });
+
+  it('libera o PATCH no preflight (renomear e mudar o status)', async () => {
+    const { app } = setup();
+    const response = await app.request(
+      '/projects/x',
+      {
+        method: 'OPTIONS',
+        headers: {
+          Origin: 'https://trama.conta.workers.dev',
+          'Access-Control-Request-Method': 'PATCH',
+        },
+      },
+      env,
+    );
+    expect(response.headers.get('Access-Control-Allow-Methods')).toContain('PATCH');
   });
 
   it('responde ao preflight só para origem aceita', async () => {

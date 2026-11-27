@@ -33,7 +33,7 @@ export function createApp(storeFor?: StoreFactory, overrides: Partial<Deps> = {}
     cors({
       // O contexto do CORS não carrega o tipo do app; o env é o mesmo do Worker.
       origin: (origin, c) => (isAllowedOrigin(origin, (c.env ?? {}) as Env) ? origin : null),
-      allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+      allowMethods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
       allowHeaders: ['Authorization', 'Content-Type'],
       maxAge: 600,
     }),

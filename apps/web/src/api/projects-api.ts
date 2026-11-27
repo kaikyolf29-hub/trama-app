@@ -7,6 +7,7 @@ import {
   type ProjectSummary,
   type SaveProjectRequest,
   type SaveProjectResponse,
+  type UpdateProjectRequest,
 } from '@trama/core';
 import { z } from 'zod';
 import { ApiError, createCaller } from './http';
@@ -18,6 +19,9 @@ export interface ProjectsApi {
   list(): Promise<ProjectSummary[]>;
   create(input: CreateProjectRequest): Promise<FlowProject>;
   get(id: string): Promise<FlowProject>;
+  /** Renomeia e/ou muda o status, sem mexer no conteúdo. */
+  update(id: string, patch: UpdateProjectRequest): Promise<ProjectSummary>;
+  remove(id: string): Promise<void>;
   save(
     id: string,
     request: SaveProjectRequest,
@@ -41,6 +45,14 @@ export function createProjectsApi(config: {
     create: (input) =>
       call('/projects', flowProjectSchema, { method: 'POST', body: JSON.stringify(input) }),
     get: (id) => call(`/projects/${encodeURIComponent(id)}`, flowProjectSchema),
+    update: (id, patch) =>
+      call(`/projects/${encodeURIComponent(id)}`, projectSummarySchema, {
+        method: 'PATCH',
+        body: JSON.stringify(patch),
+      }),
+    // A API responde 204, sem corpo: o `call` lê como `undefined`.
+    remove: (id) =>
+      call(`/projects/${encodeURIComponent(id)}`, z.undefined(), { method: 'DELETE' }),
     save: (id, request, options) =>
       call(`/projects/${encodeURIComponent(id)}`, saveProjectResponseSchema, {
         method: 'PUT',

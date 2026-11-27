@@ -6,6 +6,7 @@ import type {
   ProjectVersion,
   SaveProjectRequest,
   SaveProjectResponse,
+  UpdateProjectRequest,
 } from '@trama/core';
 
 /** Projeto como vem do banco; o conteúdo ainda passa pela validação antes de sair da API. */
@@ -30,6 +31,8 @@ export interface ProjectStore {
   list(): Promise<ProjectSummary[]>;
   get(id: string): Promise<StoredProject | null>;
   create(input: { kind: 'flow'; title: string; content: FlowContent }): Promise<StoredProject>;
+  /** Renomeia e/ou muda o status; o conteúdo e a revisão ficam como estão. */
+  update(id: string, patch: UpdateProjectRequest): Promise<ProjectSummary | null>;
   save(id: string, request: SaveProjectRequest): Promise<SaveProjectResponse | null>;
   /** Guarda o id do `projeto.trama` no Drive (não conta como mudança no projeto). */
   setDriveFileId(id: string, driveFileId: string): Promise<void>;

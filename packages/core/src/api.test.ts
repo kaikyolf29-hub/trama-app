@@ -5,6 +5,7 @@ import {
   projectVersionSchema,
   saveProjectRequestSchema,
   saveProjectResponseSchema,
+  updateProjectRequestSchema,
 } from './api';
 import { videoFlowExample } from './fixtures';
 import { createEmptyFlow } from './flow';
@@ -42,6 +43,22 @@ describe('contrato da API de projetos', () => {
         baseRevision: 1,
       }).success,
     ).toBe(false);
+  });
+
+  it('renomear e mudar o status aceitam um campo, o outro ou os dois', () => {
+    expect(updateProjectRequestSchema.parse({ title: '  Aula 1  ' })).toEqual({ title: 'Aula 1' });
+    expect(updateProjectRequestSchema.parse({ status: 'done' })).toEqual({ status: 'done' });
+    expect(updateProjectRequestSchema.parse({ title: 'Aula', status: 'in_progress' })).toEqual({
+      title: 'Aula',
+      status: 'in_progress',
+    });
+  });
+
+  it('renomear e mudar o status recusam corpo vazio, título em branco e status desconhecido', () => {
+    expect(updateProjectRequestSchema.safeParse({}).success).toBe(false);
+    expect(updateProjectRequestSchema.safeParse({ title: '   ' }).success).toBe(false);
+    expect(updateProjectRequestSchema.safeParse({ title: 'a'.repeat(201) }).success).toBe(false);
+    expect(updateProjectRequestSchema.safeParse({ status: 'arquivado' }).success).toBe(false);
   });
 
   it('descreve a resposta de salvar, o resumo e a versão', () => {

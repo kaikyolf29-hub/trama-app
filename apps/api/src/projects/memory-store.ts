@@ -56,6 +56,25 @@ export function createMemoryStore(clock: () => Date = () => new Date()): Project
       projects.set(project.id, project);
       return Promise.resolve(project);
     },
+    update: (id, { title, status }) => {
+      const project = projects.get(id);
+      if (!project) return Promise.resolve(null);
+      const updated = {
+        ...project,
+        title: title ?? project.title,
+        status: status ?? project.status,
+        updatedAt: now(),
+      };
+      projects.set(id, updated);
+      return Promise.resolve({
+        id: updated.id,
+        kind: updated.kind,
+        title: updated.title,
+        status: updated.status,
+        revision: updated.revision,
+        updatedAt: updated.updatedAt,
+      });
+    },
     save: (id, { content, title, baseRevision }) => {
       const project = projects.get(id);
       if (!project) return Promise.resolve(null);
