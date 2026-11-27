@@ -1,0 +1,13 @@
+{
+  "name": "@trama/mcp",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Worker do conector MCP do Trama (OAuth + ferramentas).",
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "typescript": "catalog:"
+  }
+}
