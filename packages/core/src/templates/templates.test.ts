@@ -147,12 +147,14 @@ describe('modelos de início', () => {
     expect(xs).toEqual([...xs].sort((a, b) => a - b));
   });
 
-  it('falar e organizar abre um quadro só com a nota que explica que a voz vem depois', () => {
+  it('falar e organizar abre um quadro com a nota que explica que a voz vem depois', () => {
     const flow = getFlowTemplate('voice').content();
     expect(flow.blocks).toHaveLength(1);
     expect(flow.blocks[0]).toMatchObject({ type: 'sticky' });
     expect(flow.blocks[0]?.type === 'sticky' && flow.blocks[0].text).toContain('próxima etapa');
-    expect(flow.frames).toEqual([]);
+    // Só uma moldura vazia, para montar o fluxo.
+    expect(flow.frames).toHaveLength(1);
+    expect(flow.arrows).toEqual([]);
   });
 
   it('getFlowTemplate recusa um modelo que não existe', () => {
