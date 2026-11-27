@@ -26,6 +26,8 @@ export interface SignInInput {
 export interface AuthClient {
   /** A sessão guardada no navegador, se houver. */
   getUser(): Promise<AuthUser | null>;
+  /** Token de acesso da sessão (para a API), já renovado se estava para vencer. */
+  getAccessToken(): Promise<string | null>;
   /** Avisa quando a pessoa entra, sai ou troca de conta. Devolve a função de parar. */
   onUserChange(listener: (user: AuthUser | null) => void): () => void;
   /** `needsConfirmation` é true quando o Supabase exige confirmar o e-mail antes de entrar. */

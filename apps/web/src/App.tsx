@@ -4,20 +4,25 @@ import { AuthProvider } from './auth/AuthProvider';
 import { useAuth } from './auth/context';
 import type { AuthClient } from './auth/types';
 import { createAppRouter, type AppRouter } from './router';
+import { defaultServices, ServicesContext, type Services } from './services';
 
 interface AppProps {
   client: AuthClient;
+  /** API de projetos e armazenamento de imagens; sem eles, as telas explicam o que falta. */
+  services?: Services;
   /** Só nos testes: o histórico em memória. */
   history?: RouterHistory;
 }
 
 /** Casca do site: o login e as rotas. */
-export function App({ client, history }: AppProps) {
+export function App({ client, services = defaultServices, history }: AppProps) {
   const [router] = useState(() => createAppRouter(client, history));
   return (
-    <AuthProvider client={client}>
-      <RouterWithAuth router={router} />
-    </AuthProvider>
+    <ServicesContext.Provider value={services}>
+      <AuthProvider client={client}>
+        <RouterWithAuth router={router} />
+      </AuthProvider>
+    </ServicesContext.Provider>
   );
 }
 

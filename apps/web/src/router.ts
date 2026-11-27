@@ -14,6 +14,7 @@ import { ForgotPasswordPage } from './pages/ForgotPasswordPage';
 import { HomePage } from './pages/HomePage';
 import { NewPasswordPage } from './pages/NewPasswordPage';
 import { NotFoundPage } from './pages/NotFoundPage';
+import { ProjectPage } from './pages/ProjectPage';
 import { SignInPage } from './pages/SignInPage';
 import { SignUpPage } from './pages/SignUpPage';
 
@@ -28,15 +29,31 @@ const rootRoute = createRootRouteWithContext<RouterContext>()({
 
 // As guardas perguntam ao cliente, e não ao estado do React: logo depois do login o
 // estado ainda pode estar atrasado, e a pessoa voltaria para /entrar.
+const signedInOnly = async ({
+  context,
+  location,
+}: {
+  context: RouterContext;
+  location: { href: string };
+}) => {
+  if (!(await context.auth.getUser())) {
+    throw redirect({ to: '/entrar', search: { volta: location.href } });
+  }
+};
+
 const homeRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/',
-  beforeLoad: async ({ context, location }) => {
-    if (!(await context.auth.getUser())) {
-      throw redirect({ to: '/entrar', search: { volta: location.href } });
-    }
-  },
+  beforeLoad: signedInOnly,
   component: HomePage,
+});
+
+/** Um projeto aberto no quadro (etapa 1.5). */
+const projectRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/p/$projectId',
+  beforeLoad: signedInOnly,
+  component: ProjectPage,
 });
 
 const guestOnly = async ({ context }: { context: RouterContext }) => {
@@ -92,6 +109,7 @@ const designRoute = createRoute({
 
 const routeTree = rootRoute.addChildren([
   homeRoute,
+  projectRoute,
   signInRoute,
   signUpRoute,
   forgotPasswordRoute,
