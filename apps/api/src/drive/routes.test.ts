@@ -77,7 +77,8 @@ function setup(env: Env = ENV) {
             google.fetch,
           )
         : null,
-    vault: (e) => (e.TOKEN_ENCRYPTION_KEY ? createVault(e.TOKEN_ENCRYPTION_KEY) : Promise.resolve(null)),
+    vault: (e) =>
+      e.TOKEN_ENCRYPTION_KEY ? createVault(e.TOKEN_ENCRYPTION_KEY) : Promise.resolve(null),
     mailer: (e) => createResendMailer(e, google.fetch),
     now: () => clock.now,
   });
@@ -101,7 +102,11 @@ function setup(env: Env = ENV) {
     );
   };
   const post = (path: string, body?: unknown, who: Identity | null = ANA) =>
-    call(path, { method: 'POST', as: who, ...(body === undefined ? {} : { body: JSON.stringify(body) }) });
+    call(path, {
+      method: 'POST',
+      as: who,
+      ...(body === undefined ? {} : { body: JSON.stringify(body) }),
+    });
   return { app, call, post, google, projects, drive, welcome, clock };
 }
 
@@ -111,7 +116,9 @@ async function connect(s: ReturnType<typeof setup>, who: Identity = ANA) {
   const { url } = (await start.json()) as { url: string };
   const state = new URL(url).searchParams.get('state') ?? '';
   const back = await s.call(`/drive/callback?code=codigo-bom&state=${encodeURIComponent(state)}`);
-  const ticket = new URLSearchParams(new URL(back.headers.get('Location') ?? SITE).hash.slice(1)).get('t');
+  const ticket = new URLSearchParams(
+    new URL(back.headers.get('Location') ?? SITE).hash.slice(1),
+  ).get('t');
   const done = await s.post('/drive/connection', { ticket }, who);
   return { start, back, done, ticket: ticket ?? '', state };
 }
@@ -152,12 +159,14 @@ describe('conectar ao Drive (OAuth)', () => {
     const bare = setup({ ...ENV, GOOGLE_CLIENT_ID: undefined });
     const response = await bare.post('/drive/connect', {});
     expect(response.status).toBe(503);
-    expect(await response.json()).toEqual({ error: 'O Drive ainda não está ligado neste ambiente.' });
+    expect(await response.json()).toEqual({
+      error: 'O Drive ainda não está ligado neste ambiente.',
+    });
   });
 
   it('troca o código e devolve o navegador ao site com o bilhete (nada é gravado ainda)', async () => {
     const s = setup();
-    const { back, state } = await connect(s).then(async (r) => ({ ...r }));
+    const { back, state } = await connect(s);
     expect(back.status).toBe(302);
     const location = new URL(back.headers.get('Location') ?? '');
     expect(location.origin).toBe(SITE);
@@ -264,9 +273,10 @@ describe('estado e desconexão', () => {
     const status = driveStatusSchema.parse(await (await s.call('/drive/status')).json());
     expect(status).toMatchObject({ available: true, connected: false, email: null });
     const bare = setup({ ...ENV, TOKEN_ENCRYPTION_KEY: undefined });
-    expect(
-      driveStatusSchema.parse(await (await bare.call('/drive/status')).json()),
-    ).toMatchObject({ available: false, connected: false });
+    expect(driveStatusSchema.parse(await (await bare.call('/drive/status')).json())).toMatchObject({
+      available: false,
+      connected: false,
+    });
   });
 
   it('desconectar revoga o acesso no Google e apaga a conexão, mas não os arquivos', async () => {
@@ -275,7 +285,7 @@ describe('estado e desconexão', () => {
     const project = await newProject(s);
     await s.post(`/drive/projects/${project.id}/copy`);
     const filesBefore = s.google.files.size;
-    const response = await s.call('/drive/status').then((r) => r.json());
+    const response: unknown = await (await s.call('/drive/status')).json();
     expect(driveStatusSchema.parse(response).connected).toBe(true);
 
     expect((await s.call('/drive', { method: 'DELETE' })).status).toBe(204);
@@ -336,7 +346,13 @@ describe('copiar um projeto para o Drive', () => {
     const filesBefore = s.google.files.size;
 
     await s.projects.save(project.id, {
-      content: flowContentSchema.parse({ ...videoFlowExample, blocks: [] , frames: [], arrows: [], presentation: [] }),
+      content: flowContentSchema.parse({
+        ...videoFlowExample,
+        blocks: [],
+        frames: [],
+        arrows: [],
+        presentation: [],
+      }),
       title: 'Título novo',
       baseRevision: 1,
     });
@@ -537,7 +553,13 @@ describe('Picker e "Abrir do Drive"', () => {
       {
         ...project,
         title: 'Editado no Drive',
-        content: flowContentSchema.parse({ ...videoFlowExample, blocks: [], frames: [], arrows: [], presentation: [] }),
+        content: flowContentSchema.parse({
+          ...videoFlowExample,
+          blocks: [],
+          frames: [],
+          arrows: [],
+          presentation: [],
+        }),
       },
       '2026-11-20T10:00:00.000Z',
     );
@@ -584,7 +606,10 @@ describe('Picker e "Abrir do Drive"', () => {
     );
     const broken = {
       ...file,
-      content: { ...file.content, arrows: [{ id: 'a1', from: { nodeId: 'x1' }, to: { nodeId: 'x2' } }] },
+      content: {
+        ...file.content,
+        arrows: [{ id: 'a1', from: { nodeId: 'x1' }, to: { nodeId: 'x2' } }],
+      },
     };
     const drive = s.google.addFile('projeto.trama', JSON.stringify(broken));
     expect((await s.post('/drive/import', { fileId: drive.id })).status).toBe(422);

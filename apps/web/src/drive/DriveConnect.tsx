@@ -16,13 +16,14 @@ export function DriveConnect({ className }: { className?: string }) {
   const [confirming, setConfirming] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  if (!drive) return null;
-
   const connect = async () => {
+    if (!drive) return;
     setError(null);
     setBusy('connect');
     try {
-      const { url } = await drive.startConnect(`${window.location.pathname}${window.location.search}`);
+      const { url } = await drive.startConnect(
+        `${window.location.pathname}${window.location.search}`,
+      );
       redirectTo(url);
     } catch (failure) {
       setError(failure instanceof Error ? failure.message : 'Não deu para conectar ao Google.');
@@ -31,6 +32,7 @@ export function DriveConnect({ className }: { className?: string }) {
   };
 
   const disconnect = async () => {
+    if (!drive) return;
     setError(null);
     setBusy('disconnect');
     try {
@@ -49,7 +51,9 @@ export function DriveConnect({ className }: { className?: string }) {
   let actions: ReactNode = null;
   let alert: string | null = null;
 
-  if (value.state === 'failed') {
+  if (!drive) {
+    description = 'A conexão com o Google Drive precisa da API do Trama, que não está ligada aqui.';
+  } else if (value.state === 'failed') {
     description = value.message;
   } else if (value.state === 'ready') {
     const { status } = value;
@@ -115,11 +119,14 @@ export function DriveConnect({ className }: { className?: string }) {
   return (
     <section
       aria-label="Google Drive"
-      className={cn('flex flex-col gap-3 rounded-block border border-border px-6 py-4', className)}
+      className={cn(
+        'flex flex-col gap-3 rounded-block border border-border-subtle bg-surface px-5 py-4',
+        className,
+      )}
     >
       <div className="flex flex-wrap items-center justify-between gap-4">
-        <div className="flex min-w-0 items-start gap-4">
-          <span aria-hidden className={cn('mt-1.5 size-2.5 shrink-0 rounded-full', dot)} />
+        <div className="flex min-w-0 items-start gap-3">
+          <span aria-hidden className={cn('mt-2 size-2 shrink-0 rounded-full', dot)} />
           <div className="min-w-0">
             <h2 className="text-[15px] font-semibold text-text-strong">{title}</h2>
             <p className="text-sm text-text-muted">{description}</p>

@@ -25,7 +25,11 @@ type Variables = { store: ProjectStore; token: string; deps: Deps };
  * testes trocarem o banco, o Google e o Resend por versões falsas.
  */
 export function createApp(storeFor?: StoreFactory, overrides: Partial<Deps> = {}) {
-  const deps: Deps = { ...defaultDeps(), ...(storeFor ? { projects: storeFor } : {}), ...overrides };
+  const deps: Deps = {
+    ...defaultDeps(),
+    ...(storeFor ? { projects: storeFor } : {}),
+    ...overrides,
+  };
   const app = new Hono<{ Bindings: Env; Variables: Variables }>();
 
   app.use(
@@ -53,7 +57,10 @@ export function createApp(storeFor?: StoreFactory, overrides: Partial<Deps> = {}
   for (const prefix of ['/drive/*', '/account/*']) {
     app.use(
       prefix,
-      bodyLimit({ maxSize: 64 * 1024, onError: (c) => c.json({ error: 'Pedido grande demais.' }, 413) }),
+      bodyLimit({
+        maxSize: 64 * 1024,
+        onError: (c) => c.json({ error: 'Pedido grande demais.' }, 413),
+      }),
     );
   }
 

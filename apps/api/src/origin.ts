@@ -24,5 +24,5 @@ export function appOrigin(origin: string | undefined, env: Env): string | null {
 export function safePath(path: string | undefined): string {
   if (!path || !path.startsWith('/') || path.startsWith('//') || path.includes('\\')) return '/';
   // Um caminho com esquema escondido ("/\t/evil") também não passa.
-  return /[\u0000-\u001f]/.test(path) ? '/' : path;
+  return /\p{Cc}/u.test(path) ? '/' : path;
 }

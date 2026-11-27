@@ -41,7 +41,9 @@ export function createBackendFromEnv(): Backend {
       drive: api ? createDriveApi(api) : null,
       account: api ? createAccountApi(api) : null,
       pickDriveFile:
-        googleApiKey && googleAppId ? createPicker({ apiKey: googleApiKey, appId: googleAppId }) : null,
+        googleApiKey && googleAppId
+          ? createPicker({ apiKey: googleApiKey, appId: googleAppId })
+          : null,
       mediaFor: (userId) => createSupabaseMedia(bucket, userId),
     },
   };

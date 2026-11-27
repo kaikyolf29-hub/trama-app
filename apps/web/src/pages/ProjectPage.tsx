@@ -246,7 +246,9 @@ export function DriveIndicator({ status }: { status: DriveCopyStatus }) {
     <span
       role="status"
       aria-live="polite"
-      title={status.kind === 'error' ? `${status.message} O Trama tenta de novo sozinho.` : undefined}
+      title={
+        status.kind === 'error' ? `${status.message} O Trama tenta de novo sozinho.` : undefined
+      }
       className={cn(
         'flex items-center gap-1.5 text-[13px]',
         status.kind === 'error' ? 'text-text-strong' : 'text-text-muted',

@@ -28,7 +28,7 @@ export function createFakeDrive(initial: DriveStatus = disconnectedStatus) {
   let failCopies = 0;
   let projects: ProjectsApi | null = null;
 
-  const api: DriveApi = {
+  const api = {
     status: vi.fn(() => Promise.resolve(status)),
     startConnect: vi.fn((returnTo?: string) =>
       Promise.resolve({ url: `https://accounts.google.test/auth?volta=${returnTo ?? ''}` }),
@@ -53,10 +53,10 @@ export function createFakeDrive(initial: DriveStatus = disconnectedStatus) {
       });
     }),
     pickerToken: vi.fn(() => Promise.resolve({ accessToken: 'token-do-picker', expiresIn: 3599 })),
-    importFile: vi.fn(() =>
+    importFile: vi.fn<DriveApi['importFile']>(() =>
       Promise.reject(new ApiError('Este arquivo não é um projeto do Trama.', 422)),
     ),
-  };
+  } satisfies DriveApi;
 
   return {
     api,
@@ -69,7 +69,7 @@ export function createFakeDrive(initial: DriveStatus = disconnectedStatus) {
     },
     /** Para o teste de "Abrir do Drive": o arquivo vira este projeto. */
     importAs(projectId: string) {
-      api.importFile = vi.fn(() =>
+      api.importFile.mockImplementation(() =>
         Promise.resolve({ projectId, created: true, replacedPrevious: false }),
       );
     },

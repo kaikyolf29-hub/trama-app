@@ -25,8 +25,8 @@ export function DriveNoticeEmail({ name = '', siteUrl, reason }: DriveNoticeEmai
       </Heading>
       <Text style={emailText.paragraph}>{firstName ? `Olá, ${firstName}.` : 'Olá.'}</Text>
       <Text style={emailText.paragraph}>
-        A cópia dos seus projetos para a pasta “Trama” do Google Drive falhou 3 vezes seguidas.
-        Seus projetos continuam salvos no Trama e nada se perdeu; só a cópia no Drive está parada.
+        A cópia dos seus projetos para a pasta “Trama” do Google Drive falhou 3 vezes seguidas. Seus
+        projetos continuam salvos no Trama e nada se perdeu; só a cópia no Drive está parada.
       </Text>
       {reason ? (
         <Text style={detail}>

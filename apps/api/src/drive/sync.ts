@@ -45,7 +45,9 @@ interface Context {
 }
 
 /** Troca o refresh token guardado (cifrado) por um token de acesso de curta duração. */
-export async function accessTokenFor(ctx: Pick<Context, 'google' | 'vault' | 'uid' | 'connection'>) {
+export async function accessTokenFor(
+  ctx: Pick<Context, 'google' | 'vault' | 'uid' | 'connection'>,
+) {
   const refreshToken = await openRefreshToken(
     ctx.vault,
     ctx.uid,
@@ -70,7 +72,12 @@ async function ensureRootFolder(ctx: Context, accessToken: string): Promise<stri
 
 /** O Drive não aceita "/" nem nomes vazios de um jeito amigável; deixa o nome simples. */
 function folderName(title: string): string {
-  return title.replaceAll(/[\\/\u0000-\u001f]/g, ' ').trim().slice(0, 100) || 'Sem título';
+  return (
+    title
+      .replaceAll(/[\\/\p{Cc}]/gu, ' ')
+      .trim()
+      .slice(0, 100) || 'Sem título'
+  );
 }
 
 /**
@@ -117,10 +124,7 @@ export async function copyProjectToDrive(
  * "Abrir do Drive": lê o `projeto.trama` que a pessoa escolheu no Picker, valida com o core e
  * vira projeto novo, ou atualiza o projeto de mesmo id (o conteúdo de antes vai para o histórico).
  */
-export async function importFromDrive(
-  ctx: Context,
-  fileId: string,
-): Promise<DriveImportResponse> {
+export async function importFromDrive(ctx: Context, fileId: string): Promise<DriveImportResponse> {
   const { accessToken } = await accessTokenFor(ctx);
   const meta = await ctx.google.getFile(accessToken, fileId);
   if (!meta || meta.trashed) {

@@ -28,7 +28,10 @@ interface PickerBuilder {
 }
 interface GooglePicker {
   PickerBuilder: new () => PickerBuilder;
-  DocsView: new () => { setMimeTypes(types: string): unknown; setIncludeFolders(on: boolean): unknown };
+  DocsView: new () => {
+    setMimeTypes(types: string): unknown;
+    setIncludeFolders(on: boolean): unknown;
+  };
   Action: { PICKED: string; CANCEL: string };
 }
 interface GoogleWindow {

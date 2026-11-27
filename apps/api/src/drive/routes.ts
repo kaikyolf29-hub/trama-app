@@ -95,7 +95,8 @@ export function driveRoutes() {
     const env = c.env ?? {};
     const google = deps.google(env);
     const vault = await deps.vault(env);
-    if (!google || !vault) return { ok: false as const, response: c.json({ error: NOT_CONFIGURED }, 503) };
+    if (!google || !vault)
+      return { ok: false as const, response: c.json({ error: NOT_CONFIGURED }, 503) };
     const drive = deps.drive(env, token);
     const connection = await drive.get();
     if (!connection) return { ok: false as const, response: c.json({ error: NOT_CONNECTED }, 409) };
@@ -167,7 +168,8 @@ export function driveRoutes() {
     };
 
     const googleError = c.req.query('error');
-    if (googleError) return back('', { erro: googleError === 'access_denied' ? 'negado' : 'falhou' });
+    if (googleError)
+      return back('', { erro: googleError === 'access_denied' ? 'negado' : 'falhou' });
     const code = c.req.query('code');
     if (!code) return back('', { erro: 'falhou' });
 
@@ -184,7 +186,10 @@ export function driveRoutes() {
       );
       return back(`t=${ticket}`, {});
     } catch (error) {
-      console.error('troca do código do Google falhou', error instanceof Error ? error.message : '');
+      console.error(
+        'troca do código do Google falhou',
+        error instanceof Error ? error.message : '',
+      );
       return back('', { erro: 'falhou' });
     }
   });
@@ -232,7 +237,10 @@ export function driveRoutes() {
           await google.revoke(await openRefreshToken(vault, uid, connection.refreshTokenEncrypted));
         } catch (error) {
           // Revogar é um favor ao Google; o que importa é apagar a conexão daqui.
-          console.error('não deu para revogar o acesso', error instanceof Error ? error.message : '');
+          console.error(
+            'não deu para revogar o acesso',
+            error instanceof Error ? error.message : '',
+          );
         }
       }
       await drive.disconnect();

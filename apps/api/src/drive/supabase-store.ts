@@ -95,8 +95,9 @@ export function createSupabaseWelcomeStore(
   const supabase = createUserClient(url, publishableKey, token);
   return {
     async claim() {
-      const { data, error, status } = await supabase.rpc('claim_welcome_email');
-      check(error, status);
+      const result = await supabase.rpc('claim_welcome_email');
+      check(result.error, result.status);
+      const data: unknown = result.data;
       return data === true;
     },
     async release() {

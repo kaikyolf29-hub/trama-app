@@ -139,7 +139,10 @@ export function createFakeGoogle() {
     }
 
     if (path === '/files' && method === 'POST' && upload) {
-      const { metadata, content } = parseMultipart(request.headers.get('Content-Type') ?? '', await request.text());
+      const { metadata, content } = parseMultipart(
+        request.headers.get('Content-Type') ?? '',
+        await request.text(),
+      );
       return json(
         publicFile(
           create({
@@ -153,7 +156,11 @@ export function createFakeGoogle() {
     }
 
     if (path === '/files' && method === 'POST') {
-      const metadata = (await request.json()) as { name: string; mimeType: string; parents?: string[] };
+      const metadata = (await request.json()) as {
+        name: string;
+        mimeType: string;
+        parents?: string[];
+      };
       return json(
         publicFile(
           create({
