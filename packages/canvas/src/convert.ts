@@ -15,15 +15,9 @@ export type CanvasEdge = Edge<{ arrow: Arrow }>;
 /** Molduras ficam sempre atrás dos blocos. */
 const FRAME_LAYER = -1000;
 
-/**
- * Do formato do core (posições absolutas no quadro) para o React Flow, onde um bloco
- * dentro de moldura tem posição relativa à moldura (`parentId`). As molduras vêm antes
- * na lista, como o React Flow pede para pais e filhos.
- */
-export function toReactFlow(flow: FlowContent): { nodes: CanvasNode[]; edges: CanvasEdge[] } {
-  const frames = new Map(flow.frames.map((frame) => [frame.id, frame]));
-
-  const frameNodes: FrameNode[] = flow.frames.map((frame) => ({
+/** Uma moldura como nó do React Flow. */
+export function frameToNode(frame: Frame): FrameNode {
+  return {
     id: frame.id,
     type: 'frame',
     position: { ...frame.position },
@@ -32,27 +26,30 @@ export function toReactFlow(flow: FlowContent): { nodes: CanvasNode[]; edges: Ca
     zIndex: FRAME_LAYER + frame.zIndex,
     draggable: !frame.locked,
     data: { kind: 'frame', frame },
-  }));
+  };
+}
 
-  const blockNodes: BlockNode[] = flow.blocks.map((block) => {
-    const parent = block.frameId ? frames.get(block.frameId) : undefined;
-    const position = parent
-      ? { x: block.position.x - parent.position.x, y: block.position.y - parent.position.y }
-      : { ...block.position };
-    return {
-      id: block.id,
-      type: 'block',
-      position,
-      ...(parent ? { parentId: parent.id } : {}),
-      width: block.size.width,
-      height: block.size.height,
-      zIndex: block.zIndex,
-      draggable: !block.locked,
-      data: { kind: 'block', block },
-    };
-  });
+/** Um bloco como nó do React Flow; dentro de moldura, a posição fica relativa a ela. */
+export function blockToNode(block: Block, parent?: Frame): BlockNode {
+  const position = parent
+    ? { x: block.position.x - parent.position.x, y: block.position.y - parent.position.y }
+    : { ...block.position };
+  return {
+    id: block.id,
+    type: 'block',
+    position,
+    ...(parent ? { parentId: parent.id } : {}),
+    width: block.size.width,
+    height: block.size.height,
+    zIndex: block.zIndex,
+    draggable: !block.locked,
+    data: { kind: 'block', block },
+  };
+}
 
-  const edges: CanvasEdge[] = flow.arrows.map((arrow) => ({
+/** Uma seta como aresta do React Flow. */
+export function arrowToEdge(arrow: Arrow): CanvasEdge {
+  return {
     id: arrow.id,
     source: arrow.from.nodeId,
     target: arrow.to.nodeId,
@@ -61,7 +58,21 @@ export function toReactFlow(flow: FlowContent): { nodes: CanvasNode[]; edges: Ca
     type: arrow.route === 'straight' ? 'straight' : 'default',
     label: arrow.label,
     data: { arrow },
-  }));
+  };
+}
+
+/**
+ * Do formato do core (posições absolutas no quadro) para o React Flow, onde um bloco
+ * dentro de moldura tem posição relativa à moldura (`parentId`). As molduras vêm antes
+ * na lista, como o React Flow pede para pais e filhos.
+ */
+export function toReactFlow(flow: FlowContent): { nodes: CanvasNode[]; edges: CanvasEdge[] } {
+  const frames = new Map(flow.frames.map((frame) => [frame.id, frame]));
+  const frameNodes = flow.frames.map(frameToNode);
+  const blockNodes = flow.blocks.map((block) =>
+    blockToNode(block, block.frameId ? frames.get(block.frameId) : undefined),
+  );
+  const edges = flow.arrows.map(arrowToEdge);
 
   return { nodes: [...frameNodes, ...blockNodes], edges };
 }

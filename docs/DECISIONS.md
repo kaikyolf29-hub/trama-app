@@ -101,3 +101,13 @@ Não apague: escreva uma linha nova dizendo o que substitui.
 - 2026-11-27 · **Tokens novos da tela 1: fundo e borda da moldura, traço da seta e o véu do minimapa.** Motivo: o quadro desenha essas cores, e cor só existe nos tokens.
 - 2026-11-27 · **Ferramentas das próximas etapas aparecem desativadas ("em breve"), na ordem da tela 1.** Motivo: a barra já fica no lugar certo e cada etapa só liga a sua ferramenta.
 - 2026-11-27 · **`/exemplo` abre o fluxo de vídeo da tela 1 no quadro, sem login.** Motivo: dá para ver e testar o quadro (e o preview de cada PR) antes de os projetos da pessoa chegarem na etapa 1.5.
+
+## Etapa 1.2 — Blocos
+
+- 2026-11-27 · **O conteúdo do fluxo fica numa ref dentro do quadro, e toda mudança (mover, criar, editar, apagar) passa por um `commit` que lê as posições com `getNodes()` e avisa `onFlowChange`.** Motivo: na 1.1 o aviso saía de dentro de um atualizador de estado, o que o React pode rodar duas vezes.
+- 2026-11-27 · **Apagar (Delete ou Backspace) passa por `removeNodes`, em `packages/canvas`: some com as setas ligadas, tira o nó dos passos da aula e apaga o passo que ficar vazio. Apagar uma moldura apaga o que está dentro.** Motivo: nada pode ficar apontando para um bloco que não existe (o core recusa), e é assim que o React Flow e o Miro tratam a moldura.
+- 2026-11-27 · **Criar: a ferramenta (ou a tecla T, C, N, R, F) vale para um clique; o bloco nasce centrado no clique, na grade, já selecionado e em edição, e a ferramenta volta para selecionar.** Motivo: o fluxo mais curto para escrever logo; clique duplo num ponto vazio cria um texto.
+- 2026-11-27 · **O cartão não tem botão na barra: entra pela tecla C.** Motivo: a barra segue a tela 1, que não tem botão de cartão.
+- 2026-11-27 · **O texto solto não tem caixa nem fundo; fonte, tamanho e cor valem para o bloco todo, e as linhas "- " e "1. " viram listas.** Motivo: é como o texto aparece na tela 1 e a convenção de listas do core.
+- 2026-11-27 · **O selo de status do cartão é uma caixa de marcar (`role="checkbox"`) que guarda a data em que foi marcado.** Motivo: marcar "Vídeo pronto" é um clique, e a data mostra quando ficou pronto.
+- 2026-11-27 · **A edição é um campo de texto no lugar do texto, com a mesma fonte; sair do campo ou Esc confirmam, e Enter confirma nos campos de uma linha (título do cartão, nome da moldura).** Motivo: editar parece escrever direto no quadro, sem caixa de diálogo.

@@ -3,6 +3,7 @@
  * não os da Lucide direto, para o app inteiro falar a mesma língua de ícones.
  */
 export {
+  Check as CheckIcon,
   Frame as FrameIcon,
   Hand as PanIcon,
   Image as ImageIcon,
