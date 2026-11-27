@@ -197,3 +197,9 @@ Não apague: escreva uma linha nova dizendo o que substitui.
 ## Etapa 1.6 — Google Drive
 
 - 2026-11-27 · **O arquivo da cópia é `projeto.trama`, um JSON com `format: "trama"`, `version: 1`, `savedAt`, os dados do projeto (id, título, status, datas) e o `content` validado por `flowContentSchema`. Só fluxos por enquanto.** Motivo: a pessoa pode baixar, mover e abrir de novo no app; o contrato fica em `packages/core/src/drive.ts`, e roteiros e cadernos entram com a V1.
+
+## Etapa 2.5 — Configurações
+
+- 2026-11-27 · **O perfil (`profileSchema`: nome, fuso, preferências de e-mail) e o pedido `PATCH /account/profile` (`updateProfileRequestSchema`) moram em `packages/core/src/profile.ts`. O e-mail e a senha ficam só no Supabase Auth.** Motivo: o perfil espelha a tabela `profiles`; e-mail e senha têm outro dono (o Auth), e duplicar o e-mail no perfil criaria dois lugares para ficar desatualizados.
+- 2026-11-27 · **O fuso é um nome IANA conhecido pelo `Intl` (deslocamentos como "+03:00" são recusados), e o nome conta de 1 a 80 letras como o `char_length` do Postgres (um emoji vale 1).** Motivo: "+03:00" não segue o horário de verão, e contar diferente do banco deixaria passar um nome que o banco recusa.
+- 2026-11-27 · **No `PATCH`, `emailPreferences` pode trazer só a chave que mudou (`applyProfileUpdate` junta com o que já existe); ao ler, chave que falta no banco vira o padrão (resumo ligado, lembrete desligado).** Motivo: ligar ou desligar uma preferência não pode apagar a outra, e o padrão do `profiles` já é esse.

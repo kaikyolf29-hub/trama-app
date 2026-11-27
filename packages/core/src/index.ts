@@ -14,3 +14,4 @@ export * from './project';
 export * from './api';
 export * from './drive';
 export * from './templates';
+export * from './profile';
