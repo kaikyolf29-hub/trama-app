@@ -48,3 +48,12 @@ Não apague: escreva uma linha nova dizendo o que substitui.
 - 2026-11-27 · **`parseLinkEmbed` só reconhece caminhos de UM vídeo do Vimeo e guarda o `hash` dos vídeos não listados.** Motivo: uma página de coleção (showcase, album) virava um vídeo inexistente no quadro; sem o hash, o player não toca vídeo não listado.
 - 2026-11-27 · **O bloco de texto inteiro usa uma fonte e um tamanho; título e lista da tela 1 são dois blocos.** Motivo: o editor, o modo aula e a exportação desenham o bloco do mesmo jeito, sem uma regra escondida de "primeira linha é título".
 - 2026-11-27 · **Node a partir de 22.22.2 ou 24.15.** Motivo: é o mínimo do Stylelint 18.
+
+## Etapa 0.2 — Tokens e componentes base
+
+- 2026-11-27 · **O tema do Tailwind 4 vem dos tokens por `@config` (`apps/web/tailwind.config.ts` → `@trama/ui/tailwind-theme`).** Motivo: `tokens.ts` continua sendo a única fonte, e nenhum CSS precisa escrever uma cor.
+- 2026-11-27 · **O tema substitui a paleta padrão do Tailwind.** Motivo: `bg-red-500` ou `text-white` não existem, então ninguém usa cor fora dos tokens nem por engano.
+- 2026-11-27 · **Os nomes de cor viram kebab-case no Tailwind (`textStrong` → `bg-text-strong`).** Motivo: com camelCase as classes saíam como `bg-textStrong`, e o botão principal ficou sem fundo; há um teste para isso.
+- 2026-11-27 · **Fontes servidas pelo próprio site (`@fontsource-variable`): Inter, Lora, JetBrains Mono e Caveat.** Motivo: sem pedido ao Google Fonts a cada visita; a mono e a manuscrita do plano ficam definidas.
+- 2026-11-27 · **Erros usam o par rosa das notas; sucesso, o verde de concluído; informação, o azul.** Motivo: o plano só permite cor com significado, e esses pares já existem nos tokens, todos com contraste AA testado.
+- 2026-11-27 · **Vitrine dos componentes em `#design` até o roteador chegar (etapa 0.5).** Motivo: dá para revisar os componentes no navegador, e o Codex consegue testar a etapa no ambiente dele.

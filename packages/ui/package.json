@@ -7,12 +7,27 @@
   "sideEffects": false,
   "exports": {
     ".": "./src/index.ts",
-    "./tokens": "./tokens.ts"
+    "./tokens": "./tokens.ts",
+    "./tailwind-theme": "./src/tailwind-theme.ts"
   },
   "scripts": {
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@trama/core": "workspace:*"
+  },
+  "peerDependencies": {
+    "react": "^19.0.0"
   },
   "devDependencies": {
-    "typescript": "catalog:"
+    "@testing-library/dom": "^10.4.2",
+    "@testing-library/react": "^16.3.3",
+    "@types/react": "^19.3.3",
+    "jsdom": "^31.0.1",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
   }
 }
