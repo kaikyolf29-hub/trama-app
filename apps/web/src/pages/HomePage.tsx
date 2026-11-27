@@ -1,3 +1,4 @@
+import { Link } from '@tanstack/react-router';
 import { Button, Logo } from '@trama/ui';
 import { useAuth } from '../auth/context';
 import { greetingFor } from './greeting';
@@ -27,8 +28,15 @@ export function HomePage() {
           {firstName ? `, ${firstName}` : ''}
         </h1>
         <p className="text-text-muted">
-          Sua conta está pronta. O quadro e os modelos para começar chegam nas próximas etapas.
+          Sua conta está pronta. Os seus projetos e os modelos para começar chegam nas próximas
+          etapas. Enquanto isso, veja o quadro com o fluxo de vídeo de exemplo.
         </p>
+        <Link
+          to="/exemplo"
+          className="mt-3 inline-flex h-11 items-center self-start rounded-control bg-text-strong px-4 text-sm font-semibold text-brand-ink transition-colors hover:bg-brand-paper focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-selection"
+        >
+          Abrir o quadro de exemplo
+        </Link>
       </main>
     </div>
   );
