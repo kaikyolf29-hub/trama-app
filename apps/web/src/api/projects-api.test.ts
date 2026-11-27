@@ -57,6 +57,32 @@ describe('cliente da API de projetos', () => {
     });
   });
 
+  it('renomeia com PATCH e valida o resumo que volta', async () => {
+    const summary = {
+      id: project.id,
+      kind: 'flow',
+      title: 'Novo nome',
+      status: 'done',
+      revision: 1,
+      updatedAt: '2026-11-27T10:05:00.000Z',
+    };
+    const { api, fetcher } = setup(json(summary));
+    const updated = await api.update(project.id, { title: 'Novo nome', status: 'done' });
+    expect(updated.title).toBe('Novo nome');
+    const init = fetcher.mock.calls[0]?.[1];
+    expect(init?.method).toBe('PATCH');
+    expect(typeof init?.body === 'string' && JSON.parse(init.body)).toEqual({
+      title: 'Novo nome',
+      status: 'done',
+    });
+  });
+
+  it('apaga com DELETE e aceita a resposta sem corpo (204)', async () => {
+    const { api, fetcher } = setup(() => Promise.resolve(new Response(null, { status: 204 })));
+    await expect(api.remove(project.id)).resolves.toBeUndefined();
+    expect(fetcher.mock.calls[0]?.[1]?.method).toBe('DELETE');
+  });
+
   it('erro da API chega em português, com o status', async () => {
     const { api } = setup(json({ error: 'Projeto não encontrado.' }, 404));
     await expect(api.get(project.id)).rejects.toMatchObject({
