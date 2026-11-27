@@ -72,6 +72,11 @@ export function createMemoryStore(clock: () => Date = () => new Date()): Project
       projects.set(id, saved);
       return Promise.resolve({ revision: saved.revision, updatedAt: saved.updatedAt, overwrote });
     },
+    setDriveFileId: (id, driveFileId) => {
+      const project = projects.get(id);
+      if (project) projects.set(id, { ...project, driveFileId });
+      return Promise.resolve();
+    },
     remove: (id) => Promise.resolve(projects.delete(id)),
     versions: (id) =>
       Promise.resolve(

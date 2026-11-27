@@ -130,6 +130,15 @@ export function createSupabaseStore(
       return { revision: row.revision, updatedAt: iso(row.updated_at), overwrote: row.overwrote };
     },
 
+    async setDriveFileId(id, driveFileId) {
+      // Não passa pelo save_project: guardar o id do arquivo não sobe a revisão nem a data.
+      const { error, status } = await supabase
+        .from('projects')
+        .update({ drive_file_id: driveFileId })
+        .eq('id', id);
+      check(error, status);
+    },
+
     async remove(id) {
       const { data, error, status } = await supabase
         .from('projects')

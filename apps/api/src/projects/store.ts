@@ -31,6 +31,8 @@ export interface ProjectStore {
   get(id: string): Promise<StoredProject | null>;
   create(input: { kind: 'flow'; title: string; content: FlowContent }): Promise<StoredProject>;
   save(id: string, request: SaveProjectRequest): Promise<SaveProjectResponse | null>;
+  /** Guarda o id do `projeto.trama` no Drive (não conta como mudança no projeto). */
+  setDriveFileId(id: string, driveFileId: string): Promise<void>;
   remove(id: string): Promise<boolean>;
   versions(id: string): Promise<ProjectVersion[] | null>;
   restore(id: string, versionId: number): Promise<{ revision: number; updatedAt: string } | null>;

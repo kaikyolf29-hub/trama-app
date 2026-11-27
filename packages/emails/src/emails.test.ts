@@ -1,7 +1,7 @@
 import { readFile } from 'node:fs/promises';
 import { colors } from '@trama/ui/tokens';
 import { describe, expect, it } from 'vitest';
-import { renderRecoveryEmail, renderWelcomeEmail } from './index';
+import { renderDriveNoticeEmail, renderRecoveryEmail, renderWelcomeEmail } from './index';
 import { SUPABASE_TEMPLATES } from './supabase-templates';
 
 const siteUrl = 'https://trama.example';
@@ -38,6 +38,28 @@ describe('e-mail de recuperação de senha', () => {
     ).toHaveLength(2);
     expect(email.text).toContain(resetUrl);
     expect(email.html).not.toContain('undefined');
+  });
+});
+
+describe('Aviso do Drive', () => {
+  it('explica que nada se perdeu e leva de volta ao Trama', async () => {
+    const email = await renderDriveNoticeEmail({
+      name: 'Ana Souza',
+      siteUrl,
+      reason: 'O Google recusou o acesso.',
+    });
+    expect(email.subject).toBe('Não deu para copiar seus projetos para o Drive');
+    expect(email.html).toContain('Olá, Ana.');
+    expect(email.html).toContain('href="https://trama.example"');
+    expect(email.text).toContain('nada se perdeu');
+    expect(email.text).toContain('O Google recusou o acesso.');
+    expect(email.html).toContain('src="https://trama.example/email/logo.png"');
+  });
+
+  it('funciona sem nome e sem motivo', async () => {
+    const email = await renderDriveNoticeEmail({ siteUrl });
+    expect(email.html).not.toContain('undefined');
+    expect(email.text).not.toContain('Motivo:');
   });
 });
 
