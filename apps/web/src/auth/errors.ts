@@ -1,5 +1,9 @@
 /** Mensagem para quando algo falha sem um motivo conhecido. */
 export const GENERIC_ERROR = 'Algo deu errado. Tente de novo em instantes.';
+export const OFFLINE_ERROR = 'Sem conexão com o servidor. Confira a internet e tente de novo.';
+/** O servidor aceitou o pedido de recuperação, mas o envio do e-mail falhou. */
+export const RECOVERY_SEND_ERROR =
+  'Não deu para enviar o e-mail agora. Tente de novo em alguns minutos.';
 
 const MESSAGES: Record<string, string> = {
   invalid_credentials: 'E-mail ou senha incorretos.',
@@ -26,13 +30,23 @@ interface ErrorLike {
   name?: unknown;
 }
 
-/** Traduz um erro do Supabase Auth para uma frase que a pessoa entende. */
+/** O servidor respondeu com erro dele (5xx): a internet da pessoa está funcionando. */
+export function isServerError(error: unknown): boolean {
+  if (!error || typeof error !== 'object') return false;
+  const { status } = error as ErrorLike;
+  return typeof status === 'number' && status >= 500;
+}
+
+/**
+ * Traduz um erro do Supabase Auth para uma frase que a pessoa entende. O supabase-js marca
+ * como "de rede" (AuthRetryableFetchError) também respostas 5xx do servidor: só é falta de
+ * conexão quando não houve resposta nenhuma.
+ */
 export function authErrorMessage(error: unknown): string {
   if (!error || typeof error !== 'object') return GENERIC_ERROR;
   const { code, status, name } = error as ErrorLike;
   if (typeof code === 'string' && code in MESSAGES) return MESSAGES[code] ?? GENERIC_ERROR;
-  if (name === 'AuthRetryableFetchError' || status === 0) {
-    return 'Sem conexão com o servidor. Confira a internet e tente de novo.';
-  }
+  if (isServerError(error)) return GENERIC_ERROR;
+  if (name === 'AuthRetryableFetchError' || status === 0) return OFFLINE_ERROR;
   return GENERIC_ERROR;
 }
