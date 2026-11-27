@@ -70,6 +70,7 @@ import {
   MAX_IMAGE_BYTES,
   type CanvasMedia,
 } from './media';
+import { duplicateNodes, groupIntoFrame, History } from './edit';
 import { edgeTypes, nodeTypes } from './node-types';
 import { removeNodes } from './remove';
 
@@ -142,6 +143,7 @@ function Canvas({ flow, onFlowChange, media = localMedia, topLeft, topRight }: F
   const reactFlow = useReactFlow<CanvasNode, CanvasEdge>();
   // O conteúdo do fluxo fica numa ref: os eventos leem e gravam sem esperar uma renderização.
   const content = useRef(flow);
+  const history = useRef(new History());
   const wrapper = useRef<HTMLDivElement>(null);
   const fileInput = useRef<HTMLInputElement>(null);
   // Onde o ponteiro está sobre o quadro: colar põe o bloco ali.
@@ -150,11 +152,66 @@ function Canvas({ flow, onFlowChange, media = localMedia, topLeft, topRight }: F
   /** Guarda o novo conteúdo, com as posições atuais dos nós, e avisa quem usa o quadro. */
   const commit = useCallback(
     (next: FlowContent, nodesNow: CanvasNode[] = reactFlow.getNodes()) => {
-      content.current = fromReactFlow(next, nodesNow);
-      onFlowChange?.(content.current);
+      const before = content.current;
+      const after = fromReactFlow(next, nodesNow);
+      // Soltar um bloco no mesmo lugar não é mudança: nem avisa, nem entra no histórico.
+      if (JSON.stringify(after) === JSON.stringify(before)) return;
+      history.current.record(before);
+      content.current = after;
+      onFlowChange?.(after);
     },
     [onFlowChange, reactFlow],
   );
+
+  /** Troca o quadro inteiro por um fluxo (desfazer, refazer, duplicar, agrupar). */
+  const show = useCallback(
+    (next: FlowContent, selected: readonly string[] = []) => {
+      const chosen = new Set(selected);
+      const rebuilt = toReactFlow(next);
+      setNodes(rebuilt.nodes.map((node) => ({ ...node, selected: chosen.has(node.id) })));
+      setEdges(rebuilt.edges);
+      setEditingId(null);
+      content.current = next;
+      onFlowChange?.(next);
+    },
+    [onFlowChange],
+  );
+
+  const undo = useCallback(() => {
+    const previous = history.current.undo(content.current);
+    if (previous) show(previous);
+  }, [show]);
+
+  const redo = useCallback(() => {
+    const next = history.current.redo(content.current);
+    if (next) show(next);
+  }, [show]);
+
+  /** O fluxo com as posições de agora e os ids selecionados. */
+  const current = useCallback(() => {
+    const nodesNow = reactFlow.getNodes();
+    return {
+      flow: fromReactFlow(content.current, nodesNow),
+      selected: nodesNow.filter((node) => node.selected).map((node) => node.id),
+    };
+  }, [reactFlow]);
+
+  const duplicate = useCallback(() => {
+    const { flow: base, selected } = current();
+    const { flow: next, copies } = duplicateNodes(base, selected);
+    if (copies.length === 0) return;
+    history.current.record(content.current);
+    show(next, copies);
+  }, [current, show]);
+
+  const group = useCallback(() => {
+    const { flow: base, selected } = current();
+    const result = groupIntoFrame(base, selected);
+    if (!result) return;
+    history.current.record(content.current);
+    show(result.flow, [result.frameId]);
+    setEditingId(result.frameId);
+  }, [current, show]);
 
   const updateBlock = useCallback(
     (next: Block) => {
@@ -424,7 +481,24 @@ function Canvas({ flow, onFlowChange, media = localMedia, topLeft, topRight }: F
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
-      if (isTyping(event.target) || event.ctrlKey || event.metaKey || event.altKey) return;
+      if (isTyping(event.target)) return;
+      // Ctrl no Windows e no Linux, Cmd no Mac (docs/PLAN.md, "Interações").
+      if (event.ctrlKey || event.metaKey) {
+        const key = event.key.toLowerCase();
+        const actions: Partial<Record<string, () => void>> = {
+          z: event.shiftKey ? redo : undo,
+          y: redo,
+          d: duplicate,
+          g: group,
+        };
+        const action = actions[key];
+        if (action && !event.altKey) {
+          event.preventDefault();
+          action();
+        }
+        return;
+      }
+      if (event.altKey) return;
       if (event.key === 'Escape') {
         setTool('select');
         setLinkOpen(false);
@@ -438,7 +512,7 @@ function Canvas({ flow, onFlowChange, media = localMedia, topLeft, topRight }: F
     };
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, []);
+  }, [undo, redo, duplicate, group]);
 
   // O aviso some sozinho depois de alguns segundos.
   useEffect(() => {

@@ -10,6 +10,8 @@ interface EditableTextProps {
   placeholder?: string;
   /** Uma linha só: Enter confirma. Em várias linhas, Enter quebra a linha. */
   singleLine?: boolean;
+  /** Seleciona o texto todo ao abrir (renomear), em vez de pôr o cursor no fim. */
+  selectAll?: boolean;
   className?: string;
   style?: CSSProperties;
   /** Como o texto aparece fora da edição. */
@@ -28,6 +30,7 @@ export function EditableText({
   label,
   placeholder,
   singleLine = false,
+  selectAll = false,
   className,
   style,
   children,
@@ -60,6 +63,10 @@ export function EditableText({
       onBlur={() => onCommit(singleLine ? draft.replace(/\n/g, ' ') : draft)}
       onKeyDown={onKeyDown}
       onFocus={(event) => {
+        if (selectAll) {
+          event.currentTarget.select();
+          return;
+        }
         const end = event.currentTarget.value.length;
         event.currentTarget.setSelectionRange(end, end);
       }}
