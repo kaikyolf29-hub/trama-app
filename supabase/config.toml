@@ -1,0 +1,39 @@
+# Configuração do Supabase como código. A CLI usa este arquivo no ambiente local
+# (`supabase start`) e para enviar a configuração ao projeto (`supabase config push`).
+# No projeto de produção ("trama", São Paulo), os mesmos valores estão no painel, com o
+# endereço publicado no lugar de localhost (docs/DECISIONS.md, etapa 0.3).
+project_id = "trama"
+
+[api]
+schemas = ["public"]
+
+[auth]
+site_url = "http://localhost:5173"
+additional_redirect_urls = ["http://localhost:5173/**"]
+enable_signup = true
+# 8 a 72 caracteres: o site confere o máximo, porque o bcrypt ignora o que passa de 72.
+minimum_password_length = 8
+
+[auth.email]
+enable_signup = true
+# A pessoa cria a senha e já entra (decisão da etapa 0.5).
+enable_confirmations = false
+secure_password_change = false
+# Um e-mail de recuperação por minuto, por endereço; o link vale 1 hora.
+max_frequency = "1m0s"
+otp_expiry = 3600
+
+# Gerado de packages/emails (pnpm --filter @trama/emails templates:supabase).
+[auth.email.template.recovery]
+subject = "Crie uma senha nova no Trama"
+content_path = "./supabase/templates/recovery.html"
+
+# Envio pelo Resend. Sem domínio verificado, o Resend só entrega no e-mail do dono da conta.
+[auth.email.smtp]
+enabled = true
+host = "smtp.resend.com"
+port = 465
+user = "resend"
+pass = "env(RESEND_API_KEY)"
+admin_email = "onboarding@resend.dev"
+sender_name = "Trama"
