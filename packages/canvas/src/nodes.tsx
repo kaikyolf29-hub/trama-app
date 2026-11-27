@@ -15,9 +15,10 @@ const SIDES = [
 
 /**
  * Pontos de conexão no meio de cada borda (o "ponto azul" da tela 1). Cada um serve de
- * saída e de chegada: o quadro usa o modo de conexão solto.
+ * saída e de chegada: o quadro usa o modo de conexão solto. Na apresentação (`inert`) ficam
+ * invisíveis e sem clique, só para as setas saberem onde ancorar.
  */
-function SideHandles({ visible }: { visible: boolean }) {
+export function SideHandles({ visible, inert = false }: { visible: boolean; inert?: boolean }) {
   return (
     <>
       {SIDES.map(([id, position]) => (
@@ -29,6 +30,8 @@ function SideHandles({ visible }: { visible: boolean }) {
           className={cn(
             'size-2.5! rounded-full! border-2! border-canvas! bg-selection! transition-opacity',
             visible ? 'opacity-100' : 'opacity-0',
+            // Na apresentação os pontos só servem de âncora das setas: nada clica neles.
+            inert && 'pointer-events-none!',
           )}
         />
       ))}

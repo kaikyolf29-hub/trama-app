@@ -91,6 +91,22 @@ describe('projetos', () => {
     expect(fake.saves[1]?.request.baseRevision).toBe(2);
   });
 
+  it('"Apresentar" abre o modo aula com o nome do projeto, e apresentar não salva nada', async () => {
+    const { fake } = renderAt(`/p/${video.id}`);
+    fireEvent.click(await screen.findByRole('button', { name: 'Apresentar' }));
+    const dialog = await screen.findByRole('dialog', { name: 'Modo aula' });
+    expect(within(dialog).getByText('MODO AULA')).toBeDefined();
+    expect(within(dialog).getAllByText('Como editar 10x mais rápido').length).toBeGreaterThan(1);
+    expect(within(dialog).getByText('Passo 1 de 4')).toBeDefined();
+    fireEvent.keyDown(window, { key: 'ArrowRight' });
+    expect(within(dialog).getByText('Passo 2 de 4')).toBeDefined();
+    fireEvent.keyDown(window, { key: 'Escape' });
+    expect(screen.queryByRole('dialog', { name: 'Modo aula' })).toBeNull();
+    // Espera mais que o salvamento sozinho (20 ms nos testes): nada foi gravado.
+    await new Promise((resolve) => setTimeout(resolve, 80));
+    expect(fake.saves).toHaveLength(0);
+  });
+
   it('avisa quando não salvou e tenta de novo sozinho', async () => {
     const { fake } = renderAt(`/p/${video.id}`);
     fake.failNextSave('Sem conexão com o Trama.');

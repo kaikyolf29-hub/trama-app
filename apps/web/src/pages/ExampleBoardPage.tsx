@@ -14,8 +14,9 @@ export function ExampleBoardPage() {
     <div className="h-dvh w-full">
       <FlowCanvas
         flow={flow}
+        title="Como editar 10x mais rápido"
         topLeft={<BoardTitle section="Exemplo" title="Como editar 10x mais rápido" />}
-        topRight={<PresentButton />}
+        topRight={({ present }) => <PresentButton onPresent={present} />}
       />
     </div>
   );
