@@ -2,6 +2,10 @@
 
 > Transcrito do documento "Trama — Plano do produto e da construção" de 26 nov 2026. Mudanças no
 > plano entram por PR, com a decisão registrada em `docs/DECISIONS.md`.
+>
+> **Mudanças de 27 nov 2026:** o Claude Code faz todas as etapas e o Codex revisa no GitHub
+> (veja "Divisão do trabalho"); o login é por e-mail e senha, com recuperação de senha, sem
+> login com Google por enquanto; os e-mails levam o logo do Trama.
 
 ## Visão geral
 
@@ -67,26 +71,27 @@ O modo claro vem depois, com os mesmos tokens invertidos. O escuro é o padrão.
 O MVP entrega o quadro completo, o fluxo de vídeo, o modo aula e o salvamento no Drive. Roteiros,
 Agenda, Estudos, IA e MCP vêm na versão 1.
 
-| Funcionalidade          | Fase     | O que inclui                                                                                           |
-| ----------------------- | -------- | ------------------------------------------------------------------------------------------------------ |
-| Conta e login           | MVP      | Entrar com Google ou com código por e-mail. A mesma conta vale no site e, depois, no app de computador |
-| Quadro infinito         | MVP      | Arrastar, dar zoom, minimapa, molduras, setas, desfazer e refazer, guias de alinhamento                |
-| Blocos                  | MVP      | Texto (fonte, tamanho, cor), cartão, nota adesiva, forma, imagem, vídeo ou link, checklist, status     |
-| Fluxo de vídeo          | MVP      | Modelo com tema, thumbnail, vídeo, texto, etapas e o selo "Vídeo pronto"                               |
-| Modo aula               | MVP      | Ordem de revelação por bloco, apresentar em tela cheia, destacar e caneta                              |
-| Google Drive            | MVP      | Cada projeto salvo na pasta "Trama" do Drive da pessoa, com imagens junto                              |
-| Modelos de início       | MVP      | Em branco, fluxo de vídeo, aula por etapas, plano de projeto, roteiro, falar e organizar               |
-| Agenda                  | V1       | Data e hora registradas sozinhas ao criar, editar, concluir ou estudar. Visões de ano, mês e dia       |
-| Roteiros                | V1       | Editor de páginas com cenas, falas e B-roll. Cada cena vira cartão no quadro, e o contrário            |
-| Estudos                 | V1       | Cadernos, aulas, status, data estudada e data de revisão                                               |
-| Falar e organizar       | V1       | Transcrição local grátis e organização por API em fluxo, roteiro, plano ou prompt                      |
-| Escolha de IA           | V1       | Provedor (Claude, Gemini, ChatGPT), modelo e esforço, com a chave da própria pessoa                    |
-| E-mails                 | MVP e V1 | Login e avisos no MVP. Resumo semanal de estudos e lembrete de revisão na V1                           |
-| Conector MCP            | V1       | Outras IAs leem e criam fluxos, roteiros e estudos no Trama                                            |
-| Exportar e compartilhar | V1       | PNG, PDF e link só para leitura                                                                        |
-| App de computador       | Depois   | Mesmo app empacotado, mesma conta, voz local mais rápida                                               |
-| Edição em tempo real    | Depois   | Duas pessoas no mesmo quadro, com cursores                                                             |
-| Modo claro e celular    | Depois   | Tema claro e versão instalável no celular                                                              |
+| Funcionalidade          | Fase     | O que inclui                                                                                                                            |
+| ----------------------- | -------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| Conta e login           | MVP      | Criar conta com nome, e-mail e senha, entrar e recuperar a senha por e-mail. A mesma conta vale no site e, depois, no app de computador |
+| Quadro infinito         | MVP      | Arrastar, dar zoom, minimapa, molduras, setas, desfazer e refazer, guias de alinhamento                                                 |
+| Blocos                  | MVP      | Texto (fonte, tamanho, cor), cartão, nota adesiva, forma, imagem, vídeo ou link, checklist, status                                      |
+| Fluxo de vídeo          | MVP      | Modelo com tema, thumbnail, vídeo, texto, etapas e o selo "Vídeo pronto"                                                                |
+| Modo aula               | MVP      | Ordem de revelação por bloco, apresentar em tela cheia, destacar e caneta                                                               |
+| Google Drive            | MVP      | Cada projeto salvo na pasta "Trama" do Drive da pessoa, com imagens junto                                                               |
+| Modelos de início       | MVP      | Em branco, fluxo de vídeo, aula por etapas, plano de projeto, roteiro, falar e organizar                                                |
+| Agenda                  | V1       | Data e hora registradas sozinhas ao criar, editar, concluir ou estudar. Visões de ano, mês e dia                                        |
+| Roteiros                | V1       | Editor de páginas com cenas, falas e B-roll. Cada cena vira cartão no quadro, e o contrário                                             |
+| Estudos                 | V1       | Cadernos, aulas, status, data estudada e data de revisão                                                                                |
+| Falar e organizar       | V1       | Transcrição local grátis e organização por API em fluxo, roteiro, plano ou prompt                                                       |
+| Escolha de IA           | V1       | Provedor (Claude, Gemini, ChatGPT), modelo e esforço, com a chave da própria pessoa                                                     |
+| E-mails                 | MVP e V1 | Login e avisos no MVP. Resumo semanal de estudos e lembrete de revisão na V1                                                            |
+| Conector MCP            | V1       | Outras IAs leem e criam fluxos, roteiros e estudos no Trama                                                                             |
+| Exportar e compartilhar | V1       | PNG, PDF e link só para leitura                                                                                                         |
+| App de computador       | Depois   | Mesmo app empacotado, mesma conta, voz local mais rápida                                                                                |
+| Edição em tempo real    | Depois   | Duas pessoas no mesmo quadro, com cursores                                                                                              |
+| Modo claro e celular    | Depois   | Tema claro e versão instalável no celular                                                                                               |
+| Login com Google        | Depois   | Talvez no futuro; por enquanto o login é só por e-mail e senha                                                                          |
 
 ## O quadro (editor de fluxo)
 
@@ -258,7 +263,7 @@ e-mails e as IAs, e o MCP usa o mesmo núcleo.
 | Layout automático            | dagre                                                                  | Organiza os blocos que a IA cria                                                                                                                                                                    |
 | Estilo                       | Tailwind CSS com os tokens do Trama                                    | Os dois agentes usam os mesmos nomes de cor e espaço                                                                                                                                                |
 | API                          | Hono em Cloudflare Workers                                             | Arquivos estáticos são grátis e ilimitados, e o plano grátis dá 100 mil requisições por dia ([fonte](https://developers.cloudflare.com/workers/platform/pricing/index.md))                          |
-| Banco, login e arquivos      | Supabase (Postgres, Auth, Storage, RLS)                                | Login com Google e por código de e-mail, regras de acesso por linha                                                                                                                                 |
+| Banco, login e arquivos      | Supabase (Postgres, Auth, Storage, RLS)                                | Login por e-mail e senha com recuperação, regras de acesso por linha                                                                                                                                |
 | E-mail                       | Resend + React Email                                                   | Modelos de e-mail escritos em React, no mesmo repositório                                                                                                                                           |
 | IA                           | `packages/ai` com os SDKs oficiais da Anthropic, do Google e da OpenAI | Uma interface só para os três provedores                                                                                                                                                            |
 | Voz                          | `@huggingface/transformers` (Whisper)                                  | Transcrição grátis no navegador                                                                                                                                                                     |
@@ -325,118 +330,133 @@ API são lidas apenas pelo Worker da API.
 
 ## E-mails
 
-O Resend envia todos os e-mails do Trama, inclusive o código de login do Supabase, que é
-configurado para usar o Resend como servidor de envio. Os modelos são escritos com React Email em
-`packages/emails`, no mesmo visual preto e branco do app.
+O Resend envia todos os e-mails do Trama, inclusive os do login do Supabase (recuperação de
+senha), que é configurado para usar o Resend como servidor de envio. Os modelos são escritos com
+React Email em `packages/emails`, no mesmo visual preto e branco do app, e todos levam o logo do
+Trama no topo.
 
 | E-mail                    | Quando sai                                                                                      | Fase |
 | ------------------------- | ----------------------------------------------------------------------------------------------- | ---- |
-| Código de login           | Quando a pessoa entra com e-mail                                                                | MVP  |
-| Boas-vindas               | No primeiro login, com o link para o primeiro fluxo                                             | MVP  |
+| Recuperação de senha      | Quando a pessoa pede uma senha nova; o link abre a tela de criar a senha nova                   | MVP  |
+| Boas-vindas               | Logo depois do cadastro, com o link para o primeiro fluxo                                       | MVP  |
 | Aviso do Drive            | Quando a cópia para o Drive falha 3 vezes seguidas                                              | MVP  |
 | Resumo semanal de estudos | Segunda às 8h no fuso da pessoa: o que estudou, o que revisar e os vídeos marcados como prontos | V1   |
 | Lembrete de revisão       | No dia da revisão de uma aula, se a pessoa ligou essa opção                                     | V1   |
 
 - O resumo semanal é disparado por uma tarefa agendada (Cron Trigger) no Worker da API. O texto é
   montado com o modelo de IA que a pessoa escolheu ou, sem chave, só com os dados da Agenda.
-- Cada e-mail tem link de descadastro, e as preferências ficam em Configurações.
+- Cada e-mail tem link de descadastro, e as preferências ficam em Configurações. Os e-mails da
+  conta (recuperação de senha) não têm descadastro, porque a pessoa pediu por eles.
 - O domínio de envio precisa dos registros SPF e DKIM configurados antes do lançamento.
 - O plano grátis do Resend cobre 3.000 e-mails por mês, com no máximo 100 por dia
   ([fonte](https://resend.com/blog/new-free-tier)). Passando disso, o plano Pro custa US$ 20 por mês
   para 50.000 e-mails ([fonte](https://www.usecarly.com/blog/resend-pricing/)).
 
-## Divisão do trabalho: Claude Code e Codex
+## Divisão do trabalho
 
-O Claude Code (Opus 5.5, esforço xhigh) fica com a arquitetura e as partes profundas: quadro, dados,
-IA e MCP. O Codex (GPT-6.2 Astra) fica com as telas feitas a partir das referências, os componentes,
-os e-mails e os testes. Você decide e faz o merge.
+Mudou em 27 nov 2026. Antes, o Claude Code fazia a arquitetura e o Codex fazia as telas; agora:
 
-**Por que essa divisão**
+- **Claude Code faz todas as etapas**: código, telas, componentes, e-mails, testes, banco e
+  deploy.
+- **Codex revisa cada PR.** Ele sobe o projeto no ambiente na nuvem, testa e escreve o relatório
+  no próprio PR do GitHub. O Claude Code recebe o aviso, corrige e responde lá mesmo.
+- **Imagens geradas** (ilustração, arte, foto) são a exceção: o Claude Code pede a você, você
+  pede ao Codex e devolve a imagem. Ícones e o logo são SVG feitos em código.
+- **Você** decide, cuida das contas e dos segredos, olha o preview e faz o merge.
 
-- O nível xhigh do Claude é indicado para tarefas longas de programação e de agente, com mais de
-  30 minutos ([docs](https://platform.claude.com/docs/build-with-claude/effort)). É o perfil da
-  fundação e do motor do quadro.
-- Segundo a OpenAI, o GPT-6.2 Astra consegue usar uma captura de tela como modelo e reproduzir
-  layout, cores e tamanho de fonte. Também faz e testa mudanças melhor num projeto que já existe
-  ([fonte](https://9to5mac.com/?p=1080945)). É o perfil das telas a partir da prévia e dos testes.
+**Regra de ouro:** quem escreve não aprova. Todo PR passa pela revisão do Codex antes de chegar
+em você.
 
-| Área                                                                       | Quem faz    | Quem revisa |
-| -------------------------------------------------------------------------- | ----------- | ----------- |
-| Monorepo, CI, `AGENTS.md`, `CLAUDE.md`                                     | Claude Code | Codex       |
-| `packages/core`: tipos do fluxo, esquemas, regras                          | Claude Code | Codex       |
-| Supabase: migrations, RLS, login                                           | Claude Code | Codex       |
-| `packages/canvas`: blocos, setas, seleção, atalhos, modo aula              | Claude Code | Codex       |
-| Salvamento e sincronização com o Drive                                     | Claude Code | Codex       |
-| `packages/ai`: provedores, prompts, saída em JSON                          | Claude Code | Codex       |
-| Servidor MCP                                                               | Claude Code | Codex       |
-| `packages/ui`: tokens e componentes                                        | Codex       | Claude Code |
-| Telas: Início, Roteiros, Estudos, Agenda, Configurações, Falar e organizar | Codex       | Claude Code |
-| Modelos de e-mail e resumo semanal                                         | Codex       | Claude Code |
-| Testes Vitest e Playwright de cada fluxo de uso                            | Codex       | Claude Code |
-| Exportar PNG e PDF, link de compartilhamento                               | Codex       | Claude Code |
-| App de computador (Tauri)                                                  | Codex       | Claude Code |
-
-**Regra de ouro:** quem escreve não aprova. Todo PR de um agente é revisado pelo outro antes de
-chegar em você.
-
-## Como os dois trabalham no mesmo repositório
-
-Os dois agentes leem as mesmas regras, cada um trabalha na sua branch e nas suas pastas, e nada
-entra na `main` sem CI verde e a revisão do outro.
+## Como o trabalho anda no repositório
 
 **Arquivos de instrução**
 
 - `AGENTS.md`: a fonte única de regras. Traz a stack, os comandos (`pnpm dev`, `pnpm test`,
-  `pnpm lint`), quem é dono de cada pasta, os tokens obrigatórios e o que nunca fazer (cores fora
-  dos tokens, emoji na interface, segredos no código).
+  `pnpm lint`), quem faz o quê, os tokens obrigatórios e o que nunca fazer (cores fora dos
+  tokens, emoji na interface, segredos no código).
 - `CLAUDE.md`: começa importando o `AGENTS.md` (`@AGENTS.md`) e acrescenta só o que é do Claude
   Code.
-- `docs/DESIGN.md`: tokens e regras visuais, com as imagens das 8 telas em `docs/telas/`, para o
-  Codex usar como modelo.
+- `docs/DESIGN.md`: tokens e regras visuais, com as imagens das 8 telas em `docs/telas/`.
 - `docs/DECISIONS.md`: cada decisão importante numa linha, com data e motivo.
-- `docs/PLAN.md`: este plano, resumido.
+- `docs/PLAN.md`: este plano.
 
-**Ciclo de cada tarefa**
+**Ciclo de cada etapa**
 
-1. Você cria uma issue no GitHub com a etiqueta `agente:claude` ou `agente:codex`, a tela de
-   referência e os critérios de pronto.
-2. O agente cria a branch `claude/<número>-<nome>` ou `codex/<número>-<nome>`.
-3. Ele abre um PR pequeno, com o que mudou, como testar e uma imagem quando mexer em tela.
-4. O CI roda tipos, lint, testes e publica um preview na Cloudflare.
-5. O outro agente revisa o PR e aponta problemas. O autor corrige.
+1. O Claude Code pega a próxima etapa do roadmap (abaixo).
+2. Cria a branch `claude/<número>-<nome>` e abre um PR pequeno, com o que mudou, como testar e
+   uma imagem quando mexer em tela.
+3. O CI roda tipos, lint, testes e publica um preview na Cloudflare.
+4. O Codex revisa no PR. Os dois usam a mesma conta do GitHub, então a revisão é um comentário
+   que termina com **Aprovar** ou **Pedir mudanças**, com cada ponto marcado como `[bloqueia]`,
+   `[sugestão]` ou `[nit]`.
+5. O Claude Code corrige, responde em cada conversa e resolve o que corrigiu.
 6. Você olha o preview e faz o merge.
 
-**Regras para não dar conflito**
+**Regras**
 
-- Cada pasta tem um dono, conforme a tabela da seção anterior. Mexer na pasta do outro só pelo PR
-  dele ou com aviso na issue.
 - Mudança em `packages/core` (o contrato entre as partes) entra antes, num PR próprio, e só depois
   as telas que usam a mudança.
 - Mensagens de commit no padrão Conventional Commits (`feat:`, `fix:`, `docs:`).
 - Segredos só nos painéis da Cloudflare, do Supabase e do GitHub. O repositório tem apenas um
   `.env.example`.
 
-**Modelo de pedido para os agentes**
-
-```
-Tarefa #12 — Tela de Estudos
-Referência: docs/telas/6-estudos.png (tela 6 da prévia)
-Pronto quando: cadernos, tabela de aulas e o botão do resumo funcionam com dados reais;
-  testes Playwright passam; nenhuma cor fora de packages/ui/tokens.ts
-Não altere: packages/core, packages/canvas
-```
-
 ## Roadmap por fases
 
-Cinco fases; cada uma só começa quando o portão da anterior passa.
+Cinco fases; cada uma só começa quando o portão da anterior passa. O Claude Code faz todas as
+etapas e o Codex revisa cada PR.
 
-| Fase             | O que entra                                                                                                                             | Portão para a próxima                                 |
-| ---------------- | --------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------- |
-| 0 · Fundação     | Repositório, monorepo, `AGENTS.md` e `CLAUDE.md`; tokens de design e componentes base; login com Google e e-mail, deploy na Cloudflare  | Login funciona no preview                             |
-| 1 · Quadro (MVP) | Blocos, setas, molduras, atalhos e minimapa; fluxo de vídeo com thumbnail e selo "Vídeo pronto"; modo aula, salvamento e cópia no Drive | Criar, salvar e apresentar um fluxo de vídeo completo |
-| 2 · Organização  | Roteiros ligados aos cartões do quadro; Agenda com data e hora automáticas; Estudos e resumo semanal por e-mail                         | Uma semana de uso real sem perder dados               |
-| 3 · IA e MCP     | Voz local com Whisper no navegador; organizar com Claude, Gemini ou ChatGPT, com modelo e esforço; conector MCP com login e permissões  | Uma fala de 2 minutos vira um fluxo correto           |
-| 4 · Lançamento   | Exportar PNG e PDF, link só para leitura; domínio, SPF e DKIM, Supabase Pro; app de computador com Tauri                                | —                                                     |
+**Fase 0 · Fundação.** Portão: criar conta, entrar e recuperar a senha funcionam no preview.
+
+| Etapa | O que entra                                                                                          | Referência     |
+| ----- | ---------------------------------------------------------------------------------------------------- | -------------- |
+| 0.1   | Repositório, monorepo, `AGENTS.md`, `CLAUDE.md`, contrato do fluxo em `packages/core`, CI            | —              |
+| 0.2   | Tokens em `packages/ui/tokens.ts`, Tailwind, componentes base, logo em SVG e `docs/DESIGN.md`        | telas 1, 4 e 8 |
+| 0.3   | Supabase: tabela `profiles` com RLS, cadastro com nome, e-mail e senha, login e recuperação de senha | —              |
+| 0.4   | E-mails de recuperação de senha e de boas-vindas, com o logo, saindo pelo Resend                     | tela 8         |
+| 0.5   | Casca do app e as telas de entrar, criar conta, esqueci a senha e nova senha                         | telas 4 e 8    |
+| 0.6   | Deploy na Cloudflare (site e API) e preview em todo PR                                               | —              |
+
+**Fase 1 · Quadro (MVP).** Portão: criar, salvar e apresentar um fluxo de vídeo completo.
+
+| Etapa | O que entra                                                                                                  | Referência |
+| ----- | ------------------------------------------------------------------------------------------------------------ | ---------- |
+| 1.1   | Quadro base: grade de 8 px, zoom, minimapa, "Ajustar", ferramentas flutuantes                                | tela 1     |
+| 1.2   | Blocos de texto, cartão com selo de status, nota adesiva, forma e moldura                                    | tela 1     |
+| 1.3   | Blocos de imagem (com upload), vídeo ou link, e etapas                                                       | tela 1     |
+| 1.4   | Setas, seleção, barra de contexto, guias de alinhamento, atalhos, desfazer e refazer, clique direito         | tela 1     |
+| 1.5   | Salvamento: API de projetos, salvar sozinho em 2 s, histórico de versões                                     | —          |
+| 1.6   | Google Drive: conectar, pasta "Trama", `projeto.trama`, cópia a cada 30 s, "Abrir do Drive", e-mail de aviso | tela 4     |
+| 1.7   | Modo aula: ordem da apresentação, tela cheia, câmera, destaque e caneta                                      | tela 2     |
+| 1.8   | Modelos de início e a tela Início                                                                            | tela 4     |
+| 1.9   | Testes Playwright dos fluxos do MVP e o teste de 500 blocos no CI                                            | —          |
+
+**Fase 2 · Organização.** Portão: uma semana de uso real sem perder dados.
+
+| Etapa | O que entra                                                                  | Referência |
+| ----- | ---------------------------------------------------------------------------- | ---------- |
+| 2.1   | Formatos de roteiro, caderno e eventos no core; tabelas `events` e `lessons` | —          |
+| 2.2   | Agenda com data e hora registradas sozinhas                                  | tela 7     |
+| 2.3   | Roteiros (Tiptap), com cada cena ligada a um cartão do quadro                | tela 3     |
+| 2.4   | Estudos: cadernos, aulas, datas de estudo e de revisão                       | tela 6     |
+| 2.5   | Configurações: conta, troca de e-mail e de senha, preferências de e-mail     | —          |
+| 2.6   | Resumo semanal e lembrete de revisão por e-mail                              | tela 6     |
+
+**Fase 3 · IA e MCP.** Portão: uma fala de 2 minutos vira um fluxo correto.
+
+| Etapa | O que entra                                                                                                      | Referência |
+| ----- | ---------------------------------------------------------------------------------------------------------------- | ---------- |
+| 3.1   | `packages/ai`: Claude, Gemini e ChatGPT, esforço, prompts versionados, chaves criptografadas, Configurações → IA | —          |
+| 3.2   | Voz local com Whisper no navegador                                                                               | tela 5     |
+| 3.3   | Falar e organizar, com layout automático e "Inserir no quadro"                                                   | tela 5     |
+| 3.4   | Conector MCP com login e permissões                                                                              | —          |
+
+**Fase 4 · Lançamento.**
+
+| Etapa | O que entra                              |
+| ----- | ---------------------------------------- |
+| 4.1   | Exportar PNG e PDF, link só para leitura |
+| 4.2   | Domínio, SPF e DKIM, Supabase Pro        |
+| 4.3   | App de computador com Tauri              |
 
 A Fase 1 é o MVP e a prioridade. As fases não têm datas: cada uma termina quando o portão é
 cumprido no preview, e você é quem confirma.

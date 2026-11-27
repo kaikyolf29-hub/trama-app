@@ -33,3 +33,18 @@ Não apague: escreva uma linha nova dizendo o que substitui.
 - 2026-11-27 · **`.env.example` usa as chaves novas do Supabase (publicável e secreta), não `anon` e `service_role`.** Motivo: são o modelo atual de chaves do Supabase e podem ser trocadas sem derrubar o app.
 - 2026-11-27 · **`docs/PLAN.md` é a transcrição completa do PDF do plano de 26 nov 2026.** Motivo: o arquivo ainda não existia no repositório; transcrever tudo evita perder detalhes que um resumo cortaria.
 - 2026-11-27 · **As imagens de `docs/telas/` foram geradas do canvas da prévia, sem executar scripts.** Motivo: a pasta ainda não existia; o HTML de cada artboard foi convertido em página estática e capturado em 2x.
+
+## Revisão do PR #1 e mudança de plano
+
+- 2026-11-27 · **O Claude Code faz todas as etapas; o Codex só revisa, no GitHub.** Motivo: pedido da pessoa dona do projeto; substitui a divisão por pastas da primeira versão do plano.
+- 2026-11-27 · **Imagens geradas (ilustração, arte, foto) são pedidas à pessoa dona do projeto, que pede ao Codex; ícones e logo são SVG em código.** Motivo: o Claude Code não gera imagens.
+- 2026-11-27 · **A revisão do Codex é um comentário que termina com "Aprovar" ou "Pedir mudanças", com os pontos marcados como `[bloqueia]`, `[sugestão]` ou `[nit]`.** Motivo: os dois agentes usam a mesma conta do GitHub, que não deixa o autor de um PR aprovar ou pedir mudanças formalmente.
+- 2026-11-27 · **Login por e-mail e senha (nome, e-mail e senha no cadastro), com recuperação de senha; sem login com Google por enquanto.** Motivo: pedido da pessoa dona do projeto; o Google continua só para a cópia no Drive.
+- 2026-11-27 · **Todos os e-mails levam o logo do Trama.** Motivo: pedido da pessoa dona do projeto.
+- 2026-11-27 · **As regras de lint do Trama ficam em `tooling/`, com testes de regressão.** Motivo: a revisão mostrou que bandeiras escapavam da regra de emoji; agora cada caso pego vira teste.
+- 2026-11-27 · **A regra de emoji cobre pictogramas, indicadores regionais (bandeiras), U+FE0F e U+20E3.** Motivo: toda sequência de emoji tem ao menos um desses pontos de código; setas como "→" e "▾" continuam aceitas.
+- 2026-11-27 · **Stylelint com `color-no-hex` em todo CSS, sem exceção.** Motivo: o ESLint não lê CSS, e uma cor fixa numa folha de estilo passava no CI; o CSS usa as variáveis dos tokens.
+- 2026-11-27 · **Só `packages/ui/tokens.ts` pode ter hex, e ele faz parte do projeto TypeScript do `packages/ui`.** Motivo: a segunda exceção (`src/tokens.ts`) abria uma brecha, e fora do `tsconfig` o arquivo nem passava no lint.
+- 2026-11-27 · **`parseLinkEmbed` só reconhece caminhos de UM vídeo do Vimeo e guarda o `hash` dos vídeos não listados.** Motivo: uma página de coleção (showcase, album) virava um vídeo inexistente no quadro; sem o hash, o player não toca vídeo não listado.
+- 2026-11-27 · **O bloco de texto inteiro usa uma fonte e um tamanho; título e lista da tela 1 são dois blocos.** Motivo: o editor, o modo aula e a exportação desenham o bloco do mesmo jeito, sem uma regra escondida de "primeira linha é título".
+- 2026-11-27 · **Node a partir de 22.22.2 ou 24.15.** Motivo: é o mínimo do Stylelint 18.

@@ -36,7 +36,7 @@ Rode sempre da raiz.
 | `pnpm dev`       | Sobe o site em http://localhost:5173                          |
 | `pnpm test`      | Testes de todos os pacotes (Vitest)                           |
 | `pnpm typecheck` | Checagem de tipos de todos os pacotes                         |
-| `pnpm lint`      | ESLint no repositório inteiro                                 |
+| `pnpm lint`      | ESLint no código e Stylelint nas folhas de estilo             |
 | `pnpm format`    | Formata com Prettier (`pnpm format:check` só confere)         |
 | `pnpm build`     | Build de produção                                             |
 | `pnpm check`     | Tipos + lint + formatação + testes: rode antes de abrir um PR |
@@ -44,30 +44,33 @@ Rode sempre da raiz.
 Um pacote só: `pnpm --filter @trama/core test`. O CI roda typecheck, lint, formatação,
 testes e build em todo PR (`.github/workflows/ci.yml`).
 
-## Estrutura e dono de cada pasta
+## Quem faz o quê
 
-Quem faz escreve; quem revisa aprova. **Quem escreve não aprova.**
+Desde 27 nov 2026 (`docs/DECISIONS.md`):
 
-| Pasta                                        | O que é                                                             | Quem faz    | Quem revisa |
-| -------------------------------------------- | ------------------------------------------------------------------- | ----------- | ----------- |
-| raiz, `.github/`, `AGENTS.md`, `CLAUDE.md`   | Monorepo, CI e regras                                               | Claude Code | Codex       |
-| `packages/core`                              | Tipos do fluxo, esquemas zod, regras de negócio                     | Claude Code | Codex       |
-| `supabase/`                                  | Migrations, RLS, login                                              | Claude Code | Codex       |
-| `packages/canvas`                            | Blocos, setas, seleção, atalhos, modo aula                          | Claude Code | Codex       |
-| `apps/api`                                   | Worker Hono; salvamento e sincronia com o Drive                     | Claude Code | Codex       |
-| `packages/ai`                                | Provedores, prompts, saída em JSON                                  | Claude Code | Codex       |
-| `apps/mcp`                                   | Servidor MCP                                                        | Claude Code | Codex       |
-| `packages/ui`                                | Tokens e componentes                                                | Codex       | Claude Code |
-| `apps/web` (telas)                           | Início, Roteiros, Estudos, Agenda, Configurações, Falar e organizar | Codex       | Claude Code |
-| `packages/emails`                            | Modelos de e-mail e resumo semanal                                  | Codex       | Claude Code |
-| testes Vitest e Playwright dos fluxos de uso | Um teste por fluxo de uso                                           | Codex       | Claude Code |
-| exportar PNG/PDF, link de compartilhamento   | V1                                                                  | Codex       | Claude Code |
-| `apps/desktop` (Tauri)                       | Fase 4, ainda não existe                                            | Codex       | Claude Code |
-| `docs/`                                      | Plano, decisões, telas                                              | quem decide | o outro     |
+- **Claude Code faz tudo**: código, telas, componentes, e-mails, testes, banco e deploy.
+- **Codex revisa.** Ele sobe o projeto no ambiente na nuvem, testa e escreve o relatório no
+  próprio PR do GitHub. **Quem escreve não aprova.**
+- **Imagens** (ilustração, arte, foto) são a única coisa que o Claude Code não gera. Ele pede à
+  pessoa dona do projeto, que pede ao Codex e devolve a imagem. Ícones e o logo são SVG em
+  código e não entram nessa regra.
+- **A pessoa dona do projeto** decide, cuida das contas e dos segredos, olha o preview e faz o
+  merge.
 
-Em `apps/web`, a casca (configuração, roteamento, login e a página que monta o quadro) é do
-Claude Code; as telas são do Codex. Mexer na pasta do outro só pelo PR dele ou com aviso na
-issue.
+| Pasta                                      | O que é                                                                  |
+| ------------------------------------------ | ------------------------------------------------------------------------ |
+| raiz, `.github/`, `AGENTS.md`, `CLAUDE.md` | Monorepo, CI e regras                                                    |
+| `tooling/`                                 | Regras de lint do Trama (cor só nos tokens, sem emoji) e os testes delas |
+| `packages/core`                            | Tipos do fluxo, esquemas zod, regras de negócio                          |
+| `packages/ui`                              | Tokens (`tokens.ts`), componentes e o logo                               |
+| `packages/canvas`                          | Blocos, setas, seleção, atalhos, modo aula                               |
+| `packages/emails`                          | Modelos de e-mail                                                        |
+| `packages/ai`                              | Provedores, prompts, saída em JSON                                       |
+| `apps/web`                                 | Site: casca, login e as telas                                            |
+| `apps/api`                                 | Worker Hono: projetos, Drive, e-mails, tarefas agendadas                 |
+| `apps/mcp`                                 | Servidor MCP                                                             |
+| `supabase/`                                | Migrations, RLS, configuração do login e modelos de e-mail do Auth       |
+| `docs/`                                    | Plano, decisões e telas de referência                                    |
 
 ## O contrato: `packages/core`
 
@@ -95,22 +98,27 @@ Glossário (a interface fala português; o código, inglês):
 
 ## Branches, commits e PRs
 
-1. Cada tarefa nasce de uma issue com a etiqueta `agente:claude` ou `agente:codex`, a tela de
-   referência e os critérios de pronto.
-2. Branch `claude/<número>-<nome>` ou `codex/<número>-<nome>`, sempre a partir da `main`.
+1. Cada tarefa segue as etapas de `docs/PLAN.md` ("Roadmap por fases"): a tela de referência e o
+   critério de pronto vêm de lá.
+2. Branch `claude/<número>-<nome>`, a partir da `main` (ou da branch da tarefa anterior, quando
+   ela ainda espera o merge).
 3. Commits em Conventional Commits: `feat:`, `fix:`, `docs:`, `chore:`, `test:`, `refactor:`.
 4. PR pequeno, seguindo `.github/pull_request_template.md`: o que mudou, como testar e uma
    imagem quando mexer em tela.
-5. Nada entra na `main` sem CI verde e a revisão do outro agente. Quem faz o merge é a pessoa
-   dona do projeto, depois de olhar o preview.
+5. O Codex revisa no PR. Como os dois agentes usam a mesma conta do GitHub, o GitHub não deixa
+   o revisor aprovar nem pedir mudanças formalmente: a revisão é um comentário que termina com
+   **Aprovar** ou **Pedir mudanças**, e cada ponto é marcado como `[bloqueia]`, `[sugestão]` ou
+   `[nit]`. O autor responde em cada conversa e resolve o que corrigiu.
+6. Nada entra na `main` sem CI verde e sem o "Aprovar" do Codex. Quem faz o merge é a pessoa
+   dona do projeto.
 
 ## Regras visuais
 
 - O quadro vem primeiro; criar um fluxo leva no máximo 3 cliques.
 - Preto e branco, sem degradê, sem brilho, sem emoji. Cor só para dar significado: seleção,
   concluído, notas.
-- Toda cor vem de `packages/ui/tokens.ts`. O lint recusa hex fora de lá e emoji no código de
-  interface.
+- Toda cor vem de `packages/ui/tokens.ts`. O lint recusa hex fora de lá (no código e no CSS) e
+  emoji no código de interface; as regras e os testes delas estão em `tooling/`.
 - Espaçamento em múltiplos de 8 px; animações de ~150 ms; sombra discreta só em blocos e menus
   flutuantes.
 - Cada tarefa de tela aponta a tela de `docs/telas/` que está reproduzindo.
