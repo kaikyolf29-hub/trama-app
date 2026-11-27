@@ -12,7 +12,7 @@ Modelos em React Email, no visual escuro do app, com o logo do Trama no topo. As
   em `<APP_URL>/email/logo.png`. É PNG porque vários programas de e-mail não mostram SVG, e o
   Gmail bloqueia imagens embutidas no HTML.
 - **Modelos do Supabase:** o Supabase Auth só aceita HTML pronto, com as variáveis dele
-  (`{{ .ConfirmationURL }}`, `{{ .SiteURL }}`, `{{ .Data.name }}`). Mudou o `RecoveryEmail`?
+  (`{{ .SiteURL }}`, `{{ .TokenHash }}`, `{{ .Data.name }}`). O link leva a `/nova-senha?token_hash=…`, que a tela confere. Mudou o `RecoveryEmail`?
   Gere de novo:
 
   ```bash

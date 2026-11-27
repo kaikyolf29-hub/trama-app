@@ -15,7 +15,10 @@ export const SUPABASE_TEMPLATES = {
   'recovery.html': () =>
     render(
       createElement(RecoveryEmail, {
-        resetUrl: '{{ .ConfirmationURL }}',
+        // O link leva à tela /nova-senha com o token_hash, que a tela confere
+        // (verifyOtp). Funciona mesmo aberto em outro aparelho, e robôs que abrem
+        // links de e-mail não gastam o token, porque eles não rodam o JavaScript da tela.
+        resetUrl: '{{ .SiteURL }}/nova-senha?token_hash={{ .TokenHash }}&type=recovery',
         siteUrl: '{{ .SiteURL }}',
         greeting: '{{ if .Data.name }}Olá, {{ .Data.name }}.{{ else }}Olá.{{ end }}',
       }),

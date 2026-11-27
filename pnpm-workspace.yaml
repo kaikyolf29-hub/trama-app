@@ -17,3 +17,9 @@ catalog:
   typescript-eslint: ^8.74.0
   vitest: ^5.1.2
   zod: ^4.6.7
+
+# "Skills" de agente que dependências trazem ficam negadas: são instruções para o Claude
+# Code e o Codex vindas de fora do repositório. As regras dos agentes estão no AGENTS.md.
+permissions:
+  '@tanstack/react-router':
+    skills: false

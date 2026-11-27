@@ -357,15 +357,16 @@ Trama no topo.
 Mudou em 27 nov 2026. Antes, o Claude Code fazia a arquitetura e o Codex fazia as telas; agora:
 
 - **Claude Code faz todas as etapas**: código, telas, componentes, e-mails, testes, banco e
-  deploy.
-- **Codex revisa cada PR.** Ele sobe o projeto no ambiente na nuvem, testa e escreve o relatório
-  no próprio PR do GitHub. O Claude Code recebe o aviso, corrige e responde lá mesmo.
-- **Imagens geradas** (ilustração, arte, foto) são a exceção: o Claude Code pede a você, você
-  pede ao Codex e devolve a imagem. Ícones e o logo são SVG feitos em código.
-- **Você** decide, cuida das contas e dos segredos, olha o preview e faz o merge.
+  deploy. Decide o que é técnico e faz o merge com o CI verde.
+- **Codex revisa no fim.** Quando o Claude Code termina, ele sobe o projeto no ambiente na nuvem,
+  testa e escreve o relatório no GitHub. O Claude Code recebe o aviso, corrige e responde lá
+  mesmo.
+- **O que só você pode fazer** (contas, chaves, painéis) e **imagens geradas**: o Claude Code
+  escreve um pedido pronto, você manda ao Codex, que controla o seu computador e faz.
+- **Só planos grátis.** Os planos pagos de "Custos estimados" só entram se o projeto crescer.
+- **Você** acompanha pela página de andamento e confirma os portões.
 
-**Regra de ouro:** quem escreve não aprova. Todo PR passa pela revisão do Codex antes de chegar
-em você.
+**Regra de ouro:** quem escreve não aprova. O trabalho todo passa pela revisão do Codex.
 
 ## Como o trabalho anda no repositório
 
@@ -386,11 +387,10 @@ em você.
 2. Cria a branch `claude/<número>-<nome>` e abre um PR pequeno, com o que mudou, como testar e
    uma imagem quando mexer em tela.
 3. O CI roda tipos, lint, testes e publica um preview na Cloudflare.
-4. O Codex revisa no PR. Os dois usam a mesma conta do GitHub, então a revisão é um comentário
+4. Com o CI verde, o Claude Code faz o merge e segue para a próxima etapa.
+5. No fim, o Codex revisa no GitHub. Os dois usam a mesma conta, então a revisão é um comentário
    que termina com **Aprovar** ou **Pedir mudanças**, com cada ponto marcado como `[bloqueia]`,
-   `[sugestão]` ou `[nit]`.
-5. O Claude Code corrige, responde em cada conversa e resolve o que corrigiu.
-6. Você olha o preview e faz o merge.
+   `[sugestão]` ou `[nit]`. O Claude Code corrige e responde em cada conversa.
 
 **Regras**
 
@@ -403,7 +403,7 @@ em você.
 ## Roadmap por fases
 
 Cinco fases; cada uma só começa quando o portão da anterior passa. O Claude Code faz todas as
-etapas e o Codex revisa cada PR.
+etapas, faz o merge com o CI verde, e o Codex revisa tudo no fim.
 
 **Fase 0 · Fundação.** Portão: criar conta, entrar e recuperar a senha funcionam no preview.
 

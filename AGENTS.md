@@ -48,14 +48,16 @@ testes e build em todo PR (`.github/workflows/ci.yml`).
 
 Desde 27 nov 2026 (`docs/DECISIONS.md`):
 
-- **Claude Code faz tudo**: código, telas, componentes, e-mails, testes, banco e deploy.
-- **Codex revisa.** Ele sobe o projeto no ambiente na nuvem, testa e escreve o relatório no
-  próprio PR do GitHub. **Quem escreve não aprova.**
-- **Imagens** (ilustração, arte, foto) são a única coisa que o Claude Code não gera. Ele pede à
-  pessoa dona do projeto, que pede ao Codex e devolve a imagem. Ícones e o logo são SVG em
-  código e não entram nessa regra.
-- **A pessoa dona do projeto** decide, cuida das contas e dos segredos, olha o preview e faz o
-  merge.
+- **Claude Code faz tudo**: código, telas, componentes, e-mails, testes, banco e deploy. Ele
+  decide o que é técnico e faz o merge quando o CI está verde.
+- **Codex revisa no fim.** Quando o Claude Code termina, o Codex sobe o projeto no ambiente na
+  nuvem, testa e escreve o relatório no GitHub. O Claude Code recebe o aviso e corrige.
+- **O que só a pessoa dona do projeto pode fazer** (contas, chaves, painéis, pagamentos): o
+  Claude Code escreve um pedido pronto para o Codex, que controla o computador da pessoa e faz.
+  O mesmo vale para **imagens** (ilustração, arte, foto): o Codex gera. Ícones e o logo são SVG
+  em código.
+- **Só planos grátis.** Nada pago enquanto o projeto não crescer; quando crescer, os planos pagos
+  previstos em `docs/PLAN.md` ("Custos estimados") entram por decisão da pessoa dona do projeto.
 
 | Pasta                                      | O que é                                                                  |
 | ------------------------------------------ | ------------------------------------------------------------------------ |
@@ -105,12 +107,12 @@ Glossário (a interface fala português; o código, inglês):
 3. Commits em Conventional Commits: `feat:`, `fix:`, `docs:`, `chore:`, `test:`, `refactor:`.
 4. PR pequeno, seguindo `.github/pull_request_template.md`: o que mudou, como testar e uma
    imagem quando mexer em tela.
-5. O Codex revisa no PR. Como os dois agentes usam a mesma conta do GitHub, o GitHub não deixa
-   o revisor aprovar nem pedir mudanças formalmente: a revisão é um comentário que termina com
-   **Aprovar** ou **Pedir mudanças**, e cada ponto é marcado como `[bloqueia]`, `[sugestão]` ou
-   `[nit]`. O autor responde em cada conversa e resolve o que corrigiu.
-6. Nada entra na `main` sem CI verde e sem o "Aprovar" do Codex. Quem faz o merge é a pessoa
-   dona do projeto.
+5. O Claude Code faz o merge quando o CI está verde. PRs empilhados entram em ordem, com commit
+   de merge (sem squash), e o seguinte passa a apontar para a `main`.
+6. A revisão do Codex vem no fim, no GitHub. Como os dois agentes usam a mesma conta, a revisão é
+   um comentário que termina com **Aprovar** ou **Pedir mudanças**, com cada ponto marcado como
+   `[bloqueia]`, `[sugestão]` ou `[nit]`. O autor responde em cada conversa e resolve o que
+   corrigiu.
 
 ## Regras visuais
 
@@ -131,8 +133,9 @@ Glossário (a interface fala português; o código, inglês):
 - Ler chave de IA fora do Worker da API ou devolvê-la ao navegador.
 - Tabela sem RLS, ou editar uma migration já aplicada (crie outra).
 - Gravar fluxo sem validar com `@trama/core`.
-- Push direto na `main`, aprovar o próprio PR, ou pular, desligar ou apagar teste para o CI
+- Push direto na `main`, merge com CI vermelho, ou pular, desligar ou apagar teste para o CI
   passar.
+- Contratar plano pago ou serviço cobrado sem a pessoa dona do projeto pedir.
 - Copiar código do AppFlowy (AGPL-3.0) ou usar o tldraw (exige licença paga em produção).
 - Adicionar dependência sem motivo registrado no PR.
 - Começar algo da V1 antes de o portão da Fase 1 ser cumprido.

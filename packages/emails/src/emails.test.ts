@@ -44,7 +44,9 @@ describe('e-mail de recuperação de senha', () => {
 describe('modelos do Supabase Auth', () => {
   it('mantêm as variáveis do Supabase intactas', async () => {
     const html = await SUPABASE_TEMPLATES['recovery.html']();
-    expect(html).toContain('href="{{ .ConfirmationURL }}"');
+    expect(html).toContain(
+      'href="{{ .SiteURL }}/nova-senha?token_hash={{ .TokenHash }}&amp;type=recovery"',
+    );
     expect(html).toContain('src="{{ .SiteURL }}/email/logo.png"');
     expect(html).toContain('{{ if .Data.name }}Olá, {{ .Data.name }}.{{ else }}Olá.{{ end }}');
   });

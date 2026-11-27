@@ -26,7 +26,7 @@ export function DesignPreview() {
       <div className="mx-auto flex max-w-3xl flex-col gap-10">
         <header className="flex flex-wrap items-center justify-between gap-4">
           <Logo size={36} />
-          <p className="text-text-muted">Componentes base · etapa 0.2</p>
+          <p className="text-text-muted">Componentes base</p>
         </header>
 
         <section className="flex flex-col gap-3">
