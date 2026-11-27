@@ -18,6 +18,7 @@ export {
   Link2 as LinkIcon,
   ListOrdered as OrderIcon,
   Mic as VoiceIcon,
+  Pencil as PencilIcon,
   Minus as ZoomOutIcon,
   MousePointer2 as SelectIcon,
   MoveUpRight as ArrowIcon,

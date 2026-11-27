@@ -29,6 +29,19 @@ export const createProjectRequestSchema = z.object({
 });
 
 /**
+ * Renomear ou mudar o status (`PATCH /projects/:id`) sem mexer no conteúdo nem na revisão:
+ * serve à lista do Início, que não tem o conteúdo em mãos. Ao menos um dos campos é obrigatório.
+ */
+export const updateProjectRequestSchema = z
+  .object({
+    title: projectTitleSchema.optional(),
+    status: projectStatusSchema.optional(),
+  })
+  .refine((body) => body.title !== undefined || body.status !== undefined, {
+    message: 'informe o título ou o status',
+  });
+
+/**
  * Salvar o fluxo. `baseRevision` é a revisão que o site tinha quando a pessoa começou a mexer:
  * se o projeto mudou em outro lugar desde então, vale a versão mais nova (esta), e a outra vai
  * para o histórico de versões (docs/PLAN.md, "Google Drive").
@@ -68,6 +81,7 @@ export const apiErrorSchema = z.object({ error: z.string().min(1) });
 
 export type ProjectSummary = z.infer<typeof projectSummarySchema>;
 export type CreateProjectRequest = z.input<typeof createProjectRequestSchema>;
+export type UpdateProjectRequest = z.infer<typeof updateProjectRequestSchema>;
 export type SaveProjectRequest = z.infer<typeof saveProjectRequestSchema>;
 export type SaveProjectResponse = z.infer<typeof saveProjectResponseSchema>;
 export type VersionReason = z.infer<typeof versionReasonSchema>;
