@@ -1,6 +1,6 @@
 import type { User } from '@supabase/supabase-js';
 import type { Supabase } from '../supabase';
-import { authErrorMessage } from './errors';
+import { authErrorMessage, isServerError, RECOVERY_SEND_ERROR } from './errors';
 import type { AuthClient, AuthResult, AuthUser } from './types';
 
 function toUser(user: User): AuthUser {
@@ -61,7 +61,12 @@ export function createSupabaseAuthClient(supabase: Supabase, appUrl: string): Au
       const { error } = await auth.resetPasswordForEmail(email, {
         redirectTo: `${appUrl}/nova-senha`,
       });
-      return error ? { ok: false, error: authErrorMessage(error) } : ok;
+      if (!error) return ok;
+      // 5xx aqui é o envio do e-mail que falhou (SMTP), não a conta nem a internet.
+      return {
+        ok: false,
+        error: isServerError(error) ? RECOVERY_SEND_ERROR : authErrorMessage(error),
+      };
     },
 
     async verifyRecovery(tokenHash) {
