@@ -12,6 +12,7 @@ export {
   Italic as ItalicIcon,
   Link2 as LinkIcon,
   Mic as VoiceIcon,
+  Pencil as PencilIcon,
   Minus as ZoomOutIcon,
   MousePointer2 as SelectIcon,
   MoveUpRight as ArrowIcon,

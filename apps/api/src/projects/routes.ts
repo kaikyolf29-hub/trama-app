@@ -3,6 +3,7 @@ import {
   createProjectRequestSchema,
   flowContentSchema,
   saveProjectRequestSchema,
+  updateProjectRequestSchema,
 } from '@trama/core';
 import { Hono, type Context } from 'hono';
 import { z } from 'zod';
@@ -74,6 +75,15 @@ export function projectRoutes() {
     if (!parsed.success) return invalid(c, 'O fluxo enviado não é válido.');
     const saved = await c.var.store.save(id.data, parsed.data);
     return saved ? c.json(saved) : c.json({ error: NOT_FOUND }, 404);
+  });
+
+  routes.patch('/:id', async (c) => {
+    const id = idSchema.safeParse(c.req.param('id'));
+    if (!id.success) return c.json({ error: NOT_FOUND }, 404);
+    const parsed = updateProjectRequestSchema.safeParse(await body(c));
+    if (!parsed.success) return invalid(c, 'Informe um título ou um status válido.');
+    const updated = await c.var.store.update(id.data, parsed.data);
+    return updated ? c.json(updated) : c.json({ error: NOT_FOUND }, 404);
   });
 
   routes.delete('/:id', async (c) => {

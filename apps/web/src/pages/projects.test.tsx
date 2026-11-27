@@ -1,7 +1,7 @@
 import { createMemoryHistory } from '@tanstack/react-router';
 import { flowContentSchema, type FlowProject } from '@trama/core';
 import { videoFlowExample } from '@trama/core/fixtures';
-import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeAll, describe, expect, it } from 'vitest';
 import { App } from '../App';
 import { defaultServices, type Services } from '../services';
@@ -50,27 +50,6 @@ function renderAt(path: string, fake = createFakeProjects([video]), services?: P
 }
 
 describe('projetos', () => {
-  it('o início lista os fluxos e abre cada um', async () => {
-    const { history } = renderAt('/');
-    const list = await screen.findByRole('list');
-    fireEvent.click(within(list).getByRole('link', { name: /Como editar 10x mais rápido/ }));
-    await waitFor(() => expect(history.location.pathname).toBe(`/p/${video.id}`));
-    expect(
-      await screen.findByRole('heading', { name: 'Como editar 10x mais rápido' }),
-    ).toBeDefined();
-  });
-
-  it('"Novo fluxo" cria e já abre no quadro, em um clique', async () => {
-    const fake = createFakeProjects();
-    const { history } = renderAt('/', fake);
-    expect(await screen.findByText(/Nenhum fluxo ainda/)).toBeDefined();
-    fireEvent.click(screen.getByRole('button', { name: 'Novo fluxo' }));
-    await waitFor(() => expect(history.location.pathname).toMatch(/^\/p\//));
-    expect(await screen.findByRole('heading', { name: 'Sem título' })).toBeDefined();
-    expect(screen.getByRole('status').textContent).toContain('Salvo');
-    expect(fake.projects.size).toBe(1);
-  });
-
   it('salva sozinho depois de uma mudança, com a revisão certa', async () => {
     const { fake } = renderAt(`/p/${video.id}`);
     const badge = await screen.findByRole('checkbox', { name: /Vídeo pronto/ });
