@@ -1,6 +1,9 @@
 import { Hono } from 'hono';
 import { bodyLimit } from 'hono/body-limit';
 import { cors } from 'hono/cors';
+import { eventRoutes, lessonRoutes } from './organization/routes';
+import type { OrganizationStore } from './organization/store';
+import { createSupabaseOrganizationStore } from './organization/supabase-store';
 import { projectRoutes } from './projects/routes';
 import { SessionError, type ProjectStore } from './projects/store';
 import { createSupabaseStore } from './projects/supabase-store';
@@ -20,6 +23,8 @@ export interface Env {
 
 /** Até 5 MB por pedido, o mesmo limite do conteúdo no banco. */
 const MAX_BODY = 5 * 1024 * 1024;
+/** Agenda e aulas: até 256 KB (as aulas levam notas de texto). */
+const MAX_SMALL_BODY = 256 * 1024;
 const LOCAL_ORIGINS = new Set(['http://localhost:5173', 'http://127.0.0.1:5173']);
 
 /** Só o site do Trama (produção e previews dos PRs) e o `pnpm dev` chamam a API. */
@@ -32,6 +37,7 @@ export function isAllowedOrigin(origin: string, env: Env): boolean {
 }
 
 type StoreFactory = (env: Env, token: string) => ProjectStore;
+type OrganizationFactory = (env: Env, token: string) => OrganizationStore;
 
 const supabaseStore: StoreFactory = (env, token) => {
   if (!env.SUPABASE_URL || !env.SUPABASE_PUBLISHABLE_KEY) {
@@ -40,12 +46,30 @@ const supabaseStore: StoreFactory = (env, token) => {
   return createSupabaseStore(env.SUPABASE_URL, env.SUPABASE_PUBLISHABLE_KEY, token);
 };
 
+const supabaseOrganizationStore: OrganizationFactory = (env, token) => {
+  if (!env.SUPABASE_URL || !env.SUPABASE_PUBLISHABLE_KEY) {
+    throw new Error('Faltam SUPABASE_URL e SUPABASE_PUBLISHABLE_KEY no Worker.');
+  }
+  return createSupabaseOrganizationStore(env.SUPABASE_URL, env.SUPABASE_PUBLISHABLE_KEY, token);
+};
+
+/** O token de login (Supabase) que o site manda em `Authorization: Bearer ...`. */
+function bearerToken(header: string | undefined): string | undefined {
+  return /^Bearer (\S+)$/.exec(header ?? '')?.[1];
+}
+
 /**
  * A API do Trama: a única porta para o banco, o Drive, os e-mails e as IAs
- * (docs/PLAN.md, "Stack técnica e arquitetura"). `storeFor` existe para os testes.
+ * (docs/PLAN.md, "Stack técnica e arquitetura"). `storeFor` e `organizationFor` existem para os testes.
  */
-export function createApp(storeFor: StoreFactory = supabaseStore) {
-  const app = new Hono<{ Bindings: Env; Variables: { store: ProjectStore } }>();
+export function createApp(
+  storeFor: StoreFactory = supabaseStore,
+  organizationFor: OrganizationFactory = supabaseOrganizationStore,
+) {
+  const app = new Hono<{
+    Bindings: Env;
+    Variables: { store: ProjectStore; organization: OrganizationStore };
+  }>();
 
   app.use(
     '*',
@@ -68,16 +92,38 @@ export function createApp(storeFor: StoreFactory = supabaseStore) {
       onError: (c) => c.json({ error: 'O projeto passou de 5 MB.' }, 413),
     }),
   );
+  // Agenda e aulas só recebem textos curtos.
+  for (const path of ['/events/*', '/notebooks/*']) {
+    app.use(
+      path,
+      bodyLimit({
+        maxSize: MAX_SMALL_BODY,
+        onError: (c) => c.json({ error: 'O pedido passou de 256 KB.' }, 413),
+      }),
+    );
+  }
 
   // Toda rota de projeto precisa do token de login (Supabase) da pessoa.
   app.use('/projects/*', async (c, next) => {
-    const token = /^Bearer (\S+)$/.exec(c.req.header('Authorization') ?? '')?.[1];
+    const token = bearerToken(c.req.header('Authorization'));
     if (!token) return c.json({ error: 'Entre na sua conta para continuar.' }, 401);
     c.set('store', storeFor(c.env ?? {}, token));
     await next();
   });
 
+  // O mesmo vale para a Agenda e as aulas.
+  for (const path of ['/events/*', '/notebooks/*']) {
+    app.use(path, async (c, next) => {
+      const token = bearerToken(c.req.header('Authorization'));
+      if (!token) return c.json({ error: 'Entre na sua conta para continuar.' }, 401);
+      c.set('organization', organizationFor(c.env ?? {}, token));
+      await next();
+    });
+  }
+
   app.route('/projects', projectRoutes());
+  app.route('/events', eventRoutes());
+  app.route('/notebooks', lessonRoutes());
 
   app.notFound((c) => c.json({ error: 'Rota não encontrada.' }, 404));
 

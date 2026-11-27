@@ -1,3 +1,5 @@
+import { createAgendaApi } from './api/agenda-api';
+import { createLessonsApi } from './api/lessons-api';
 import { createProjectsApi } from './api/projects-api';
 import { createSupabaseAuthClient } from './auth/supabase-client';
 import type { AuthClient } from './auth/types';
@@ -25,14 +27,15 @@ export function createBackendFromEnv(): Backend {
   const supabase = createSupabase(url, key);
   const auth = createSupabaseAuthClient(supabase, appUrl);
   const bucket = filesBucket(supabase);
+  const api = apiUrl ? { baseUrl: apiUrl, getToken: () => auth.getAccessToken() } : null;
   return {
     auth,
     supabase,
     services: {
       ...defaultServices,
-      projects: apiUrl
-        ? createProjectsApi({ baseUrl: apiUrl, getToken: () => auth.getAccessToken() })
-        : null,
+      projects: api ? createProjectsApi(api) : null,
+      agenda: api ? createAgendaApi(api) : null,
+      lessons: api ? createLessonsApi(api) : null,
       mediaFor: (userId) => createSupabaseMedia(bucket, userId),
     },
   };
