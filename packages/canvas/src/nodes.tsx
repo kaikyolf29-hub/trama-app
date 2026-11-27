@@ -1,7 +1,9 @@
-import type { Block } from '@trama/core';
 import { cn } from '@trama/ui';
 import { Handle, Position, type NodeProps } from '@xyflow/react';
+import { BlockView } from './block-views';
+import { useCanvas } from './canvas-context';
 import type { BlockNode as BlockNodeType, FrameNode as FrameNodeType } from './convert';
+import { EditableText } from './EditableText';
 
 const SIDES = [
   ['top', Position.Top],
@@ -33,52 +35,29 @@ function SideHandles({ visible }: { visible: boolean }) {
   );
 }
 
-/** Texto principal de cada tipo de bloco, para a versão simples da etapa 1.1. */
-function blockSummary(block: Block): { label: string; text: string } {
-  switch (block.type) {
-    case 'text':
-      return { label: 'Texto', text: block.text };
-    case 'card':
-      return { label: block.tag ?? 'Cartão', text: block.title };
-    case 'sticky':
-      return { label: 'Nota', text: block.text };
-    case 'shape':
-      return { label: 'Forma', text: block.text };
-    case 'image':
-      return { label: 'Imagem', text: block.fileName ?? block.caption ?? '' };
-    case 'link':
-      return { label: 'Vídeo ou link', text: block.title ?? block.url };
-    case 'checklist':
-      return {
-        label: block.title,
-        text: `${block.items.filter((item) => item.done).length}/${block.items.length}`,
-      };
-    case 'audio':
-      return { label: 'Áudio', text: block.transcript ?? '' };
-  }
-}
-
-/** Bloco na versão base: superfície do Trama com o rótulo e o texto principal. */
-export function BlockNode({ data, selected }: NodeProps<BlockNodeType>) {
-  const { label, text } = blockSummary(data.block);
+/** Um bloco no quadro. Clique duplo edita o texto. */
+export function BlockNode({ id, data, selected }: NodeProps<BlockNodeType>) {
+  const { editingId, startEditing } = useCanvas();
+  const editing = editingId === id;
   return (
     <div
+      onDoubleClick={() => startEditing(id)}
       className={cn(
-        'relative flex size-full flex-col gap-1.5 overflow-hidden rounded-block border border-border bg-surface p-4 shadow-block',
-        selected && 'outline-2 outline-offset-2 outline-selection',
+        'relative size-full',
+        selected && 'rounded-block outline-2 outline-offset-4 outline-selection',
       )}
     >
-      <span className="text-[11px] font-semibold tracking-wider text-text-muted uppercase">
-        {label}
-      </span>
-      <span className="line-clamp-4 text-sm whitespace-pre-line text-text-strong">{text}</span>
-      <SideHandles visible={selected} />
+      <BlockView block={data.block} editing={editing} />
+      <SideHandles visible={selected && !editing} />
     </div>
   );
 }
 
-/** Moldura: agrupa blocos e dá nome à seção. O nome fica acima da borda, como na tela 1. */
-export function FrameNode({ data, selected }: NodeProps<FrameNodeType>) {
+/** Moldura: agrupa blocos e dá nome à seção. O nome fica acima da borda e edita no clique duplo. */
+export function FrameNode({ id, data, selected }: NodeProps<FrameNodeType>) {
+  const { editingId, startEditing, stopEditing, updateFrame } = useCanvas();
+  const editing = editingId === id;
+  const { frame } = data;
   return (
     <div
       className={cn(
@@ -86,11 +65,30 @@ export function FrameNode({ data, selected }: NodeProps<FrameNodeType>) {
         selected && 'outline-2 outline-offset-2 outline-selection',
       )}
     >
-      {data.frame.title && (
-        <span className="absolute -top-7 left-0 text-[13px] font-medium whitespace-nowrap text-text-muted">
-          {data.frame.title}
-        </span>
-      )}
+      <div
+        className="absolute -top-8 left-0 w-full min-w-48"
+        onDoubleClick={(event) => {
+          event.stopPropagation();
+          startEditing(id);
+        }}
+      >
+        <EditableText
+          singleLine
+          value={frame.title}
+          editing={editing}
+          label="Nome da moldura"
+          placeholder="Nome da seção"
+          onCommit={(title) => {
+            updateFrame({ ...frame, title });
+            stopEditing();
+          }}
+          className="text-[13px] font-medium text-text-strong"
+        >
+          <span className="block truncate pt-1 text-[13px] font-medium text-text-muted">
+            {frame.title || 'Sem nome'}
+          </span>
+        </EditableText>
+      </div>
       <SideHandles visible={selected} />
     </div>
   );
