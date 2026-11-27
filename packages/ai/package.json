@@ -1,0 +1,17 @@
+{
+  "name": "@trama/ai",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Provedores de IA, prompts versionados e testes de prompt.",
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "typescript": "catalog:"
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "name": "@trama/api",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Worker da API (Hono na Cloudflare): projetos, Drive, IA, e-mails e tarefas agendadas.",
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "typescript": "catalog:"
+  }
+}

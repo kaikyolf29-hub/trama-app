@@ -1,0 +1,29 @@
+# Dependências e builds
+node_modules/
+dist/
+.turbo/
+coverage/
+*.tsbuildinfo
+
+# Cloudflare e Supabase locais
+.wrangler/
+supabase/.temp/
+supabase/.branches/
+
+# Segredos: só o .env.example entra no repositório
+.env
+.env.*
+!.env.example
+.dev.vars
+.dev.vars.*
+
+# Testes de ponta a ponta
+playwright-report/
+test-results/
+
+# Sistema e editores
+.DS_Store
+*.log
+.idea/
+.vscode/*
+!.vscode/extensions.json

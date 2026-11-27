@@ -1,0 +1,17 @@
+{
+  "name": "@trama/canvas",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Quadro do Trama: blocos, setas, seleção, atalhos e modo aula.",
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "typescript": "catalog:"
+  }
+}
