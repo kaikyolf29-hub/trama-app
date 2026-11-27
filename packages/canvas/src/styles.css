@@ -11,3 +11,8 @@
 .trama-canvas[data-connecting] .react-flow__handle {
   opacity: 1;
 }
+
+/* Na apresentação, a seta de um passo que já passou fica discreta (a de agora, não). */
+.react-flow__edge.trama-dim {
+  opacity: 0.45;
+}

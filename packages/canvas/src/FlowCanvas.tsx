@@ -4,6 +4,7 @@ import {
   type Block,
   type FlowContent,
   type Frame,
+  type PresentationStep,
 } from '@trama/core';
 import { cn } from '@trama/ui';
 import {
@@ -11,6 +12,7 @@ import {
   ArrowIcon,
   FrameIcon,
   ImageIcon,
+  OrderIcon,
   PanIcon,
   SelectIcon,
   ShapeIcon,
@@ -84,11 +86,14 @@ import { duplicateNodes, groupIntoFrame, History } from './edit';
 import { edgeTypes, nodeTypes } from './node-types';
 import { alignmentGuides, type Guides, type Rect } from './guides';
 import { removeNodes } from './remove';
+import { FIT_VIEW } from './fit';
+import { OrderPanel } from './order-panel';
+import { Presenter } from './present-mode';
 import { setNodeStep, type StepTarget } from './steps';
 
 /** Selecionar, mover o quadro, ligar com setas, ou criar um tipo de bloco no próximo clique. */
 export type CanvasTool = 'select' | 'pan' | 'arrow' | CreatableKind;
-type ToolAction = 'image' | 'link';
+type ToolAction = 'image' | 'link' | 'order';
 type ScreenPoint = { x: number; y: number };
 /** Clique direito: onde abriu e, num nó, o que valia nele naquela hora. */
 type MenuState = ScreenPoint & { node?: { id: string; locked: boolean; step?: number } };
@@ -100,16 +105,24 @@ export interface FlowCanvasProps {
   onFlowChange?: (flow: FlowContent) => void;
   /** Onde guardar e de onde ler as imagens. Sem ele, ficam só nesta aba. */
   media?: CanvasMedia;
+  /** Nome do projeto, mostrado no canto de cima do modo aula. */
+  title?: string;
   /** Barras do app por cima do quadro (título, compartilhar, apresentar...). */
   topLeft?: ReactNode;
-  topRight?: ReactNode;
+  /** Pode ser uma função: recebe os controles do quadro (apresentar, ordem da apresentação). */
+  topRight?: ReactNode | ((controls: CanvasControls) => ReactNode);
 }
 
-// Deixa espaço para as barras flutuantes: ferramentas à esquerda, título em cima, zoom embaixo.
-const FIT_VIEW = {
-  padding: { top: '88px', right: '48px', bottom: '72px', left: '96px' },
-  duration: 150,
-} as const;
+/** O que o app de fora pode pedir ao quadro, como o botão "Apresentar". */
+export interface CanvasControls {
+  /** Abre o modo aula em tela cheia. */
+  present: () => void;
+  /** Abre ou fecha o painel "Ordem da apresentação". */
+  toggleOrder: () => void;
+  /** O modo aula está aberto. */
+  presenting: boolean;
+}
+
 // Distância das barras flutuantes até a borda da tela (16 px, como na tela 1).
 const PANEL = 'm-4!';
 const CONNECTION_LINE_STYLE = { stroke: colors.selection, strokeWidth: 1.5 };
@@ -151,7 +164,14 @@ function isTyping(target: EventTarget | null): boolean {
   );
 }
 
-function Canvas({ flow, onFlowChange, media = localMedia, topLeft, topRight }: FlowCanvasProps) {
+function Canvas({
+  flow,
+  onFlowChange,
+  media = localMedia,
+  title,
+  topLeft,
+  topRight,
+}: FlowCanvasProps) {
   const initial = useMemo(() => toReactFlow(flow), [flow]);
   const [nodes, setNodes] = useState<CanvasNode[]>(initial.nodes);
   const [edges, setEdges] = useState<CanvasEdge[]>(initial.edges);
@@ -159,8 +179,13 @@ function Canvas({ flow, onFlowChange, media = localMedia, topLeft, topRight }: F
   const [editingId, setEditingId] = useState<string | null>(null);
   const [linkOpen, setLinkOpen] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
-  // Os passos da aula ficam também em estado: a barra de contexto mostra "Aula: passo N".
-  const [presentation, setPresentation] = useState(flow.presentation);
+  // O fluxo de agora fica também em estado: a barra de contexto mostra "Aula: passo N" e o
+  // painel da ordem mostra os nomes dos passos.
+  const [snapshot, setSnapshot] = useState(flow);
+  const presentation = snapshot.presentation;
+  const [orderOpen, setOrderOpen] = useState(false);
+  // O fluxo que está sendo apresentado (uma foto): enquanto houver, o modo aula está aberto.
+  const [presenting, setPresenting] = useState<FlowContent | null>(null);
   const [menu, setMenu] = useState<MenuState | null>(null);
   const reactFlow = useReactFlow<CanvasNode, CanvasEdge>();
   // O conteúdo do fluxo fica numa ref: os eventos leem e gravam sem esperar uma renderização.
@@ -182,7 +207,7 @@ function Canvas({ flow, onFlowChange, media = localMedia, topLeft, topRight }: F
       if (JSON.stringify(after) === JSON.stringify(before)) return;
       history.current.record(before);
       content.current = after;
-      setPresentation(after.presentation);
+      setSnapshot(after);
       onFlowChange?.(after);
     },
     [onFlowChange, reactFlow],
@@ -197,7 +222,7 @@ function Canvas({ flow, onFlowChange, media = localMedia, topLeft, topRight }: F
       setEdges(rebuilt.edges);
       setEditingId(null);
       content.current = next;
-      setPresentation(next.presentation);
+      setSnapshot(next);
       onFlowChange?.(next);
     },
     [onFlowChange],
@@ -317,6 +342,35 @@ function Canvas({ flow, onFlowChange, media = localMedia, topLeft, topRight }: F
     },
     [commit],
   );
+
+  /** Painel "Ordem da apresentação": grava os passos pelo mesmo caminho do resto (e do desfazer). */
+  const changeOrder = useCallback(
+    (next: PresentationStep[]) => commit({ ...content.current, presentation: next }),
+    [commit],
+  );
+
+  /** Mostra no quadro os nós de um passo: seleciona e leva a câmera até eles. */
+  const showStep = useCallback(
+    (step: PresentationStep) => {
+      const ids = new Set(step.targetIds);
+      setNodes((current) => current.map((node) => ({ ...node, selected: ids.has(node.id) })));
+      void reactFlow.fitView({
+        ...FIT_VIEW,
+        nodes: step.targetIds.map((id) => ({ id })),
+        duration: 300,
+      });
+    },
+    [reactFlow],
+  );
+
+  /** Abre o modo aula com o fluxo de agora; o que acontece lá dentro não volta para o fluxo. */
+  const present = useCallback(() => {
+    setEditingId(null);
+    setMenu(null);
+    setPresenting(current().flow);
+  }, [current]);
+  const exitPresent = useCallback(() => setPresenting(null), []);
+  const toggleOrder = useCallback(() => setOrderOpen((open) => !open), []);
 
   const removeNode = useCallback(
     (id: string) => void reactFlow.deleteElements({ nodes: [{ id }] }),
@@ -609,7 +663,7 @@ function Canvas({ flow, onFlowChange, media = localMedia, topLeft, topRight }: F
   // Colar uma imagem ou um link (fora de um campo de texto) cria o bloco certo.
   useEffect(() => {
     const onPaste = (event: ClipboardEvent) => {
-      if (isTyping(event.target) || !event.clipboardData) return;
+      if (presenting || isTyping(event.target) || !event.clipboardData) return;
       const point = pointer.current ?? center();
       const files = Array.from(event.clipboardData.files);
       if (files.length > 0) {
@@ -626,11 +680,12 @@ function Canvas({ flow, onFlowChange, media = localMedia, topLeft, topRight }: F
     };
     window.addEventListener('paste', onPaste);
     return () => window.removeEventListener('paste', onPaste);
-  }, [addImages, addLink, center]);
+  }, [addImages, addLink, center, presenting]);
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
-      if (isTyping(event.target)) return;
+      // No modo aula as teclas são dele (setas, Esc): o editor por baixo fica quieto.
+      if (presenting || isTyping(event.target)) return;
       // Ctrl no Windows e no Linux, Cmd no Mac (docs/PLAN.md, "Interações").
       if (event.ctrlKey || event.metaKey) {
         const key = event.key.toLowerCase();
@@ -661,7 +716,7 @@ function Canvas({ flow, onFlowChange, media = localMedia, topLeft, topRight }: F
     };
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [undo, redo, duplicate, group]);
+  }, [undo, redo, duplicate, group, presenting]);
 
   // O aviso some sozinho depois de alguns segundos.
   useEffect(() => {
@@ -699,6 +754,15 @@ function Canvas({ flow, onFlowChange, media = localMedia, topLeft, topRight }: F
     [editingId, updateBlock, updateFrame, updateArrow, presentation, setStep, removeNode, media],
   );
 
+  const controls = useMemo<CanvasControls>(
+    () => ({ present, toggleOrder, presenting: presenting !== null }),
+    [present, toggleOrder, presenting],
+  );
+  const selectedIds = useMemo(
+    () => nodes.filter((node) => node.selected).map((node) => node.id),
+    [nodes],
+  );
+
   const panning = tool === 'pan';
   const creating = tool !== 'select' && !panning && tool !== 'arrow';
 
@@ -706,6 +770,8 @@ function Canvas({ flow, onFlowChange, media = localMedia, topLeft, topRight }: F
     <CanvasContext.Provider value={actions}>
       <div
         ref={wrapper}
+        // Com o modo aula aberto, o quadro do editor fica por baixo, sem foco nem clique.
+        inert={presenting !== null}
         className="trama-canvas relative size-full bg-canvas"
         data-testid="quadro"
         data-creating={creating || undefined}
@@ -783,7 +849,7 @@ function Canvas({ flow, onFlowChange, media = localMedia, topLeft, topRight }: F
           nodesDraggable={tool !== 'arrow'}
           multiSelectionKeyCode={MULTI_SELECT_KEYS}
           selectionKeyCode={null}
-          deleteKeyCode={DELETE_KEYS}
+          deleteKeyCode={presenting ? null : DELETE_KEYS}
           connectionMode={ConnectionMode.Loose}
           snapToGrid
           snapGrid={[GRID, GRID]}
@@ -819,12 +885,30 @@ function Canvas({ flow, onFlowChange, media = localMedia, topLeft, topRight }: F
           )}
           {topRight && (
             <Panel position="top-right" className={PANEL}>
-              {topRight}
+              <Slot content={topRight} controls={controls} />
+            </Panel>
+          )}
+          {orderOpen && (
+            <Panel position="top-right" className="mt-20! mr-4! max-h-[calc(100%-176px)]">
+              <OrderPanel
+                flow={snapshot}
+                selectedIds={selectedIds}
+                onChange={changeOrder}
+                onShow={showStep}
+                onClose={() => setOrderOpen(false)}
+              />
             </Panel>
           )}
           <Panel position="center-left" className={PANEL}>
             <div className="relative">
-              <Tools tool={tool} onToolChange={setTool} onAction={onAction} linkOpen={linkOpen} />
+              <Tools
+                tool={tool}
+                onToolChange={setTool}
+                onAction={onAction}
+                linkOpen={linkOpen}
+                orderOpen={orderOpen}
+                onToggleOrder={toggleOrder}
+              />
               {linkOpen && (
                 <LinkPrompt
                   onClose={() => setLinkOpen(false)}
@@ -862,8 +946,22 @@ function Canvas({ flow, onFlowChange, media = localMedia, topLeft, topRight }: F
           </Panel>
         </ReactFlow>
       </div>
+      {presenting && (
+        <Presenter flow={presenting} title={title} media={media} onExit={exitPresent} />
+      )}
     </CanvasContext.Provider>
   );
+}
+
+/** Um canto do quadro que o app preenche: um nó pronto, ou uma função que recebe os controles. */
+function Slot({
+  content,
+  controls,
+}: {
+  content: ReactNode | ((controls: CanvasControls) => ReactNode);
+  controls: CanvasControls;
+}) {
+  return <>{typeof content === 'function' ? content(controls) : content}</>;
 }
 
 /** Caixa para colar o link do vídeo ou do site, ao lado da barra de ferramentas. */
@@ -1063,6 +1161,9 @@ const TOOLS: ToolButton[] = [
   { label: 'Moldura', icon: FrameIcon, tool: 'frame', shortcut: 'F' },
 ];
 
+// Abre o painel "Ordem da apresentação" (modo aula, etapa 1.7).
+const ORDER_TOOL: ToolButton = { label: 'Ordem da apresentação', icon: OrderIcon, action: 'order' };
+
 const LATER_TOOLS: ToolButton[] = [
   { label: 'Falar e organizar', icon: VoiceIcon },
   { label: 'Organizar com IA', icon: AiIcon },
@@ -1092,7 +1193,9 @@ function ToolIconButton({
       aria-label={item.label}
       aria-keyshortcuts={item.shortcut}
       title={hint}
-      aria-pressed={item.tool || item.action === 'link' ? active : undefined}
+      aria-pressed={
+        item.tool || item.action === 'link' || item.action === 'order' ? active : undefined
+      }
       disabled={!available}
       onClick={onClick}
       className={cn(
@@ -1112,11 +1215,15 @@ function Tools({
   onToolChange,
   onAction,
   linkOpen,
+  orderOpen,
+  onToggleOrder,
 }: {
   tool: CanvasTool;
   onToolChange: (tool: CanvasTool) => void;
   onAction: (action: ToolAction) => void;
   linkOpen: boolean;
+  orderOpen: boolean;
+  onToggleOrder: () => void;
 }) {
   const handler = (item: ToolButton) => {
     const { tool: itemTool, action } = item;
@@ -1138,6 +1245,8 @@ function Tools({
           onClick={handler(item)}
         />
       ))}
+      <span className="mx-1.5 my-1 h-px bg-border" aria-hidden />
+      <ToolIconButton item={ORDER_TOOL} active={orderOpen} onClick={onToggleOrder} />
       <span className="mx-1.5 my-1 h-px bg-border" aria-hidden />
       {LATER_TOOLS.map((item) => (
         <ToolIconButton key={item.label} item={item} />
