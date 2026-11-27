@@ -3,6 +3,11 @@ packages:
   - packages/*
   - tooling
 
+# Scripts de instalação de dependências: o pnpm 12 recusa os que não estão listados aqui.
+# O esbuild (do tsx) não precisa do seu: o binário já vem no pacote da plataforma.
+allowBuilds:
+  esbuild: false
+
 # Versões compartilhadas por vários pacotes. No package.json use "catalog:".
 catalog:
   '@types/node': ^24.19.4

@@ -57,3 +57,11 @@ Não apague: escreva uma linha nova dizendo o que substitui.
 - 2026-11-27 · **Fontes servidas pelo próprio site (`@fontsource-variable`): Inter, Lora, JetBrains Mono e Caveat.** Motivo: sem pedido ao Google Fonts a cada visita; a mono e a manuscrita do plano ficam definidas.
 - 2026-11-27 · **Erros usam o par rosa das notas; sucesso, o verde de concluído; informação, o azul.** Motivo: o plano só permite cor com significado, e esses pares já existem nos tokens, todos com contraste AA testado.
 - 2026-11-27 · **Vitrine dos componentes em `#design` até o roteador chegar (etapa 0.5).** Motivo: dá para revisar os componentes no navegador, e o Codex consegue testar a etapa no ambiente dele.
+
+## Etapa 0.4 — E-mails com o logo
+
+- 2026-11-27 · **E-mails no visual escuro do app (fundo do quadro, cartão de superfície, botão claro), com o logo e o nome no topo.** Motivo: pedido de e-mails caprichados com o logo, no preto e branco do Trama.
+- 2026-11-27 · **O logo vai como PNG hospedado no site (`/email/logo.png`, 80×80).** Motivo: vários programas de e-mail não mostram SVG, e o Gmail bloqueia imagens embutidas; os e-mails do Supabase Auth também não aceitam anexo.
+- 2026-11-27 · **O modelo de recuperação de senha do Supabase é gerado do componente React (`supabase/templates/recovery.html`), com um teste que avisa quando ficou desatualizado.** Motivo: um só desenho para os e-mails do Supabase e os do Resend.
+- 2026-11-27 · **O modelo do Supabase sai sem quebra de linha automática.** Motivo: a quebra caiu no meio de um `{{ else }}` dos modelos do Supabase.
+- 2026-11-27 · **O script de instalação do esbuild (dependência do tsx) fica negado em `allowBuilds`.** Motivo: o pnpm 12 recusa instalar com script não decidido, e o esbuild não precisa dele, porque o binário vem no pacote da plataforma.
