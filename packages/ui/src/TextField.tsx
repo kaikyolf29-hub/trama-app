@@ -26,7 +26,9 @@ export function TextField({
 }: TextFieldProps) {
   const autoId = useId();
   const inputId = id ?? autoId;
-  const hintId = hint ? `${inputId}-dica` : undefined;
+  // Com erro, a mensagem de erro toma o lugar da dica (elas costumam dizer o mesmo).
+  const showHint = Boolean(hint) && !error;
+  const hintId = showHint ? `${inputId}-dica` : undefined;
   const errorId = error ? `${inputId}-erro` : undefined;
   const describedBy = [errorId, hintId].filter(Boolean).join(' ') || undefined;
 
@@ -59,7 +61,7 @@ export function TextField({
           {error}
         </p>
       )}
-      {hint && (
+      {showHint && (
         <p id={hintId} className="text-xs text-text-muted">
           {hint}
         </p>

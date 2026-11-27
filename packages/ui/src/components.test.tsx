@@ -31,7 +31,7 @@ describe('TextField', () => {
     expect(screen.getByLabelText('E-mail').getAttribute('type')).toBe('email');
   });
 
-  it('com erro, marca o campo e o liga à mensagem', () => {
+  it('com erro, marca o campo, liga à mensagem e esconde a dica', () => {
     render(
       <TextField label="E-mail" error="Digite um e-mail válido." hint="Usamos só para entrar." />,
     );
@@ -39,7 +39,16 @@ describe('TextField', () => {
     expect(input.getAttribute('aria-invalid')).toBe('true');
     const described = (input.getAttribute('aria-describedby') ?? '').split(' ');
     const texts = described.map((id) => document.getElementById(id)?.textContent);
-    expect(texts).toEqual(['Digite um e-mail válido.', 'Usamos só para entrar.']);
+    expect(texts).toEqual(['Digite um e-mail válido.']);
+    expect(screen.queryByText('Usamos só para entrar.')).toBeNull();
+  });
+});
+
+describe('TextField sem erro', () => {
+  it('liga a dica ao campo', () => {
+    render(<TextField label="Senha" hint="Pelo menos 8 caracteres." />);
+    const hintId = screen.getByLabelText('Senha').getAttribute('aria-describedby') ?? '';
+    expect(document.getElementById(hintId)?.textContent).toBe('Pelo menos 8 caracteres.');
   });
 });
 

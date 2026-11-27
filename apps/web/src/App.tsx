@@ -1,16 +1,31 @@
-import { DesignPreview } from './DesignPreview';
+import { RouterProvider, type RouterHistory } from '@tanstack/react-router';
+import { useEffect, useState } from 'react';
+import { AuthProvider } from './auth/AuthProvider';
+import { useAuth } from './auth/context';
+import type { AuthClient } from './auth/types';
+import { createAppRouter, type AppRouter } from './router';
 
-/**
- * Casca do site. As telas chegam nas próximas etapas (docs/PLAN.md, "Roadmap"). Até o
- * roteador entrar (etapa 0.5), #design abre a vitrine dos componentes base.
- */
-export function App() {
-  if (typeof window !== 'undefined' && window.location.hash === '#design') {
-    return <DesignPreview />;
-  }
+interface AppProps {
+  client: AuthClient;
+  /** Só nos testes: o histórico em memória. */
+  history?: RouterHistory;
+}
+
+/** Casca do site: o login e as rotas. */
+export function App({ client, history }: AppProps) {
+  const [router] = useState(() => createAppRouter(client, history));
   return (
-    <main className="bg-canvas-dots grid min-h-dvh place-items-center px-4">
-      <h1 className="font-serif text-3xl font-semibold text-text-strong">Trama</h1>
-    </main>
+    <AuthProvider client={client}>
+      <RouterWithAuth router={router} />
+    </AuthProvider>
   );
+}
+
+/** Quando a pessoa entra ou sai (até em outra aba), as guardas das rotas rodam de novo. */
+function RouterWithAuth({ router }: { router: AppRouter }) {
+  const { status } = useAuth();
+  useEffect(() => {
+    if (status !== 'loading') void router.invalidate();
+  }, [status, router]);
+  return <RouterProvider router={router} />;
 }

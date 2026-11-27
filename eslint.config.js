@@ -30,6 +30,19 @@ export default defineConfig([
         'error',
         { argsIgnorePattern: '^_', varsIgnorePattern: '^_', ignoreRestSiblings: true },
       ],
+      // O TanStack Router interrompe a navegação com `throw redirect()` e `throw notFound()`.
+      '@typescript-eslint/only-throw-error': [
+        'error',
+        {
+          allow: [
+            {
+              from: 'package',
+              package: '@tanstack/router-core',
+              name: ['Redirect', 'NotFoundError'],
+            },
+          ],
+        },
+      ],
     },
   },
 
