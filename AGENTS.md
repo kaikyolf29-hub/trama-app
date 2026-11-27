@@ -30,20 +30,31 @@ Node 24 (`.nvmrc`). Instale o pnpm 12 de verdade (`npm install -g pnpm@12` ou
 
 Rode sempre da raiz.
 
-| Comando          | O que faz                                                     |
-| ---------------- | ------------------------------------------------------------- |
-| `pnpm install`   | Instala tudo                                                  |
-| `pnpm dev`       | Sobe o site (localhost:5173) e a API (localhost:8787)         |
-| `pnpm test`      | Testes de todos os pacotes (Vitest)                           |
-| `pnpm typecheck` | Checagem de tipos de todos os pacotes                         |
-| `pnpm lint`      | ESLint no código e Stylelint nas folhas de estilo             |
-| `pnpm format`    | Formata com Prettier (`pnpm format:check` só confere)         |
-| `pnpm build`     | Build de produção                                             |
-| `pnpm check`     | Tipos + lint + formatação + testes: rode antes de abrir um PR |
+| Comando          | O que faz                                                      |
+| ---------------- | -------------------------------------------------------------- |
+| `pnpm install`   | Instala tudo                                                   |
+| `pnpm dev`       | Sobe o site (localhost:5173) e a API (localhost:8787)          |
+| `pnpm test`      | Testes de todos os pacotes (Vitest)                            |
+| `pnpm typecheck` | Checagem de tipos de todos os pacotes                          |
+| `pnpm lint`      | ESLint no código e Stylelint nas folhas de estilo              |
+| `pnpm format`    | Formata com Prettier (`pnpm format:check` só confere)          |
+| `pnpm build`     | Build de produção                                              |
+| `pnpm check`     | Tipos + lint + formatação + testes: rode antes de abrir um PR  |
+| `pnpm e2e`       | Playwright: constrói o site e testa os fluxos e os 500 blocos  |
+| `pnpm e2e:perf`  | Só o teste de desempenho com 500 blocos (usa o `dist/` pronto) |
 
 Um pacote só: `pnpm --filter @trama/core test`. O CI roda typecheck, lint, formatação,
 testes e build em todo PR (`.github/workflows/ci.yml`); o deploy na Cloudflare publica a `main`
 e um preview de cada PR (`docs/DEPLOY.md`).
+
+Testes de ponta a ponta (`apps/web/e2e`, Playwright, `*.e2e.ts`): rodam contra o site construído
+(`vite build` + `vite preview`) com o login do Supabase e a API simulados no navegador, sem tocar
+em nada de verdade. Antes da primeira vez: `pnpm --filter @trama/web exec playwright install
+chromium` (no CI, `--with-deps`). Variáveis: `E2E_PORT` (porta, padrão 4173), `E2E_SKIP_BUILD=1`
+(reaproveita o `dist/`), `E2E_PERF_*` (limites do teste de 500 blocos, veja `perf.e2e.ts`). Um
+arquivo por assunto (`auth`, `home`, `board`, `project`, `perf`); o `support/` tem a API falsa
+(`FakeApi`), a sessão falsa e os ajudantes do quadro. O job `e2e` do CI roda tudo e guarda o
+relatório como artefato quando falha.
 
 ## Quem faz o quê
 
