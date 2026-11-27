@@ -1,6 +1,6 @@
 import { flowContentSchema, type FlowContent } from '@trama/core';
 import { videoFlowExample } from '@trama/core/fixtures';
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { FlowCanvas } from './FlowCanvas';
 import type { CanvasMedia } from './media';
@@ -491,6 +491,114 @@ describe('FlowCanvas', () => {
       fireEvent.keyDown(field, { key: 'z', ctrlKey: true });
       expect(onFlowChange).not.toHaveBeenCalled();
       expect(screen.getByRole('textbox', { name: 'Texto da nota' })).toBeDefined();
+    });
+  });
+
+  describe('barra de contexto e clique direito (etapa 1.4)', () => {
+    function setup() {
+      const onFlowChange = vi.fn<(next: FlowContent) => void>();
+      render(<FlowCanvas flow={flow} onFlowChange={onFlowChange} />);
+      const last = () => {
+        const next = onFlowChange.mock.calls.at(-1)?.[0];
+        if (!next) throw new Error('O quadro ainda não avisou nenhuma mudança.');
+        return next;
+      };
+      return { onFlowChange, last };
+    }
+    const node = (id: string) => {
+      const element = document.querySelector(`[data-id="${id}"]`);
+      if (!element) throw new Error(`Sem o nó ${id}.`);
+      return element;
+    };
+    const block = (next: FlowContent, id: string) => next.blocks.find((b) => b.id === id);
+    const bar = () => screen.getByRole('toolbar', { name: 'Opções do bloco' });
+
+    it('muda fonte, tamanho e negrito do texto selecionado', () => {
+      const { last } = setup();
+      fireEvent.click(node('texto-titulo'));
+      const font = within(bar()).getByRole('combobox', { name: 'Fonte' });
+      expect(font).toHaveProperty('value', 'serif');
+      fireEvent.change(font, { target: { value: 'mono' } });
+      fireEvent.change(within(bar()).getByRole('combobox', { name: 'Tamanho' }), {
+        target: { value: '32' },
+      });
+      fireEvent.click(within(bar()).getByRole('button', { name: 'Negrito' }));
+      expect(block(last(), 'texto-titulo')).toMatchObject({
+        font: 'mono',
+        fontSize: 32,
+        bold: false,
+      });
+    });
+
+    it('troca a cor da nota', () => {
+      const { last } = setup();
+      fireEvent.click(node('nota-comentario'));
+      fireEvent.click(within(bar()).getByRole('button', { name: 'Cor da nota: Amarelo' }));
+      fireEvent.click(within(bar()).getByRole('radio', { name: 'Azul' }));
+      expect(block(last(), 'nota-comentario')).toMatchObject({ color: 'blue' });
+    });
+
+    it('põe e tira o bloco de um passo da aula', () => {
+      const { last } = setup();
+      fireEvent.click(node('nota-comentario'));
+      const step = within(bar()).getByRole('combobox', { name: 'Passo da aula' });
+      expect(step).toHaveProperty('value', '3');
+      fireEvent.change(step, { target: { value: '' } });
+      expect(last().presentation.some((s) => s.targetIds.includes('nota-comentario'))).toBe(false);
+      fireEvent.change(step, { target: { value: 'new' } });
+      expect(last().presentation.at(-1)?.targetIds).toEqual(['nota-comentario']);
+    });
+
+    it('apaga pela barra', async () => {
+      const { last } = setup();
+      fireEvent.click(node('nota-comentario'));
+      fireEvent.click(within(bar()).getByRole('button', { name: 'Apagar' }));
+      await waitFor(() => expect(block(last(), 'nota-comentario')).toBeUndefined());
+    });
+
+    it('clique direito no vazio abre o menu de blocos, com as etapas', () => {
+      const { last } = setup();
+      const pane = document.querySelector('.react-flow__pane');
+      if (!pane) throw new Error('Sem o fundo do quadro.');
+      fireEvent.contextMenu(pane, { clientX: 300, clientY: 300 });
+      const menu = screen.getByRole('menu', { name: 'Adicionar ao quadro' });
+      expect(menu.style.left).toBe('300px');
+      fireEvent.click(within(menu).getByRole('menuitem', { name: /Etapas/ }));
+      expect(last().blocks.at(-1)?.type).toBe('checklist');
+      expect(screen.queryByRole('menu')).toBeNull();
+    });
+
+    it('arrastar com o botão direito move o quadro e não abre o menu', () => {
+      setup();
+      const pane = document.querySelector('.react-flow__pane');
+      if (!pane) throw new Error('Sem o fundo do quadro.');
+      fireEvent.pointerDown(pane, { button: 2, clientX: 100, clientY: 100 });
+      fireEvent.contextMenu(pane, { clientX: 260, clientY: 180 });
+      expect(screen.queryByRole('menu')).toBeNull();
+    });
+
+    it('trava pelo clique direito: não edita nem apaga, e destrava de novo', () => {
+      const { last } = setup();
+      fireEvent.contextMenu(node('nota-comentario'));
+      fireEvent.click(screen.getByRole('menuitem', { name: 'Travar' }));
+      expect(block(last(), 'nota-comentario')).toMatchObject({ locked: true });
+      fireEvent.doubleClick(screen.getByText('Fixar comentário com o link do curso'));
+      expect(screen.queryByRole('textbox', { name: 'Texto da nota' })).toBeNull();
+      fireEvent.contextMenu(node('nota-comentario'));
+      const menu = screen.getByRole('menu', { name: 'Opções do bloco' });
+      expect(within(menu).queryByRole('menuitem', { name: /Apagar/ })).toBeNull();
+      fireEvent.click(within(menu).getByRole('menuitem', { name: 'Destravar' }));
+      expect(block(last(), 'nota-comentario')).toMatchObject({ locked: false });
+    });
+
+    it('traz para frente e fecha o menu com Esc', () => {
+      const { last } = setup();
+      fireEvent.contextMenu(node('nota-comentario'));
+      fireEvent.click(screen.getByRole('menuitem', { name: 'Trazer para frente' }));
+      expect(block(last(), 'nota-comentario')?.zIndex).toBe(1);
+      fireEvent.contextMenu(node('nota-comentario'));
+      fireEvent.keyDown(screen.getByRole('menu'), { key: 'Escape' });
+      expect(screen.queryByRole('menu')).toBeNull();
     });
   });
 });

@@ -13,7 +13,7 @@ export type CanvasNode = BlockNode | FrameNode;
 export type CanvasEdge = Edge<{ arrow: Arrow }>;
 
 /** Molduras ficam sempre atrás dos blocos. */
-const FRAME_LAYER = -1000;
+export const FRAME_LAYER = -1000;
 
 /** Uma moldura como nó do React Flow. */
 export function frameToNode(frame: Frame): FrameNode {
@@ -25,6 +25,7 @@ export function frameToNode(frame: Frame): FrameNode {
     height: frame.size.height,
     zIndex: FRAME_LAYER + frame.zIndex,
     draggable: !frame.locked,
+    deletable: !frame.locked,
     data: { kind: 'frame', frame },
   };
 }
@@ -43,6 +44,7 @@ export function blockToNode(block: Block, parent?: Frame): BlockNode {
     height: block.size.height,
     zIndex: block.zIndex,
     draggable: !block.locked,
+    deletable: !block.locked,
     data: { kind: 'block', block },
   };
 }

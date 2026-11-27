@@ -1,6 +1,7 @@
 import type { Arrow, Block, Frame } from '@trama/core';
 import { createContext, useContext } from 'react';
 import type { CanvasMedia } from './media';
+import type { StepTarget } from './steps';
 
 /** O que um bloco ou moldura pode pedir ao quadro. */
 export interface CanvasActions {
@@ -11,6 +12,11 @@ export interface CanvasActions {
   updateBlock: (next: Block) => void;
   updateFrame: (next: Frame) => void;
   updateArrow: (next: Arrow) => void;
+  /** Número do passo da aula em que o nó aparece. */
+  stepOf: (id: string) => number | undefined;
+  stepCount: number;
+  setStep: (id: string, target: StepTarget) => void;
+  removeNode: (id: string) => void;
   /** Endereço para mostrar uma imagem guardada (veja `CanvasMedia`). */
   resolveImage: CanvasMedia['resolveImage'];
 }

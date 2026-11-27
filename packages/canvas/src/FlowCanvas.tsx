@@ -1,4 +1,10 @@
-import type { Arrow, Block, FlowContent, Frame } from '@trama/core';
+import {
+  presentationStepNumber,
+  type Arrow,
+  type Block,
+  type FlowContent,
+  type Frame,
+} from '@trama/core';
 import { cn } from '@trama/ui';
 import {
   AiIcon,
@@ -47,6 +53,7 @@ import { CanvasContext, type CanvasActions } from './canvas-context';
 import {
   arrowToEdge,
   blockToNode,
+  FRAME_LAYER,
   frameToNode,
   fromReactFlow,
   toReactFlow,
@@ -70,14 +77,18 @@ import {
   MAX_IMAGE_BYTES,
   type CanvasMedia,
 } from './media';
+import { ContextMenu, type MenuItem } from './context-menu';
 import { duplicateNodes, groupIntoFrame, History } from './edit';
 import { edgeTypes, nodeTypes } from './node-types';
 import { removeNodes } from './remove';
+import { setNodeStep, type StepTarget } from './steps';
 
 /** Selecionar, mover o quadro, ligar com setas, ou criar um tipo de bloco no próximo clique. */
 export type CanvasTool = 'select' | 'pan' | 'arrow' | CreatableKind;
 type ToolAction = 'image' | 'link';
 type ScreenPoint = { x: number; y: number };
+/** Clique direito: onde abriu e, num nó, o que valia nele naquela hora. */
+type MenuState = ScreenPoint & { node?: { id: string; locked: boolean; step?: number } };
 
 export interface FlowCanvasProps {
   /** Conteúdo inicial. Depois disso o quadro guarda o estado e avisa cada mudança. */
@@ -140,6 +151,9 @@ function Canvas({ flow, onFlowChange, media = localMedia, topLeft, topRight }: F
   const [editingId, setEditingId] = useState<string | null>(null);
   const [linkOpen, setLinkOpen] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
+  // Os passos da aula ficam também em estado: a barra de contexto mostra "Aula: passo N".
+  const [presentation, setPresentation] = useState(flow.presentation);
+  const [menu, setMenu] = useState<MenuState | null>(null);
   const reactFlow = useReactFlow<CanvasNode, CanvasEdge>();
   // O conteúdo do fluxo fica numa ref: os eventos leem e gravam sem esperar uma renderização.
   const content = useRef(flow);
@@ -148,6 +162,8 @@ function Canvas({ flow, onFlowChange, media = localMedia, topLeft, topRight }: F
   const fileInput = useRef<HTMLInputElement>(null);
   // Onde o ponteiro está sobre o quadro: colar põe o bloco ali.
   const pointer = useRef<ScreenPoint | null>(null);
+  // Onde o botão direito desceu: arrastar com ele move o quadro, clicar abre o menu.
+  const rightDown = useRef<ScreenPoint | null>(null);
 
   /** Guarda o novo conteúdo, com as posições atuais dos nós, e avisa quem usa o quadro. */
   const commit = useCallback(
@@ -158,6 +174,7 @@ function Canvas({ flow, onFlowChange, media = localMedia, topLeft, topRight }: F
       if (JSON.stringify(after) === JSON.stringify(before)) return;
       history.current.record(before);
       content.current = after;
+      setPresentation(after.presentation);
       onFlowChange?.(after);
     },
     [onFlowChange, reactFlow],
@@ -172,6 +189,7 @@ function Canvas({ flow, onFlowChange, media = localMedia, topLeft, topRight }: F
       setEdges(rebuilt.edges);
       setEditingId(null);
       content.current = next;
+      setPresentation(next.presentation);
       onFlowChange?.(next);
     },
     [onFlowChange],
@@ -196,13 +214,18 @@ function Canvas({ flow, onFlowChange, media = localMedia, topLeft, topRight }: F
     };
   }, [reactFlow]);
 
-  const duplicate = useCallback(() => {
-    const { flow: base, selected } = current();
-    const { flow: next, copies } = duplicateNodes(base, selected);
-    if (copies.length === 0) return;
-    history.current.record(content.current);
-    show(next, copies);
-  }, [current, show]);
+  /** Duplica os ids pedidos (clique direito) ou, sem eles, a seleção (Ctrl+D). */
+  const duplicate = useCallback(
+    (ids?: string[]) => {
+      const { flow: base, selected: chosen } = current();
+      const selected = ids ?? chosen;
+      const { flow: next, copies } = duplicateNodes(base, selected);
+      if (copies.length === 0) return;
+      history.current.record(content.current);
+      show(next, copies);
+    },
+    [current, show],
+  );
 
   const group = useCallback(() => {
     const { flow: base, selected } = current();
@@ -222,6 +245,9 @@ function Canvas({ flow, onFlowChange, media = localMedia, topLeft, topRight }: F
                 ...node,
                 width: next.size.width,
                 height: next.size.height,
+                zIndex: next.zIndex,
+                draggable: !next.locked,
+                deletable: !next.locked,
                 data: { kind: 'block', block: next },
               }
             : node,
@@ -241,7 +267,13 @@ function Canvas({ flow, onFlowChange, media = localMedia, topLeft, topRight }: F
       setNodes((current) =>
         current.map((node) =>
           node.id === next.id && node.type === 'frame'
-            ? { ...node, data: { kind: 'frame', frame: next } }
+            ? {
+                ...node,
+                zIndex: FRAME_LAYER + next.zIndex,
+                draggable: !next.locked,
+                deletable: !next.locked,
+                data: { kind: 'frame', frame: next },
+              }
             : node,
         ),
       );
@@ -268,6 +300,50 @@ function Canvas({ flow, onFlowChange, media = localMedia, topLeft, topRight }: F
       });
     },
     [commit],
+  );
+
+  const setStep = useCallback(
+    (id: string, target: StepTarget) => {
+      const base = content.current;
+      commit({ ...base, presentation: setNodeStep(base.presentation, id, target) });
+    },
+    [commit],
+  );
+
+  const removeNode = useCallback(
+    (id: string) => void reactFlow.deleteElements({ nodes: [{ id }] }),
+    [reactFlow],
+  );
+
+  /** Trava ou destrava: travado, o nó não se move, não apaga e não edita. */
+  const toggleLock = useCallback(
+    (id: string) => {
+      const base = content.current;
+      const block = base.blocks.find((b) => b.id === id);
+      if (block) return updateBlock({ ...block, locked: !block.locked });
+      const frame = base.frames.find((f) => f.id === id);
+      if (frame) updateFrame({ ...frame, locked: !frame.locked });
+    },
+    [updateBlock, updateFrame],
+  );
+
+  /** Traz para frente: acima dos outros blocos (ou das outras molduras). */
+  const bringToFront = useCallback(
+    (id: string) => {
+      const base = content.current;
+      const block = base.blocks.find((b) => b.id === id);
+      if (block) {
+        const top = Math.max(...base.blocks.map((b) => b.zIndex));
+        if (block.zIndex < top || base.blocks.filter((b) => b.zIndex === top).length > 1) {
+          updateBlock({ ...block, zIndex: top + 1 });
+        }
+        return;
+      }
+      const frame = base.frames.find((f) => f.id === id);
+      if (frame)
+        updateFrame({ ...frame, zIndex: Math.max(...base.frames.map((f) => f.zIndex)) + 1 });
+    },
+    [updateBlock, updateFrame],
   );
 
   const isValidConnection = useCallback(
@@ -488,7 +564,7 @@ function Canvas({ flow, onFlowChange, media = localMedia, topLeft, topRight }: F
         const actions: Partial<Record<string, () => void>> = {
           z: event.shiftKey ? redo : undo,
           y: redo,
-          d: duplicate,
+          d: () => duplicate(),
           g: group,
         };
         const action = actions[key];
@@ -526,6 +602,13 @@ function Canvas({ flow, onFlowChange, media = localMedia, topLeft, topRight }: F
     else setLinkOpen((open) => !open);
   }, []);
 
+  const closeMenu = useCallback(() => setMenu(null), []);
+
+  const menuHandlers = useMemo<MenuHandlers>(
+    () => ({ create, duplicate, bringToFront, toggleLock, setStep, removeNode }),
+    [create, duplicate, bringToFront, toggleLock, setStep, removeNode],
+  );
+
   const actions = useMemo<CanvasActions>(
     () => ({
       editingId,
@@ -534,9 +617,13 @@ function Canvas({ flow, onFlowChange, media = localMedia, topLeft, topRight }: F
       updateBlock,
       updateFrame,
       updateArrow,
+      stepOf: (id: string) => presentationStepNumber(presentation, id),
+      stepCount: presentation.length,
+      setStep,
+      removeNode,
       resolveImage: media.resolveImage,
     }),
-    [editingId, updateBlock, updateFrame, updateArrow, media],
+    [editingId, updateBlock, updateFrame, updateArrow, presentation, setStep, removeNode, media],
   );
 
   const panning = tool === 'pan';
@@ -555,6 +642,20 @@ function Canvas({ flow, onFlowChange, media = localMedia, topLeft, topRight }: F
         onDrop={onDrop}
         onPointerMove={(event) => {
           pointer.current = { x: event.clientX, y: event.clientY };
+        }}
+        onPointerDown={(event) => {
+          if (event.button === 2) rightDown.current = { x: event.clientX, y: event.clientY };
+        }}
+        onContextMenu={(event) => {
+          // O React Flow não chama onPaneContextMenu quando o botão direito também move o
+          // quadro; por isso o menu do vazio é aberto aqui, se o ponteiro quase não andou.
+          if (!(event.target instanceof Element)) return;
+          if (!event.target.classList.contains('react-flow__pane')) return;
+          event.preventDefault();
+          const down = rightDown.current;
+          rightDown.current = null;
+          if (down && Math.hypot(event.clientX - down.x, event.clientY - down.y) > 4) return;
+          setMenu({ x: event.clientX, y: event.clientY });
         }}
         onPointerLeave={() => {
           pointer.current = null;
@@ -584,6 +685,22 @@ function Canvas({ flow, onFlowChange, media = localMedia, topLeft, topRight }: F
           onDelete={onDelete}
           onPaneClick={onPaneClick}
           onConnect={onConnect}
+          onNodeContextMenu={(event, node) => {
+            event.preventDefault();
+            const base = content.current;
+            const found =
+              base.blocks.find((b) => b.id === node.id) ??
+              base.frames.find((f) => f.id === node.id);
+            setMenu({
+              x: event.clientX,
+              y: event.clientY,
+              node: {
+                id: node.id,
+                locked: found?.locked ?? false,
+                step: presentationStepNumber(base.presentation, node.id),
+              },
+            });
+          }}
           isValidConnection={isValidConnection}
           onEdgeDoubleClick={(_, edge) => setEditingId(edge.id)}
           connectionLineStyle={CONNECTION_LINE_STYLE}
@@ -649,6 +766,7 @@ function Canvas({ flow, onFlowChange, media = localMedia, topLeft, topRight }: F
               </p>
             </Panel>
           )}
+          {menu && <BoardMenu menu={menu} handlers={menuHandlers} onClose={closeMenu} />}
           <MiniMap
             position="bottom-right"
             pannable
@@ -725,6 +843,84 @@ function LinkPrompt({
       )}
     </form>
   );
+}
+
+/** O que o clique direito pode fazer. */
+type MenuHandlers = {
+  create: (kind: CreatableKind, at: ScreenPoint) => void;
+  duplicate: (ids: string[]) => void;
+  bringToFront: (id: string) => void;
+  toggleLock: (id: string) => void;
+  setStep: (id: string, target: StepTarget) => void;
+  removeNode: (id: string) => void;
+};
+
+/** O menu do clique direito, com os itens para o que foi clicado. */
+function BoardMenu({
+  menu,
+  handlers,
+  onClose,
+}: {
+  menu: MenuState;
+  handlers: MenuHandlers;
+  onClose: () => void;
+}) {
+  return (
+    <ContextMenu
+      x={menu.x}
+      y={menu.y}
+      label={menu.node ? 'Opções do bloco' : 'Adicionar ao quadro'}
+      items={buildMenuItems(menu, handlers)}
+      onClose={onClose}
+    />
+  );
+}
+
+/** Itens do clique direito: num nó, o que fazer com ele; no vazio, o menu de blocos. */
+function buildMenuItems({ x, y, node }: MenuState, actions: MenuHandlers): MenuItem[] {
+  const { create, duplicate, bringToFront, toggleLock, setStep, removeNode } = actions;
+  if (!node) {
+    const at = { x, y };
+    const add = (label: string, kind: CreatableKind, shortcut: string): MenuItem => ({
+      label,
+      shortcut,
+      onSelect: () => create(kind, at),
+    });
+    return [
+      add('Texto', 'text', 'T'),
+      add('Cartão', 'card', 'C'),
+      add('Nota adesiva', 'sticky', 'N'),
+      add('Forma', 'shape', 'R'),
+      add('Etapas', 'checklist', 'E'),
+      add('Moldura', 'frame', 'F'),
+    ];
+  }
+  const { id, locked, step } = node;
+  const items: MenuItem[] = [
+    { label: 'Duplicar', shortcut: 'Ctrl+D', onSelect: () => duplicate([id]) },
+    { label: 'Trazer para frente', onSelect: () => bringToFront(id) },
+    { label: locked ? 'Destravar' : 'Travar', onSelect: () => toggleLock(id) },
+    step
+      ? {
+          label: `Tirar da aula (passo ${step})`,
+          separated: true,
+          onSelect: () => setStep(id, null),
+        }
+      : {
+          label: 'Pôr num passo novo da aula',
+          separated: true,
+          onSelect: () => setStep(id, 'new'),
+        },
+  ];
+  if (!locked) {
+    items.push({
+      label: 'Apagar',
+      shortcut: 'Delete',
+      separated: true,
+      onSelect: () => removeNode(id),
+    });
+  }
+  return items;
 }
 
 type ToolButton = {
