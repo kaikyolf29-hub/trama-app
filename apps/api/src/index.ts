@@ -1,6 +1,9 @@
 import { Hono } from 'hono';
 import { bodyLimit } from 'hono/body-limit';
 import { cors } from 'hono/cors';
+import { accountRoutes } from './account/routes';
+import type { AccountStore } from './account/store';
+import { createSupabaseAccountStore } from './account/supabase-store';
 import { projectRoutes } from './projects/routes';
 import { SessionError, type ProjectStore } from './projects/store';
 import { createSupabaseStore } from './projects/supabase-store';
@@ -40,12 +43,27 @@ const supabaseStore: StoreFactory = (env, token) => {
   return createSupabaseStore(env.SUPABASE_URL, env.SUPABASE_PUBLISHABLE_KEY, token);
 };
 
+type AccountStoreFactory = (env: Env, token: string) => AccountStore;
+
+const supabaseAccountStore: AccountStoreFactory = (env, token) => {
+  if (!env.SUPABASE_URL || !env.SUPABASE_PUBLISHABLE_KEY) {
+    throw new Error('Faltam SUPABASE_URL e SUPABASE_PUBLISHABLE_KEY no Worker.');
+  }
+  return createSupabaseAccountStore(env.SUPABASE_URL, env.SUPABASE_PUBLISHABLE_KEY, token);
+};
+
 /**
  * A API do Trama: a única porta para o banco, o Drive, os e-mails e as IAs
- * (docs/PLAN.md, "Stack técnica e arquitetura"). `storeFor` existe para os testes.
+ * (docs/PLAN.md, "Stack técnica e arquitetura"). `storeFor` e `accountStoreFor` existem para os testes.
  */
-export function createApp(storeFor: StoreFactory = supabaseStore) {
-  const app = new Hono<{ Bindings: Env; Variables: { store: ProjectStore } }>();
+export function createApp(
+  storeFor: StoreFactory = supabaseStore,
+  accountStoreFor: AccountStoreFactory = supabaseAccountStore,
+) {
+  const app = new Hono<{
+    Bindings: Env;
+    Variables: { store: ProjectStore; accountStore: AccountStore };
+  }>();
 
   app.use(
     '*',
@@ -77,7 +95,23 @@ export function createApp(storeFor: StoreFactory = supabaseStore) {
     await next();
   });
 
+  // O mesmo vale para a conta: o perfil só abre com o token de login.
+  app.use(
+    '/account/*',
+    bodyLimit({
+      maxSize: 64 * 1024,
+      onError: (c) => c.json({ error: 'O pedido é grande demais.' }, 413),
+    }),
+  );
+  app.use('/account/*', async (c, next) => {
+    const token = /^Bearer (\S+)$/.exec(c.req.header('Authorization') ?? '')?.[1];
+    if (!token) return c.json({ error: 'Entre na sua conta para continuar.' }, 401);
+    c.set('accountStore', accountStoreFor(c.env ?? {}, token));
+    await next();
+  });
+
   app.route('/projects', projectRoutes());
+  app.route('/account', accountRoutes());
 
   app.notFound((c) => c.json({ error: 'Rota não encontrada.' }, 404));
 

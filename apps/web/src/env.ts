@@ -1,3 +1,4 @@
+import { createAccountApi } from './api/account-api';
 import { createProjectsApi } from './api/projects-api';
 import { createSupabaseAuthClient } from './auth/supabase-client';
 import type { AuthClient } from './auth/types';
@@ -32,6 +33,9 @@ export function createBackendFromEnv(): Backend {
       ...defaultServices,
       projects: apiUrl
         ? createProjectsApi({ baseUrl: apiUrl, getToken: () => auth.getAccessToken() })
+        : null,
+      account: apiUrl
+        ? createAccountApi({ baseUrl: apiUrl, getToken: () => auth.getAccessToken() })
         : null,
       mediaFor: (userId) => createSupabaseMedia(bucket, userId),
     },

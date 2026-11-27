@@ -8,6 +8,7 @@ import {
 } from '@tanstack/react-router';
 import { safeReturnPath } from './auth/return-path';
 import type { AuthClient } from './auth/types';
+import { ConfirmEmailPage } from './pages/ConfirmEmailPage';
 import { DesignPreview } from './DesignPreview';
 import { ExampleBoardPage } from './pages/ExampleBoardPage';
 import { ForgotPasswordPage } from './pages/ForgotPasswordPage';
@@ -15,6 +16,7 @@ import { HomePage } from './pages/HomePage';
 import { NewPasswordPage } from './pages/NewPasswordPage';
 import { NotFoundPage } from './pages/NotFoundPage';
 import { ProjectPage } from './pages/ProjectPage';
+import { SettingsPage } from './pages/SettingsPage';
 import { SignInPage } from './pages/SignInPage';
 import { SignUpPage } from './pages/SignUpPage';
 
@@ -56,6 +58,14 @@ const projectRoute = createRoute({
   component: ProjectPage,
 });
 
+/** Configurações (etapa 2.5). */
+const settingsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/configuracoes',
+  beforeLoad: signedInOnly,
+  component: SettingsPage,
+});
+
 const guestOnly = async ({ context }: { context: RouterContext }) => {
   if (await context.auth.getUser()) throw redirect({ to: '/' });
 };
@@ -95,6 +105,17 @@ const newPasswordRoute = createRoute({
   component: NewPasswordPage,
 });
 
+/** Destino do link do e-mail de troca de endereço; abre em qualquer aparelho, logado ou não. */
+const confirmEmailRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/confirmar-email',
+  validateSearch: (search: Record<string, unknown>): { token_hash?: string } => ({
+    token_hash:
+      typeof search.token_hash === 'string' && search.token_hash ? search.token_hash : undefined,
+  }),
+  component: ConfirmEmailPage,
+});
+
 const exampleBoardRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/exemplo',
@@ -110,10 +131,12 @@ const designRoute = createRoute({
 const routeTree = rootRoute.addChildren([
   homeRoute,
   projectRoute,
+  settingsRoute,
   signInRoute,
   signUpRoute,
   forgotPasswordRoute,
   newPasswordRoute,
+  confirmEmailRoute,
   exampleBoardRoute,
   designRoute,
 ]);

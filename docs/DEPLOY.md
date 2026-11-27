@@ -40,6 +40,16 @@ pnpm --filter @trama/api exec wrangler deploy
 
 O `wrangler` pede login na primeira vez (`wrangler login`), ou usa `CLOUDFLARE_API_TOKEN`.
 
+## Troca de e-mail no Supabase (etapa 2.5)
+
+No painel do Supabase (projeto "trama" → Authentication → Emails → Templates → **Change Email
+Address**), cole o conteúdo de `supabase/templates/email_change.html` e use o assunto
+`Confirme o novo e-mail do Trama`. Em Authentication → Sign In / Providers → Email, deixe ligado
+**Secure email change** (os links vão ao e-mail atual e ao novo). O `supabase/config.toml` já
+traz os dois (`[auth.email.template.email_change]` e `double_confirm_changes = true`), para quem
+usar `supabase config push`. Os endereços de retorno do passo anterior já cobrem
+`/configuracoes` e `/confirmar-email`.
+
 ## API de projetos (etapa 1.5)
 
 - A API fala com o Supabase com a chave **publicável** e o token de login da pessoa, então o

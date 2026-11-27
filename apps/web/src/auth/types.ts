@@ -38,5 +38,11 @@ export interface AuthClient {
   /** Confere o link do e-mail de recuperação e abre a sessão para trocar a senha. */
   verifyRecovery(tokenHash: string): Promise<AuthResult>;
   updatePassword(password: string): Promise<AuthResult>;
+  /** Guarda o nome na conta (user_metadata.name), que a saudação e a barra lateral usam. */
+  updateName(name: string): Promise<AuthResult>;
+  /** Pede a troca de e-mail: o Supabase manda links de confirmação e só troca depois deles. */
+  updateEmail(email: string): Promise<AuthResult>;
+  /** Confere o link do e-mail de troca de endereço (a tela /confirmar-email). */
+  verifyEmailChange(tokenHash: string): Promise<AuthResult>;
   signOut(): Promise<void>;
 }
