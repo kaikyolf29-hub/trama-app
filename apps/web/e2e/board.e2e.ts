@@ -167,11 +167,11 @@ test.describe('quadro de exemplo', () => {
 
   test('os botões de zoom mudam a porcentagem e Ajustar volta', async ({ page }) => {
     const label = page.getByText(/^\d+%$/);
-    // A câmera começa ajustada ao fluxo (106% em 1440 x 900).
-    await expect(label).toHaveText('106%');
+    // A câmera começa ajustada ao fluxo, e o ajuste para em 100% (FIT_VIEW.maxZoom).
+    await expect(label).toHaveText('100%');
     await page.getByRole('button', { name: 'Aumentar zoom' }).click();
-    await expect(label).not.toHaveText('106%');
+    await expect(label).not.toHaveText('100%');
     await page.getByRole('button', { name: 'Ajustar' }).click();
-    await expect(label).toHaveText('106%');
+    await expect(label).toHaveText('100%');
   });
 });
