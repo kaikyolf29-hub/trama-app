@@ -16,7 +16,7 @@ function messages(input: unknown): string[] {
 describe('flowContentSchema', () => {
   it('aceita o fluxo de vídeo da tela 1', () => {
     const flow = flowContentSchema.parse(videoFlowExample);
-    expect(flow.blocks).toHaveLength(12);
+    expect(flow.blocks).toHaveLength(13);
     expect(flow.frames).toHaveLength(2);
     expect(flow.arrows).toHaveLength(4);
     expect(flow.presentation).toHaveLength(4);

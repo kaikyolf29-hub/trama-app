@@ -4,30 +4,7 @@ import reactRefresh from 'eslint-plugin-react-refresh';
 import { defineConfig, globalIgnores } from 'eslint/config';
 import globals from 'globals';
 import tseslint from 'typescript-eslint';
-
-// Código de interface: onde valem as regras visuais do AGENTS.md.
-const UI_FILES = [
-  'apps/web/src/**/*.{ts,tsx}',
-  'packages/canvas/**/*.{ts,tsx}',
-  'packages/ui/**/*.{ts,tsx}',
-  'packages/emails/**/*.{ts,tsx}',
-];
-// O único lugar onde uma cor pode ser escrita em hex.
-const TOKEN_FILES = ['packages/ui/tokens.ts', 'packages/ui/src/tokens.ts'];
-
-const HEX = String.raw`/#(?:[0-9a-fA-F]{3,4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})\b/`;
-const EMOJI = String.raw`/\p{Extended_Pictographic}/u`;
-
-const noHexColors = ['Literal[value=', 'TemplateElement[value.raw=', 'JSXText[value='].map(
-  (node) => ({
-    selector: `${node}${HEX}]`,
-    message: 'Cor fora dos tokens. Use um token de packages/ui/tokens.ts.',
-  }),
-);
-const noEmoji = ['Literal[value=', 'TemplateElement[value.raw=', 'JSXText[value='].map((node) => ({
-  selector: `${node}${EMOJI}]`,
-  message: 'Emoji na interface não. Use um ícone.',
-}));
+import { TOKEN_FILE, UI_FILES, noEmoji, noHexColors } from './tooling/style-rules.js';
 
 export default defineConfig([
   globalIgnores(['**/dist/', '**/coverage/', '**/.turbo/', '**/.wrangler/']),
@@ -62,13 +39,14 @@ export default defineConfig([
     languageOptions: { globals: globals.browser },
   },
 
+  // Regras visuais do AGENTS.md (tooling/style-rules.js). O CSS é checado pelo Stylelint.
   {
     files: UI_FILES,
-    ignores: ['**/*.test.{ts,tsx}', ...TOKEN_FILES],
+    ignores: ['**/*.test.{ts,tsx}', TOKEN_FILE],
     rules: { 'no-restricted-syntax': ['error', ...noHexColors, ...noEmoji] },
   },
   {
-    files: TOKEN_FILES,
+    files: [TOKEN_FILE],
     rules: { 'no-restricted-syntax': ['error', ...noEmoji] },
   },
 ]);

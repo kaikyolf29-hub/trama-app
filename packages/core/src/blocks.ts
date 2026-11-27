@@ -43,6 +43,11 @@ const blockBase = {
 /**
  * Texto (tecla T). `text` é texto simples; linhas começando com "- " ou "1. "
  * são listas. Fonte, tamanho, cor, negrito e itálico valem para o bloco todo.
+ *
+ * Convenção de renderização (igual no editor, no modo aula e na exportação):
+ * o bloco inteiro usa uma fonte e um tamanho. Um título maior em cima de uma
+ * lista, como "Como vai ser o vídeo" na tela 1, são dois blocos: o título
+ * (ex.: serif 20, strong) e a lista (ex.: sans 14, normal).
  */
 export const textBlockSchema = z.object({
   ...blockBase,
