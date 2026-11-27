@@ -55,13 +55,18 @@ jobs:
         if: steps.gate.outputs.ok == 'true'
         run: |
           pnpm install --frozen-lockfile
+          # O site chama a API publicada na mesma conta (trama-api.<subdomínio>.workers.dev).
+          if [ -n "$WORKERS_SUBDOMAIN" ]; then
+            export VITE_API_URL="https://trama-api.$WORKERS_SUBDOMAIN.workers.dev"
+          fi
           pnpm --filter @trama/web build
 
       - name: Publicar o site e a API (produção)
         if: steps.gate.outputs.ok == 'true' && github.event_name == 'push'
         run: |
           pnpm --filter @trama/web exec wrangler deploy
-          pnpm --filter @trama/api exec wrangler deploy
+          # A API aceita pedidos do site e dos previews deste subdomínio (CORS).
+          pnpm --filter @trama/api exec wrangler deploy --var "WORKERS_SUBDOMAIN:$WORKERS_SUBDOMAIN"
 
       - name: Publicar o preview do PR
         id: preview

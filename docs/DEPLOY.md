@@ -39,3 +39,13 @@ pnpm --filter @trama/api exec wrangler deploy
 ```
 
 O `wrangler` pede login na primeira vez (`wrangler login`), ou usa `CLOUDFLARE_API_TOKEN`.
+
+## API de projetos (etapa 1.5)
+
+- A API fala com o Supabase com a chave **publicável** e o token de login da pessoa, então o
+  banco aplica a RLS como se fosse ela. Os dois valores públicos ficam nas `vars` de
+  `apps/api/wrangler.jsonc`; a chave secreta não é usada aqui.
+- O deploy passa `WORKERS_SUBDOMAIN` para a API, que só aceita pedidos (CORS) do site
+  `trama.<subdomínio>.workers.dev`, dos previews `pr-<n>-trama.<subdomínio>.workers.dev` e do
+  `pnpm dev` (`localhost:5173`).
+- O site é construído com `VITE_API_URL=https://trama-api.<subdomínio>.workers.dev`.

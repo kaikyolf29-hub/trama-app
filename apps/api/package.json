@@ -10,7 +10,10 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "hono": "^4.13.0"
+    "hono": "^4.13.0",
+    "@supabase/supabase-js": "^2.119.2",
+    "@trama/core": "workspace:*",
+    "zod": "catalog:"
   },
   "devDependencies": {
     "typescript": "catalog:",
