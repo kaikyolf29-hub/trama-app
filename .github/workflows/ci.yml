@@ -47,3 +47,44 @@ jobs:
 
       - name: Build
         run: pnpm build
+
+  e2e:
+    name: Testes de ponta a ponta e 500 blocos
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - uses: pnpm/action-setup@v6
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - name: Instalar dependências
+        run: pnpm install --frozen-lockfile
+
+      # O Chromium do Playwright (com as bibliotecas do sistema), na versão do @playwright/test.
+      - name: Instalar o Chromium
+        run: pnpm --filter @trama/web exec playwright install --with-deps chromium
+
+      # Constrói o site, sobe o `vite preview` e roda os fluxos do MVP e, depois, o teste de
+      # 500 blocos. O Supabase e a API são simulados no navegador (apps/web/e2e/support).
+      - name: Testes de ponta a ponta
+        run: pnpm e2e
+        env:
+          CI: 'true'
+
+      # O relatório HTML e as capturas das falhas; os números do desempenho ficam no resumo.
+      - name: Guardar o relatório
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: relatorio-e2e
+          path: |
+            apps/web/playwright-report/
+            apps/web/test-results/
+          retention-days: 7
