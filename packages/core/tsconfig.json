@@ -1,0 +1,9 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    // O core roda no navegador, nos Workers e no Node: só APIs web padrão (URL, crypto),
+    // sem document/window. Por isso WebWorker, e não DOM.
+    "lib": ["ES2023", "WebWorker"]
+  },
+  "include": ["src"]
+}

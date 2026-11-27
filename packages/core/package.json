@@ -1,0 +1,23 @@
+{
+  "name": "@trama/core",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Contrato do Trama: tipos, esquemas zod e regras de negócio do fluxo.",
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": "./src/index.ts",
+    "./fixtures": "./src/fixtures/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  }
+}
