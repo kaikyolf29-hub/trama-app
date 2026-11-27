@@ -115,6 +115,7 @@ function ProjectBoard({ project, api }: { project: FlowProject; api: ProjectsApi
       <FlowCanvas
         flow={project.content}
         media={media}
+        title={project.title}
         onFlowChange={(next) => saver.current?.push(next)}
         topLeft={
           <BoardTitle
@@ -123,7 +124,7 @@ function ProjectBoard({ project, api }: { project: FlowProject; api: ProjectsApi
             aside={<SaveIndicator status={status} />}
           />
         }
-        topRight={<PresentButton />}
+        topRight={({ present }) => <PresentButton onPresent={present} />}
       />
     </div>
   );

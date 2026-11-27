@@ -3,14 +3,20 @@
  * não os da Lucide direto, para o app inteiro falar a mesma língua de ícones.
  */
 export {
+  ArrowLeft as PreviousIcon,
+  ArrowRight as NextIcon,
   Bold as BoldIcon,
   Check as CheckIcon,
+  ChevronDown as ChevronDownIcon,
+  ChevronUp as ChevronUpIcon,
+  GripVertical as GripIcon,
   Folder as FolderIcon,
   Frame as FrameIcon,
   Hand as PanIcon,
   Image as ImageIcon,
   Italic as ItalicIcon,
   Link2 as LinkIcon,
+  ListOrdered as OrderIcon,
   Mic as VoiceIcon,
   Pencil as PencilIcon,
   Minus as ZoomOutIcon,
@@ -21,6 +27,7 @@ export {
   Plus as ZoomInIcon,
   Sparkles as AiIcon,
   Trash2 as TrashIcon,
+  X as CloseIcon,
   Square as ShapeIcon,
   StickyNote as StickyIcon,
   Type as TextIcon,
