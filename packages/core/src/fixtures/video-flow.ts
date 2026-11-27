@@ -72,6 +72,7 @@ export const videoFlowExample = {
       font: 'serif',
       fontSize: 20,
       color: 'strong',
+      bold: true,
     },
     {
       id: 'texto-roteiro',

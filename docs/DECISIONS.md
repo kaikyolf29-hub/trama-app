@@ -99,3 +99,54 @@ Não apague: escreva uma linha nova dizendo o que substitui.
 - 2026-11-27 · **A API ganha o esqueleto em Hono (`GET /health`) e sobe junto com o site.** Motivo: o plano põe site e API no ar na Fase 0; as rotas chegam etapa por etapa.
 - 2026-11-27 · **O script de instalação do workerd (do wrangler) fica negado, como o do esbuild; todas as permissões de dependência ficam em `permissions` no `pnpm-workspace.yaml`.** Motivo: o binário já vem no pacote da plataforma, e uma seção só é mais fácil de revisar.
 - 2026-11-27 · **Sem telemetria do wrangler no deploy (`WRANGLER_SEND_METRICS=false`).** Motivo: nada sai do CI além do próprio deploy.
+
+## Etapa 1.1 — Quadro base
+
+- 2026-11-27 · **React Flow 13 (`@xyflow/react`, MIT), com as mudanças aplicadas por `NodeChangeset.applyTo`.** Motivo: é o quadro do plano; na versão 13 o `applyNodeChanges` deu lugar ao `NodeChangeset`.
+- 2026-11-27 · **A conversão entre o core e o React Flow fica em `packages/canvas/src/convert.ts`: posição absoluta no core, relativa à moldura no React Flow (`parentId`), e de volta encaixada na grade de 8 px.** Motivo: o resto do app só conhece o formato do core.
+- 2026-11-27 · **Molduras ficam numa camada abaixo de todos os blocos.** Motivo: a moldura é o fundo da seção e nunca cobre um bloco.
+- 2026-11-27 · **Os pontos de conexão ficam no meio de cada borda e servem de saída e de chegada (modo de conexão solto).** Motivo: a seta "sai do meio da borda" (plano) e pode ligar qualquer lado a qualquer lado.
+- 2026-11-27 · **Ícones da Lucide (ISC, traço fino), reexportados por `@trama/ui/icons` com nomes do Trama.** Motivo: o mesmo estilo de ícone da tela 1 em todo o app.
+- 2026-11-27 · **Tokens novos da tela 1: fundo e borda da moldura, traço da seta e o véu do minimapa.** Motivo: o quadro desenha essas cores, e cor só existe nos tokens.
+- 2026-11-27 · **Ferramentas das próximas etapas aparecem desativadas ("em breve"), na ordem da tela 1.** Motivo: a barra já fica no lugar certo e cada etapa só liga a sua ferramenta.
+- 2026-11-27 · **`/exemplo` abre o fluxo de vídeo da tela 1 no quadro, sem login.** Motivo: dá para ver e testar o quadro (e o preview de cada PR) antes de os projetos da pessoa chegarem na etapa 1.5.
+
+## Etapa 1.2 — Blocos
+
+- 2026-11-27 · **O conteúdo do fluxo fica numa ref dentro do quadro, e toda mudança (mover, criar, editar, apagar) passa por um `commit` que lê as posições com `getNodes()` e avisa `onFlowChange`.** Motivo: na 1.1 o aviso saía de dentro de um atualizador de estado, o que o React pode rodar duas vezes.
+- 2026-11-27 · **Apagar (Delete ou Backspace) passa por `removeNodes`, em `packages/canvas`: some com as setas ligadas, tira o nó dos passos da aula e apaga o passo que ficar vazio. Apagar uma moldura apaga o que está dentro.** Motivo: nada pode ficar apontando para um bloco que não existe (o core recusa), e é assim que o React Flow e o Miro tratam a moldura.
+- 2026-11-27 · **Criar: a ferramenta (ou a tecla T, C, N, R, F) vale para um clique; o bloco nasce centrado no clique, na grade, já selecionado e em edição, e a ferramenta volta para selecionar.** Motivo: o fluxo mais curto para escrever logo; clique duplo num ponto vazio cria um texto.
+- 2026-11-27 · **O cartão não tem botão na barra: entra pela tecla C.** Motivo: a barra segue a tela 1, que não tem botão de cartão.
+- 2026-11-27 · **O texto solto não tem caixa nem fundo; fonte, tamanho e cor valem para o bloco todo, e as linhas "- " e "1. " viram listas.** Motivo: é como o texto aparece na tela 1 e a convenção de listas do core.
+- 2026-11-27 · **O selo de status do cartão é uma caixa de marcar (`role="checkbox"`) que guarda a data em que foi marcado.** Motivo: marcar "Vídeo pronto" é um clique, e a data mostra quando ficou pronto.
+- 2026-11-27 · **A edição é um campo de texto no lugar do texto, com a mesma fonte; sair do campo ou Esc confirmam, e Enter confirma nos campos de uma linha (título do cartão, nome da moldura).** Motivo: editar parece escrever direto no quadro, sem caixa de diálogo.
+
+## Etapa 1.3 — Imagem, vídeo ou link, e etapas
+
+- 2026-11-27 · **O quadro não sabe onde as imagens moram: quem usa o `FlowCanvas` passa um `CanvasMedia` (subir o arquivo e resolver o endereço). Sem ele, a imagem vale só enquanto a aba estiver aberta.** Motivo: o mesmo quadro serve o exemplo sem login, o app com o Supabase Storage e, depois, o Drive.
+- 2026-11-27 · **Imagens aceitas: PNG, JPG, WebP e GIF, até 10 MB. SVG fica de fora.** Motivo: SVG pode carregar script; os outros quatro todo navegador mostra com segurança.
+- 2026-11-27 · **O bloco de imagem tem até 280 × 360 px, na proporção da imagem, sem esticar imagem pequena; embaixo vão o nome (ou a legenda) e o tamanho original.** Motivo: é o bloco da thumbnail na tela 1.
+- 2026-11-27 · **YouTube e Vimeo só carregam o player depois do clique em tocar (YouTube pelo `youtube-nocookie.com`).** Motivo: o quadro abre rápido mesmo com muitos vídeos, e nada do Google ou do Vimeo carrega antes de a pessoa pedir.
+- 2026-11-27 · **Link comum vira cartão com o nome do site; título, descrição e imagem de prévia vêm depois, pela API.** Motivo: o navegador não pode ler outro site (CORS); a prévia precisa do Worker.
+- 2026-11-27 · **Colar (fora de um campo) uma imagem ou um link que começa com http cria o bloco onde está o ponteiro. Arrastar arquivos ou links para o quadro também.** Motivo: "colar imagem ou link direto no quadro cria o bloco certo" (plano). Texto comum colado não vira nada.
+- 2026-11-27 · **Etapas entram pela tecla E até o menu de blocos chegar com o clique direito (etapa 1.4).** Motivo: a barra da tela 1 não tem botão de etapas.
+- 2026-11-27 · **A lista de etapas muda de altura com o número de etapas (56 px + 32 px por etapa + 16 px).** Motivo: as 5 etapas da tela 1 cabem certinho, e nenhuma etapa fica escondida.
+- 2026-11-27 · **Token novo `media` (preto) para o fundo do vídeo e o selo de duração.** Motivo: na tela 1 o vídeo é preto, mais escuro que o quadro.
+- 2026-11-27 · **Imagens no Supabase Storage, no bucket privado `arquivos` (10 MB, só PNG, JPG, WebP e GIF), em `<id da pessoa>/<uuid>.<ext>`. A RLS só deixa cada pessoa ler e gravar a própria pasta; para mostrar, o app pede uma URL assinada de 1 hora.** Motivo: o Storage grátis tem 1 GB e a RLS já protege sem passar pela API; a cópia no Drive entra na etapa 1.6.
+- 2026-11-27 · **O site cria um só cliente do Supabase (`apps/web/src/supabase.ts`), usado pelo login e pelos arquivos.** Motivo: os dois precisam da mesma sessão.
+- 2026-11-27 · **Imagem que sai do quadro não é apagada do Storage na hora.** Motivo: o histórico de versões (etapa 1.5) ainda pode apontar para ela; a limpeza vem depois, olhando o que nenhuma versão usa.
+
+## Etapa 1.4 — Setas, seleção, atalhos, barra de contexto e clique direito
+
+- 2026-11-27 · **Toda seta usa um componente só (`arrow-edge.tsx`): curva ou reta pelo campo `route` do core, texto no meio e, selecionada, uma barrinha com Curva, Reta, Texto e Apagar.** Motivo: a seta "pode ser curva ou reta e aceita texto" (plano), e trocar isso tem que estar a um clique.
+- 2026-11-27 · **Puxar o ponto azul de um bloco até outro cria a seta; a ferramenta Seta (tecla S) mostra os pontos em todos os blocos. Não se liga um nó a ele mesmo nem se repete uma ligação.** Motivo: o core recusa a seta de um nó para ele mesmo, e duas setas iguais só confundem.
+- 2026-11-27 · **Shift, Ctrl ou Cmd somam blocos à seleção; arrastar no vazio faz o laço.** Motivo: "Shift ou o laço de seleção para pegar vários" (plano).
+- 2026-11-27 · **O texto e a barrinha da seta ficam acima dos blocos.** Motivo: no React Flow a camada dos rótulos fica embaixo dos nós, e a barrinha sumia atrás de um bloco vizinho (achado no teste no navegador).
+- 2026-11-27 · **Desfazer e refazer guardam fotos do fluxo inteiro (até 100), tiradas no mesmo `commit` por onde passa toda mudança. Uma mudança que não muda nada (soltar o bloco no lugar) não entra no histórico nem avisa.** Motivo: um ponto só de gravação deixa o histórico certo para qualquer ação, inclusive as que ainda vão chegar; 100 fotos de um fluxo grande ainda cabem com folga na memória.
+- 2026-11-27 · **Ctrl+D duplica a seleção 24 px abaixo e à direita; moldura vem com os blocos de dentro, e setas entre nós copiados vêm junto. Ctrl+G põe os blocos selecionados numa moldura nova com 32 px de folga, já com o nome selecionado para trocar.** Motivo: os atalhos do plano, com o comportamento do Miro; molduras não se aninham, então Ctrl+G ignora molduras na seleção.
+- 2026-11-27 · **Os atalhos com Ctrl ou Cmd ficam quietos enquanto a pessoa escreve num campo.** Motivo: ali o Ctrl+Z é o do próprio campo.
+- 2026-11-27 · **A barra de contexto usa o `NodeToolbar` do React Flow e só aparece com um nó sozinho na seleção, fora da edição. Texto: fonte, tamanho, negrito, itálico e cor; nota: cor; forma: tipo; todos: "Aula: passo N" e apagar.** Motivo: é a barra da tela 1; com vários nós selecionados ela não teria um valor só para mostrar.
+- 2026-11-27 · **Os menus da barra usam `<select>` do navegador, com o visual dos tokens.** Motivo: teclado, leitor de tela e celular funcionam sem código a mais.
+- 2026-11-27 · **Clique direito: num nó, duplicar, trazer para frente, travar, passo da aula e apagar; no vazio, o menu de blocos (é por ele que as etapas entram, além da tecla E). Arrastar com o botão direito continua movendo o quadro; o menu só abre se o ponteiro quase não andou.** Motivo: o React Flow não chama o menu do vazio quando o botão direito também move o quadro, então o quadro trata o clique ele mesmo.
+- 2026-11-27 · **Nó travado não se move, não apaga e não edita; destrava pelo clique direito.** Motivo: travar serve para proteger o fundo e os títulos enquanto se mexe no resto.
+- 2026-11-27 · **O menu do clique direito abre no corpo da página e muda de lado perto da borda.** Motivo: perto do rodapé ele saía da tela (achado no teste no navegador).
