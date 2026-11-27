@@ -413,4 +413,84 @@ describe('FlowCanvas', () => {
       expect(onFlowChange).not.toHaveBeenCalled();
     });
   });
+
+  describe('desfazer, refazer, duplicar e agrupar (etapa 1.4)', () => {
+    function setup() {
+      const onFlowChange = vi.fn<(next: FlowContent) => void>();
+      render(<FlowCanvas flow={flow} onFlowChange={onFlowChange} />);
+      const last = () => {
+        const next = onFlowChange.mock.calls.at(-1)?.[0];
+        if (!next) throw new Error('O quadro ainda não avisou nenhuma mudança.');
+        return next;
+      };
+      return { onFlowChange, last };
+    }
+    const select = (id: string) => {
+      const node = document.querySelector(`[data-id="${id}"]`);
+      if (!node) throw new Error(`Sem o nó ${id}.`);
+      fireEvent.click(node);
+    };
+
+    it('Ctrl+Z desfaz e Ctrl+Shift+Z refaz', () => {
+      const { last } = setup();
+      fireEvent.click(screen.getByRole('checkbox', { name: 'Vídeo pronto' }));
+      expect(
+        screen.getByRole('checkbox', { name: 'Vídeo pronto' }).getAttribute('aria-checked'),
+      ).toBe('false');
+      fireEvent.keyDown(window, { key: 'z', ctrlKey: true });
+      expect(last()).toEqual(flow);
+      expect(
+        screen.getByRole('checkbox', { name: 'Vídeo pronto' }).getAttribute('aria-checked'),
+      ).toBe('true');
+      fireEvent.keyDown(window, { key: 'z', ctrlKey: true, shiftKey: true });
+      const card = last().blocks.find((block) => block.id === 'card-projeto');
+      expect(card?.type === 'card' && card.status?.done).toBe(false);
+    });
+
+    it('Cmd+Y também refaz, e desfazer sem histórico não faz nada', () => {
+      const { onFlowChange } = setup();
+      fireEvent.keyDown(window, { key: 'z', metaKey: true });
+      expect(onFlowChange).not.toHaveBeenCalled();
+      fireEvent.click(screen.getByRole('checkbox', { name: 'Edição' }));
+      fireEvent.keyDown(window, { key: 'z', metaKey: true });
+      fireEvent.keyDown(window, { key: 'y', metaKey: true });
+      expect(screen.getByText('4/5')).toBeDefined();
+    });
+
+    it('Ctrl+D duplica a seleção e seleciona a cópia', () => {
+      const { last } = setup();
+      select('nota-comentario');
+      fireEvent.keyDown(window, { key: 'd', ctrlKey: true });
+      expect(last().blocks).toHaveLength(flow.blocks.length + 1);
+      expect(screen.getAllByText('Fixar comentário com o link do curso')).toHaveLength(2);
+      expect(() => flowContentSchema.parse(last())).not.toThrow();
+    });
+
+    it('Ctrl+G agrupa a seleção numa moldura nova, já com o nome em edição', () => {
+      const { last } = setup();
+      select('nota-comentario');
+      fireEvent.keyDown(window, { key: 'g', ctrlKey: true });
+      expect(last().frames).toHaveLength(flow.frames.length + 1);
+      const frame = last().frames.at(-1);
+      expect(last().blocks.find((block) => block.id === 'nota-comentario')?.frameId).toBe(
+        frame?.id,
+      );
+      const title = screen.getByRole<HTMLTextAreaElement>('textbox', { name: 'Nome da moldura' });
+      // O nome vem todo selecionado: escrever troca "Nova seção" de uma vez.
+      expect(document.activeElement).toBe(title);
+      expect([title.selectionStart, title.selectionEnd]).toEqual([0, 'Nova seção'.length]);
+      fireEvent.blur(title);
+      fireEvent.keyDown(window, { key: 'z', ctrlKey: true });
+      expect(last().frames).toHaveLength(flow.frames.length);
+    });
+
+    it('os atalhos não roubam o Ctrl+Z de quem está escrevendo', () => {
+      const { onFlowChange } = setup();
+      fireEvent.doubleClick(screen.getByText('Fixar comentário com o link do curso'));
+      const field = screen.getByRole('textbox', { name: 'Texto da nota' });
+      fireEvent.keyDown(field, { key: 'z', ctrlKey: true });
+      expect(onFlowChange).not.toHaveBeenCalled();
+      expect(screen.getByRole('textbox', { name: 'Texto da nota' })).toBeDefined();
+    });
+  });
 });

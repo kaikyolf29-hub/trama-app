@@ -74,6 +74,7 @@ export function FrameNode({ id, data, selected }: NodeProps<FrameNodeType>) {
       >
         <EditableText
           singleLine
+          selectAll
           value={frame.title}
           editing={editing}
           label="Nome da moldura"
