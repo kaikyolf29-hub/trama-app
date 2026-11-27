@@ -3,6 +3,12 @@ import { videoFlowExample } from '@trama/core/fixtures';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { FlowCanvas } from './FlowCanvas';
+import type { CanvasMedia } from './media';
+
+// O jsdom não decodifica imagens: o tamanho original vem daqui nos testes.
+vi.mock('./image-size', () => ({
+  readImageSize: () => Promise.resolve({ width: 1280, height: 720 }),
+}));
 
 const flow = flowContentSchema.parse(videoFlowExample);
 
@@ -202,6 +208,205 @@ describe('FlowCanvas', () => {
       expect(next.arrows.some((arrow) => arrow.from.nodeId === 'card-projeto')).toBe(false);
       expect(next.presentation[0]?.targetIds).toEqual(['imagem-thumbnail']);
       expect(() => flowContentSchema.parse(next)).not.toThrow();
+    });
+  });
+
+  describe('imagem, vídeo ou link, e etapas (etapa 1.3)', () => {
+    function setup(media?: CanvasMedia) {
+      const onFlowChange = vi.fn<(next: FlowContent) => void>();
+      render(<FlowCanvas flow={flow} onFlowChange={onFlowChange} media={media} />);
+      const last = () => {
+        const next = onFlowChange.mock.calls.at(-1)?.[0];
+        if (!next) throw new Error('O quadro ainda não avisou nenhuma mudança.');
+        return next;
+      };
+      return { onFlowChange, last };
+    }
+    const board = () => screen.getByTestId('quadro');
+    const png = (name = 'thumbnail.png') => new File(['png'], name, { type: 'image/png' });
+
+    it('mostra o vídeo com a duração e só carrega o player ao tocar', () => {
+      setup();
+      expect(screen.getByText('12:48')).toBeDefined();
+      expect(screen.getByText('youtu.be')).toBeDefined();
+      expect(document.querySelector('iframe')).toBeNull();
+      fireEvent.click(screen.getByRole('button', { name: 'Tocar Vídeo final' }));
+      const player = document.querySelector('iframe');
+      expect(player?.getAttribute('src')).toBe(
+        'https://www.youtube-nocookie.com/embed/exemplo1234?autoplay=1&rel=0',
+      );
+    });
+
+    it('mostra o link comum como cartão com o site', () => {
+      setup();
+      expect(screen.getByText('Arquivos brutos')).toBeDefined();
+      const site = screen.getByRole('link', { name: 'drive.google.com' });
+      expect(site.getAttribute('target')).toBe('_blank');
+      expect(site.getAttribute('rel')).toBe('noopener noreferrer');
+    });
+
+    it('mostra a imagem com o nome e o tamanho original, e avisa quando ela não abre', () => {
+      setup();
+      expect(screen.getByText('thumbnail-final.png')).toBeDefined();
+      expect(screen.getByText('1280×720')).toBeDefined();
+      expect(
+        screen.getByRole('img', { name: 'thumbnail-final.png: imagem indisponível' }),
+      ).toBeDefined();
+    });
+
+    it('pede o endereço da imagem ao armazenamento', async () => {
+      const media: CanvasMedia = {
+        uploadImage: vi.fn(),
+        resolveImage: (src) => Promise.resolve(`https://arquivos.exemplo/${src}`),
+      };
+      setup(media);
+      await waitFor(() =>
+        expect(screen.getByRole('img', { name: 'thumbnail-final.png' }).getAttribute('src')).toBe(
+          'https://arquivos.exemplo/projects/exemplo/thumbnail-final.png',
+        ),
+      );
+    });
+
+    it('marca e desmarca etapas, e o contador acompanha', () => {
+      const { last } = setup();
+      expect(screen.getByText('5/5')).toBeDefined();
+      fireEvent.click(screen.getByRole('checkbox', { name: 'Edição' }));
+      expect(screen.getByText('4/5')).toBeDefined();
+      const etapas = last().blocks.find((block) => block.id === 'etapas');
+      expect(etapas?.type === 'checklist' && etapas.items[2]).toMatchObject({
+        text: 'Edição',
+        done: false,
+      });
+    });
+
+    it('edita as etapas: Enter cria a próxima, Esc confirma e o bloco cresce', () => {
+      const { last } = setup();
+      fireEvent.doubleClick(screen.getByText('Roteiro'));
+      const fifth = screen.getByRole('textbox', { name: 'Etapa 5' });
+      fireEvent.keyDown(fifth, { key: 'Enter' });
+      const sixth = screen.getByRole('textbox', { name: 'Etapa 6' });
+      expect(document.activeElement).toBe(sixth);
+      fireEvent.change(sixth, { target: { value: 'Responder comentários' } });
+      fireEvent.keyDown(sixth, { key: 'Escape' });
+      const etapas = last().blocks.find((block) => block.id === 'etapas');
+      expect(etapas?.type === 'checklist' && etapas.items.map((item) => item.text)).toEqual([
+        'Roteiro',
+        'Gravação',
+        'Edição',
+        'Thumbnail',
+        'Publicar',
+        'Responder comentários',
+      ]);
+      expect(etapas?.size.height).toBe(264);
+      expect(screen.getByText('5/6')).toBeDefined();
+    });
+
+    it('a tecla E cria uma lista de etapas pronta para escrever', () => {
+      const { last } = setup();
+      fireEvent.keyDown(window, { key: 'e' });
+      const init = { button: 0, isPrimary: true, pointerId: 1, clientX: 300, clientY: 300 };
+      const pane = document.querySelector('.react-flow__pane');
+      if (!pane) throw new Error('Sem o fundo do quadro.');
+      fireEvent.pointerDown(pane, init);
+      fireEvent.pointerUp(pane, init);
+      expect(last().blocks.at(-1)?.type).toBe('checklist');
+      expect(document.activeElement).toBe(screen.getByRole('textbox', { name: 'Etapa 1' }));
+    });
+
+    it('o botão Vídeo ou link abre a caixa para colar o link', () => {
+      const { last } = setup();
+      fireEvent.click(screen.getByRole('button', { name: 'Vídeo ou link' }));
+      const field = screen.getByRole('textbox', { name: /Vídeo do YouTube/ });
+      fireEvent.change(field, { target: { value: 'oi' } });
+      fireEvent.submit(field);
+      expect(screen.getByText(/Esse link não parece certo/)).toBeDefined();
+      fireEvent.change(field, { target: { value: 'vimeo.com/76979871' } });
+      fireEvent.submit(field);
+      expect(last().blocks.at(-1)).toMatchObject({
+        type: 'link',
+        url: 'https://vimeo.com/76979871',
+        size: { width: 320, height: 216 },
+      });
+      expect(screen.queryByRole('textbox', { name: /Vídeo do YouTube/ })).toBeNull();
+    });
+
+    it('a caixa do link aceita "vimeo.com/..." sem a validação do navegador e fecha no quadro', () => {
+      setup();
+      fireEvent.click(screen.getByRole('button', { name: 'Vídeo ou link' }));
+      const field = screen.getByRole('textbox', { name: /Vídeo do YouTube/ });
+      // Sem isso, o navegador barra o Enter antes do nosso código ver o link.
+      expect(field.closest('form')?.noValidate).toBe(true);
+      const pane = document.querySelector('.react-flow__pane');
+      if (!pane) throw new Error('Sem o fundo do quadro.');
+      const init = { button: 0, isPrimary: true, pointerId: 1, clientX: 600, clientY: 400 };
+      fireEvent.pointerDown(pane, init);
+      fireEvent.pointerUp(pane, init);
+      expect(screen.queryByRole('textbox', { name: /Vídeo do YouTube/ })).toBeNull();
+    });
+
+    it('colar um link no quadro cria o bloco', () => {
+      const { last } = setup();
+      fireEvent.paste(window, {
+        clipboardData: { files: [], getData: () => 'https://trama.app/ajuda' },
+      });
+      expect(last().blocks.at(-1)).toMatchObject({ type: 'link', url: 'https://trama.app/ajuda' });
+    });
+
+    it('colar texto comum não cria nada', () => {
+      const { onFlowChange } = setup();
+      fireEvent.paste(window, { clipboardData: { files: [], getData: () => 'só um texto' } });
+      expect(onFlowChange).not.toHaveBeenCalled();
+    });
+
+    it('soltar uma imagem sobe o arquivo e cria o bloco com o tamanho original', async () => {
+      const uploadImage = vi.fn((file: File) => Promise.resolve(`u1/${file.name}`));
+      const { last } = setup({ uploadImage, resolveImage: () => null });
+      fireEvent.drop(board(), {
+        clientX: 400,
+        clientY: 300,
+        dataTransfer: { files: [png()], types: ['Files'], getData: () => '' },
+      });
+      await waitFor(() =>
+        expect(last().blocks.at(-1)).toMatchObject({
+          type: 'image',
+          src: 'u1/thumbnail.png',
+          fileName: 'thumbnail.png',
+          naturalSize: { width: 1280, height: 720 },
+          size: { width: 280, height: 200 },
+        }),
+      );
+      expect(uploadImage).toHaveBeenCalledTimes(1);
+      expect(() => flowContentSchema.parse(last())).not.toThrow();
+    });
+
+    it('recusa arquivo que não é imagem, com aviso', () => {
+      const uploadImage = vi.fn();
+      setup({ uploadImage, resolveImage: () => null });
+      fireEvent.drop(board(), {
+        dataTransfer: {
+          files: [new File(['x'], 'notas.txt', { type: 'text/plain' })],
+          types: ['Files'],
+          getData: () => '',
+        },
+      });
+      expect(screen.getByRole('status').textContent).toBe('Use uma imagem PNG, JPG, WebP ou GIF.');
+      expect(uploadImage).not.toHaveBeenCalled();
+    });
+
+    it('avisa quando o envio falha e não cria o bloco', async () => {
+      const { onFlowChange } = setup({
+        uploadImage: () => Promise.reject(new Error('sem rede')),
+        resolveImage: () => null,
+      });
+      fireEvent.drop(board(), {
+        dataTransfer: { files: [png()], types: ['Files'], getData: () => '' },
+      });
+      await waitFor(() =>
+        expect(screen.getByRole('status').textContent).toBe(
+          'Não deu para enviar a imagem. Tente de novo.',
+        ),
+      );
+      expect(onFlowChange).not.toHaveBeenCalled();
     });
   });
 });

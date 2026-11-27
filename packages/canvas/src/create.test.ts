@@ -1,5 +1,15 @@
 import { describe, expect, it } from 'vitest';
-import { createBlock, createFrame, DEFAULT_SIZES } from './create';
+import {
+  checklistHeight,
+  createBlock,
+  createFrame,
+  createImageBlock,
+  createLinkBlock,
+  DEFAULT_SIZES,
+  imageBlockSize,
+  LINK_SIZES,
+  normalizeLink,
+} from './create';
 import { parseTextLines } from './text-lines';
 
 describe('createBlock', () => {
@@ -60,5 +70,64 @@ describe('parseTextLines', () => {
       { kind: 'paragraph', text: '-traço' },
       { kind: 'paragraph', text: '2026.' },
     ]);
+  });
+});
+
+describe('blocos da etapa 1.3', () => {
+  it('cria etapas com uma etapa vazia e a altura da lista', () => {
+    const block = createBlock('checklist', { x: 0, y: 0 });
+    expect(block).toMatchObject({
+      type: 'checklist',
+      title: 'Etapas',
+      size: DEFAULT_SIZES.checklist,
+    });
+    expect(block.type === 'checklist' && block.items).toHaveLength(1);
+    expect(checklistHeight(1)).toBe(DEFAULT_SIZES.checklist.height);
+    // As 5 etapas da tela 1 cabem em 232 px, como no fluxo de exemplo.
+    expect(checklistHeight(5)).toBe(232);
+  });
+
+  it('dimensiona a imagem pela proporção, na grade, sem esticar imagem pequena', () => {
+    expect(imageBlockSize({ width: 1280, height: 720 })).toEqual({ width: 280, height: 200 });
+    expect(imageBlockSize({ width: 100, height: 100 })).toEqual({ width: 160, height: 200 });
+    const tall = imageBlockSize({ width: 1000, height: 2000 });
+    expect(tall.width % 8).toBe(0);
+    expect(tall.height % 8).toBe(0);
+    expect(tall.height).toBeLessThanOrEqual(360 + 40);
+    expect(imageBlockSize()).toEqual({ width: 280, height: 200 });
+  });
+
+  it('cria a imagem com o nome e o tamanho original', () => {
+    const block = createImageBlock(
+      { x: 500, y: 300 },
+      { src: 'u1/foto.png', fileName: 'foto.png', naturalSize: { width: 1280, height: 720 } },
+    );
+    expect(block).toMatchObject({
+      type: 'image',
+      src: 'u1/foto.png',
+      fileName: 'foto.png',
+      naturalSize: { width: 1280, height: 720 },
+      position: { x: 360, y: 200 },
+      size: { width: 280, height: 200 },
+    });
+  });
+
+  it('cria vídeo do YouTube ou Vimeo maior que um link comum', () => {
+    expect(createLinkBlock({ x: 0, y: 0 }, 'https://youtu.be/dQw4w9WgXcQ').size).toEqual(
+      LINK_SIZES.video,
+    );
+    expect(createLinkBlock({ x: 0, y: 0 }, 'https://vimeo.com/76979871').size).toEqual(
+      LINK_SIZES.video,
+    );
+    expect(createLinkBlock({ x: 0, y: 0 }, 'https://trama.app/ajuda').size).toEqual(LINK_SIZES.web);
+  });
+
+  it('aceita só links http(s) de verdade', () => {
+    expect(normalizeLink('  youtu.be/dQw4w9WgXcQ ')).toBe('https://youtu.be/dQw4w9WgXcQ');
+    expect(normalizeLink('http://exemplo.com/a?b=1')).toBe('http://exemplo.com/a?b=1');
+    expect(normalizeLink('javascript:alert(1)')).toBeNull();
+    expect(normalizeLink('ftp://exemplo.com')).toBeNull();
+    expect(normalizeLink('oi')).toBeNull();
+    expect(normalizeLink('')).toBeNull();
   });
 });

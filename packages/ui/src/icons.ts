@@ -4,14 +4,17 @@
  */
 export {
   Check as CheckIcon,
+  Folder as FolderIcon,
   Frame as FrameIcon,
   Hand as PanIcon,
   Image as ImageIcon,
+  Link2 as LinkIcon,
   Mic as VoiceIcon,
   Minus as ZoomOutIcon,
   MousePointer2 as SelectIcon,
   MoveUpRight as ArrowIcon,
   Play as PlayIcon,
+  Plus as PlusIcon,
   Plus as ZoomInIcon,
   Sparkles as AiIcon,
   Square as ShapeIcon,

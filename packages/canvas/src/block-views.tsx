@@ -12,6 +12,8 @@ import { colors, fonts, noteColors, textColors } from '@trama/ui/tokens';
 import type { CSSProperties } from 'react';
 import { useCanvas } from './canvas-context';
 import { EditableText } from './EditableText';
+import { formatDay } from './format';
+import { AudioBlockView, ChecklistBlockView, ImageBlockView, LinkBlockView } from './media-views';
 import { parseTextLines } from './text-lines';
 
 type ViewProps<T extends Block> = { block: T; editing: boolean };
@@ -97,10 +99,15 @@ export function CardBlockView({ block, editing }: ViewProps<CardBlock>) {
   const status = block.status;
   return (
     <div className="flex size-full flex-col gap-1.5 overflow-hidden rounded-block border border-border bg-surface p-4 shadow-block">
-      {block.tag && (
-        <span className="text-[11px] font-semibold tracking-[0.05em] text-text-muted uppercase">
-          {block.tag}
-        </span>
+      {(block.tag || status?.doneAt) && (
+        <div className="flex items-center justify-between gap-2 text-[11px] font-semibold tracking-[0.05em] text-text-muted uppercase">
+          <span className="truncate">{block.tag}</span>
+          {status?.done && status.doneAt && (
+            <time dateTime={status.doneAt} className="shrink-0">
+              {formatDay(status.doneAt)}
+            </time>
+          )}
+        </div>
       )}
       <EditableText
         singleLine
@@ -233,37 +240,6 @@ export function ShapeBlockView({ block, editing }: ViewProps<ShapeBlock>) {
   );
 }
 
-/** Rótulo e texto principal: a versão simples, até a etapa 1.3 trazer estes blocos. */
-function SimpleBlockView({ block }: { block: Block }) {
-  const summary = (() => {
-    switch (block.type) {
-      case 'image':
-        return { label: 'Imagem', text: block.fileName ?? block.caption ?? '' };
-      case 'link':
-        return { label: 'Vídeo ou link', text: block.title ?? block.url };
-      case 'checklist':
-        return {
-          label: block.title,
-          text: `${block.items.filter((item) => item.done).length}/${block.items.length}`,
-        };
-      case 'audio':
-        return { label: 'Áudio', text: block.transcript ?? '' };
-      default:
-        return { label: '', text: '' };
-    }
-  })();
-  return (
-    <div className="flex size-full flex-col gap-1.5 overflow-hidden rounded-block border border-border bg-surface p-4 shadow-block">
-      <span className="text-[11px] font-semibold tracking-wider text-text-muted uppercase">
-        {summary.label}
-      </span>
-      <span className="line-clamp-4 text-sm whitespace-pre-line text-text-strong">
-        {summary.text}
-      </span>
-    </div>
-  );
-}
-
 /** Escolhe a visão de cada tipo de bloco. */
 export function BlockView({ block, editing }: ViewProps<Block>) {
   switch (block.type) {
@@ -275,7 +251,13 @@ export function BlockView({ block, editing }: ViewProps<Block>) {
       return <StickyBlockView block={block} editing={editing} />;
     case 'shape':
       return <ShapeBlockView block={block} editing={editing} />;
-    default:
-      return <SimpleBlockView block={block} />;
+    case 'image':
+      return <ImageBlockView block={block} editing={editing} />;
+    case 'link':
+      return <LinkBlockView block={block} editing={editing} />;
+    case 'checklist':
+      return <ChecklistBlockView block={block} editing={editing} />;
+    case 'audio':
+      return <AudioBlockView block={block} />;
   }
 }
