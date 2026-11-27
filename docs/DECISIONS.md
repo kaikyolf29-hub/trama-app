@@ -167,3 +167,11 @@ Não apague: escreva uma linha nova dizendo o que substitui.
 - 2026-11-27 · **O cliente da API valida toda resposta com os esquemas do core; sem conexão vira um aviso em português e o salvamento tenta de novo.** Motivo: a tela nunca recebe dado fora do contrato.
 - 2026-11-27 · **O Início ganha a lista "Seus fluxos" e o botão "Novo fluxo", que cria e abre o projeto em um clique (`/p/<id>`).** Motivo: criar um fluxo em até 3 cliques (regra visual); a tela Início completa (tela 4) é a etapa 1.8.
 - 2026-11-27 · **Erro 5xx do Supabase Auth não é mais "sem conexão"; na recuperação de senha, vira "Não deu para enviar o e-mail agora".** Motivo: o supabase-js marca respostas 5xx como erro de rede, e no teste do site publicado uma falha do SMTP apareceu como "Confira a internet".
+
+## Etapa 1.8 — Modelos de início e a tela Início
+
+- 2026-11-27 · **Os modelos de início moram em `packages/core/src/templates/`: cada um é um fluxo válido na grade de 8 px (`FlowTemplate.content()` devolve um fluxo novo a cada chamada), na ordem e com os textos da tela 4.** Motivo: o site, a API e, depois, a IA e o MCP criam projetos do mesmo modelo, e o core já valida tudo.
+- 2026-11-27 · **Todo modelo cria um projeto do tipo `flow`; o "Roteiro de vídeo" é a versão em quadro (cenas como cartões em sequência, com notas de fala e B-roll).** Motivo: a API só cria fluxos até a V1, e os roteiros em texto (tipo `script`) são da V1.
+- 2026-11-27 · **"Falar e organizar" abre um quadro com uma nota azul que diz que a voz chega numa próxima etapa.** Motivo: a gravação, a transcrição e a IA são da fase seguinte (tela 5); o cartão já fica no lugar da tela 4 sem prometer o que ainda não existe.
+- 2026-11-27 · **Os modelos não trazem imagem, vídeo nem áudio de exemplo, só cartões com a instrução do que pôr ali.** Motivo: um bloco de imagem aponta para um arquivo de verdade; o do exemplo da tela 1 ficaria quebrado no projeto da pessoa.
+- 2026-11-27 · **`PATCH /projects/:id` (`updateProjectRequestSchema`: `title` e/ou `status`, ao menos um) renomeia e muda o status sem mexer no conteúdo.** Motivo: a lista do Início não tem o conteúdo em mãos, e regravar o fluxo inteiro só para trocar o nome criaria versões à toa.
