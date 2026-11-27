@@ -13,4 +13,4 @@
 - [ ] `pnpm check` passa (tipos, lint, formatação e testes)
 - [ ] Mudança em `packages/core` veio num PR próprio, antes das telas que a usam
 - [ ] Decisão importante registrada em `docs/DECISIONS.md`
-- [ ] Pronto para a revisão do Codex
+- [ ] CI verde antes do merge

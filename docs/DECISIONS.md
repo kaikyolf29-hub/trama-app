@@ -65,3 +65,18 @@ Não apague: escreva uma linha nova dizendo o que substitui.
 - 2026-11-27 · **O modelo de recuperação de senha do Supabase é gerado do componente React (`supabase/templates/recovery.html`), com um teste que avisa quando ficou desatualizado.** Motivo: um só desenho para os e-mails do Supabase e os do Resend.
 - 2026-11-27 · **O modelo do Supabase sai sem quebra de linha automática.** Motivo: a quebra caiu no meio de um `{{ else }}` dos modelos do Supabase.
 - 2026-11-27 · **O script de instalação do esbuild (dependência do tsx) fica negado em `allowBuilds`.** Motivo: o pnpm 12 recusa instalar com script não decidido, e o esbuild não precisa dele, porque o binário vem no pacote da plataforma.
+
+## Etapa 0.5 — Login e o novo jeito de trabalhar
+
+- 2026-11-27 · **O Claude Code faz o merge quando o CI está verde; o Codex revisa tudo no fim, no GitHub.** Motivo: pedido da pessoa dona do projeto; substitui a revisão do Codex a cada PR.
+- 2026-11-27 · **PRs empilhados entram em ordem, com commit de merge (sem squash).** Motivo: com squash, o PR seguinte reapareceria com os commits do anterior e daria conflito.
+- 2026-11-27 · **O que só a pessoa dona do projeto pode fazer (contas, chaves, painéis) e as imagens geradas viram um pedido pronto para o Codex, que controla o computador dela.** Motivo: pedido dela, para tirar o máximo de trabalho das mãos dela.
+- 2026-11-27 · **Só planos grátis; os pagos de "Custos estimados" só se o projeto crescer.** Motivo: pedido da pessoa dona do projeto, sem mudar o plano.
+- 2026-11-27 · **Cadastro sem confirmar o e-mail: a pessoa cria a senha e já entra.** Motivo: é o fluxo que a pessoa dona do projeto descreveu. O risco (alguém usar um e-mail que não é seu) fica aceito; a tela já trata o caso de confirmação se ela for ligada no Supabase.
+- 2026-11-27 · **Rotas com TanStack Router, definidas em código (`apps/web/src/router.ts`).** Motivo: é o roteador do plano; em código, sem gerador de arquivos, fica mais simples enquanto são poucas rotas.
+- 2026-11-27 · **As guardas das rotas perguntam a sessão ao cliente de login, e não ao estado do React.** Motivo: logo depois de entrar, o estado do React ainda está atrasado e a pessoa voltaria para /entrar.
+- 2026-11-27 · **O `volta` do login só aceita caminhos do próprio site, conferido na rota e de novo na tela.** Motivo: o TanStack Router mantém os parâmetros originais quando a validação devolve um objeto vazio, e um teste pegou `?volta=//outro.site` levando para fora.
+- 2026-11-27 · **A recuperação de senha usa o `token_hash` no link (`/nova-senha?token_hash=…`), conferido pela tela com `verifyOtp`.** Motivo: o link padrão do Supabase só funciona no navegador que pediu a troca, e é comum pedir no computador e abrir no celular; programas que abrem links de e-mail também não gastam o token.
+- 2026-11-27 · **Senha de 8 a 72 caracteres.** Motivo: 8 é o mínimo combinado para o Supabase; acima de 72 o bcrypt ignora o resto.
+- 2026-11-27 · **Sem as variáveis do Supabase, o site abre e as telas de login explicam o que falta.** Motivo: `pnpm dev` funciona do zero, sem conta nenhuma.
+- 2026-11-27 · **As "skills" de agente que vêm em dependências (o pnpm 12 pergunta) ficam negadas.** Motivo: seriam instruções para os agentes vindas de fora do repositório; as regras deles estão no AGENTS.md.
