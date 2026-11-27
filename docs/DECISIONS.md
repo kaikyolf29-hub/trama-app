@@ -167,3 +167,7 @@ Não apague: escreva uma linha nova dizendo o que substitui.
 - 2026-11-27 · **O cliente da API valida toda resposta com os esquemas do core; sem conexão vira um aviso em português e o salvamento tenta de novo.** Motivo: a tela nunca recebe dado fora do contrato.
 - 2026-11-27 · **O Início ganha a lista "Seus fluxos" e o botão "Novo fluxo", que cria e abre o projeto em um clique (`/p/<id>`).** Motivo: criar um fluxo em até 3 cliques (regra visual); a tela Início completa (tela 4) é a etapa 1.8.
 - 2026-11-27 · **Erro 5xx do Supabase Auth não é mais "sem conexão"; na recuperação de senha, vira "Não deu para enviar o e-mail agora".** Motivo: o supabase-js marca respostas 5xx como erro de rede, e no teste do site publicado uma falha do SMTP apareceu como "Confira a internet".
+
+## Etapa 1.6 — Google Drive
+
+- 2026-11-27 · **O arquivo da cópia é `projeto.trama`, um JSON com `format: "trama"`, `version: 1`, `savedAt`, os dados do projeto (id, título, status, datas) e o `content` validado por `flowContentSchema`. Só fluxos por enquanto.** Motivo: a pessoa pode baixar, mover e abrir de novo no app; o contrato fica em `packages/core/src/drive.ts`, e roteiros e cadernos entram com a V1.
