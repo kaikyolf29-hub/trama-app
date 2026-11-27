@@ -1,7 +1,7 @@
 import { createMemoryHistory } from '@tanstack/react-router';
 import { flowContentSchema, type FlowProject } from '@trama/core';
 import { videoFlowExample } from '@trama/core/fixtures';
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, beforeAll, describe, expect, it } from 'vitest';
 import { App } from '../App';
 import { defaultServices, type Services } from '../services';

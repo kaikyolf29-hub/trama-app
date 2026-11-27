@@ -22,7 +22,6 @@ export {
   Minus as ZoomOutIcon,
   MousePointer2 as SelectIcon,
   MoveUpRight as ArrowIcon,
-  Pencil as PencilIcon,
   Play as PlayIcon,
   Plus as PlusIcon,
   Plus as ZoomInIcon,
