@@ -10,10 +10,12 @@ coverage/
 supabase/.temp/
 supabase/.branches/
 
-# Segredos: só o .env.example entra no repositório
+# Segredos: só o .env.example entra no repositório. A exceção é apps/web/.env, que só tem
+# valores públicos (VITE_), que vão para o navegador de qualquer forma.
 .env
 .env.*
 !.env.example
+!apps/web/.env
 .dev.vars
 .dev.vars.*
 

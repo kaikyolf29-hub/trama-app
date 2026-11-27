@@ -80,3 +80,13 @@ Não apague: escreva uma linha nova dizendo o que substitui.
 - 2026-11-27 · **Senha de 8 a 72 caracteres.** Motivo: 8 é o mínimo combinado para o Supabase; acima de 72 o bcrypt ignora o resto.
 - 2026-11-27 · **Sem as variáveis do Supabase, o site abre e as telas de login explicam o que falta.** Motivo: `pnpm dev` funciona do zero, sem conta nenhuma.
 - 2026-11-27 · **As "skills" de agente que vêm em dependências (o pnpm 12 pergunta) ficam negadas.** Motivo: seriam instruções para os agentes vindas de fora do repositório; as regras deles estão no AGENTS.md.
+
+## Etapa 0.3 — Supabase
+
+- 2026-11-27 · **Projeto Supabase novo, "trama", em São Paulo (`sa-east-1`), no plano grátis.** Motivo: mais rápido para quem está no Brasil; o projeto que já existia (vazio, nos EUA) ficou intocado, e o plano grátis permite dois.
+- 2026-11-27 · **`profiles` nasce sozinho no cadastro (gatilho em `auth.users`), com o nome de `user_metadata.name`, e só pode ser lido e editado pela própria pessoa.** Motivo: o app não precisa criar perfil, e nada além de nome, fuso e preferências de e-mail pode ser mudado pelo app.
+- 2026-11-27 · **Funções de gatilho no esquema `private`, com `search_path` vazio e sem permissão de execução pela API.** Motivo: funções `security definer` no esquema público ficariam expostas pela API.
+- 2026-11-27 · **Testes de RLS em SQL (`supabase/tests/`), que rodam dentro de uma transação e desfazem tudo.** Motivo: dá para provar as regras no projeto real sem deixar dado, e sem precisar de Docker.
+- 2026-11-27 · **`apps/web/.env` entra no repositório, só com a URL e a chave publicável do Supabase.** Motivo: são valores públicos (vão para o navegador), e assim `pnpm dev` já fala com o login de verdade; segredos continuam fora.
+- 2026-11-27 · **Configuração do login versionada em `supabase/config.toml`; no projeto, os mesmos valores vão pelo painel, com o endereço publicado no lugar de localhost.** Motivo: o conector do Supabase não muda a configuração do login, então o painel é ajustado pelo Codex, seguindo este arquivo.
+- 2026-11-27 · **E-mails do login pelo SMTP do Resend, remetente `onboarding@resend.dev` até existir um domínio.** Motivo: domínio é pago; sem ele, o Resend grátis só entrega no e-mail do dono da conta, o que basta para testar.
