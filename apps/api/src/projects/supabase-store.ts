@@ -114,6 +114,36 @@ export function createSupabaseStore(
       return toProject(data);
     },
 
+    async update(id, { title, status }) {
+      // Sem gatilho no banco para `updated_at`: renomear ou mudar o status conta como editar.
+      // A revisão não sobe, para o salvamento aberto em outra aba não virar conflito.
+      const {
+        data,
+        error,
+        status: httpStatus,
+      } = await supabase
+        .from('projects')
+        .update({
+          ...(title === undefined ? {} : { title }),
+          ...(status === undefined ? {} : { status }),
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', id)
+        .select(SUMMARY)
+        .returns<ProjectRow[]>();
+      check(error, httpStatus);
+      const row = data?.[0];
+      if (!row) return null;
+      return {
+        id: row.id,
+        kind: row.kind,
+        title: row.title,
+        status: row.status,
+        revision: row.revision,
+        updatedAt: iso(row.updated_at),
+      };
+    },
+
     async save(id, { content, title, baseRevision }) {
       const result = await supabase.rpc('save_project', {
         p_id: id,
