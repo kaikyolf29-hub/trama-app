@@ -14,7 +14,9 @@
     "lint": "eslint . && stylelint \"**/*.css\" --allow-empty-input",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "check": "pnpm typecheck && pnpm lint && pnpm format:check && pnpm test"
+    "check": "pnpm typecheck && pnpm lint && pnpm format:check && pnpm test",
+    "e2e": "pnpm --filter @trama/web e2e",
+    "e2e:perf": "pnpm --filter @trama/web e2e:perf"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
