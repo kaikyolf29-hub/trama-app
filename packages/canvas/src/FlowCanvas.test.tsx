@@ -49,7 +49,11 @@ describe('FlowCanvas', () => {
     render(<FlowCanvas flow={flow} />);
     const toolbar = screen.getByRole('toolbar', { name: 'Ferramentas' });
     expect(toolbar).toBeDefined();
-    expect(screen.getByRole('button', { name: 'Seta' })).toHaveProperty('disabled', true);
+    expect(screen.getByRole('button', { name: 'Falar e organizar' })).toHaveProperty(
+      'disabled',
+      true,
+    );
+    expect(screen.getByRole('button', { name: 'Seta' })).toHaveProperty('disabled', false);
     expect(screen.getByRole('button', { name: 'Nota adesiva' })).toHaveProperty('disabled', false);
     expect(screen.getByRole('button', { name: 'Organizar com IA' })).toHaveProperty(
       'disabled',

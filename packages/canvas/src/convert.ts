@@ -55,8 +55,7 @@ export function arrowToEdge(arrow: Arrow): CanvasEdge {
     target: arrow.to.nodeId,
     sourceHandle: arrow.from.side ?? null,
     targetHandle: arrow.to.side ?? null,
-    type: arrow.route === 'straight' ? 'straight' : 'default',
-    label: arrow.label,
+    type: 'arrow',
     data: { arrow },
   };
 }

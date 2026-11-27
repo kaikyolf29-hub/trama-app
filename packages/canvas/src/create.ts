@@ -1,10 +1,13 @@
 import {
+  arrowSchema,
   blockSchema,
   frameSchema,
   imageBlockSchema,
   linkBlockSchema,
   parseLinkEmbed,
   snapToGrid,
+  type Arrow,
+  type ArrowEnd,
   type Block,
   type Frame,
   type ImageBlock,
@@ -126,4 +129,9 @@ export function createLinkBlock(at: Point, url: string, id = newId()): LinkBlock
   const embed = parseLinkEmbed(url);
   const size = embed.provider === 'web' ? LINK_SIZES.web : LINK_SIZES.video;
   return linkBlockSchema.parse({ id, type: 'link', position: placeAt(at, size), size, url });
+}
+
+/** Seta nova, curva, entre dois nós diferentes. */
+export function createArrow(from: ArrowEnd, to: ArrowEnd, id = newId()): Arrow {
+  return arrowSchema.parse({ id, from, to });
 }

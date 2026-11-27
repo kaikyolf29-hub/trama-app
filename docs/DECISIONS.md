@@ -126,3 +126,10 @@ Não apague: escreva uma linha nova dizendo o que substitui.
 - 2026-11-27 · **Imagens no Supabase Storage, no bucket privado `arquivos` (10 MB, só PNG, JPG, WebP e GIF), em `<id da pessoa>/<uuid>.<ext>`. A RLS só deixa cada pessoa ler e gravar a própria pasta; para mostrar, o app pede uma URL assinada de 1 hora.** Motivo: o Storage grátis tem 1 GB e a RLS já protege sem passar pela API; a cópia no Drive entra na etapa 1.6.
 - 2026-11-27 · **O site cria um só cliente do Supabase (`apps/web/src/supabase.ts`), usado pelo login e pelos arquivos.** Motivo: os dois precisam da mesma sessão.
 - 2026-11-27 · **Imagem que sai do quadro não é apagada do Storage na hora.** Motivo: o histórico de versões (etapa 1.5) ainda pode apontar para ela; a limpeza vem depois, olhando o que nenhuma versão usa.
+
+## Etapa 1.4 — Setas, seleção, atalhos, barra de contexto e clique direito
+
+- 2026-11-27 · **Toda seta usa um componente só (`arrow-edge.tsx`): curva ou reta pelo campo `route` do core, texto no meio e, selecionada, uma barrinha com Curva, Reta, Texto e Apagar.** Motivo: a seta "pode ser curva ou reta e aceita texto" (plano), e trocar isso tem que estar a um clique.
+- 2026-11-27 · **Puxar o ponto azul de um bloco até outro cria a seta; a ferramenta Seta (tecla S) mostra os pontos em todos os blocos. Não se liga um nó a ele mesmo nem se repete uma ligação.** Motivo: o core recusa a seta de um nó para ele mesmo, e duas setas iguais só confundem.
+- 2026-11-27 · **Shift, Ctrl ou Cmd somam blocos à seleção; arrastar no vazio faz o laço.** Motivo: "Shift ou o laço de seleção para pegar vários" (plano).
+- 2026-11-27 · **O texto e a barrinha da seta ficam acima dos blocos.** Motivo: no React Flow a camada dos rótulos fica embaixo dos nós, e a barrinha sumia atrás de um bloco vizinho (achado no teste no navegador).
