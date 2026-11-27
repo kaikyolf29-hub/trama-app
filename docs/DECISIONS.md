@@ -123,3 +123,6 @@ Não apague: escreva uma linha nova dizendo o que substitui.
 - 2026-11-27 · **Etapas entram pela tecla E até o menu de blocos chegar com o clique direito (etapa 1.4).** Motivo: a barra da tela 1 não tem botão de etapas.
 - 2026-11-27 · **A lista de etapas muda de altura com o número de etapas (56 px + 32 px por etapa + 16 px).** Motivo: as 5 etapas da tela 1 cabem certinho, e nenhuma etapa fica escondida.
 - 2026-11-27 · **Token novo `media` (preto) para o fundo do vídeo e o selo de duração.** Motivo: na tela 1 o vídeo é preto, mais escuro que o quadro.
+- 2026-11-27 · **Imagens no Supabase Storage, no bucket privado `arquivos` (10 MB, só PNG, JPG, WebP e GIF), em `<id da pessoa>/<uuid>.<ext>`. A RLS só deixa cada pessoa ler e gravar a própria pasta; para mostrar, o app pede uma URL assinada de 1 hora.** Motivo: o Storage grátis tem 1 GB e a RLS já protege sem passar pela API; a cópia no Drive entra na etapa 1.6.
+- 2026-11-27 · **O site cria um só cliente do Supabase (`apps/web/src/supabase.ts`), usado pelo login e pelos arquivos.** Motivo: os dois precisam da mesma sessão.
+- 2026-11-27 · **Imagem que sai do quadro não é apagada do Storage na hora.** Motivo: o histórico de versões (etapa 1.5) ainda pode apontar para ela; a limpeza vem depois, olhando o que nenhuma versão usa.

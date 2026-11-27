@@ -1,4 +1,5 @@
-import { createClient, type User } from '@supabase/supabase-js';
+import type { User } from '@supabase/supabase-js';
+import type { Supabase } from '../supabase';
 import { authErrorMessage } from './errors';
 import type { AuthClient, AuthResult, AuthUser } from './types';
 
@@ -18,19 +19,7 @@ const ok: AuthResult = { ok: true, value: undefined };
  * A recuperação usa o `token_hash` do e-mail (supabase/templates/recovery.html), conferido
  * na tela /nova-senha. Assim o link funciona mesmo aberto em outro aparelho.
  */
-export function createSupabaseAuthClient(
-  url: string,
-  publishableKey: string,
-  appUrl: string,
-): AuthClient {
-  const supabase = createClient(url, publishableKey, {
-    auth: {
-      flowType: 'pkce',
-      persistSession: true,
-      autoRefreshToken: true,
-      detectSessionInUrl: true,
-    },
-  });
+export function createSupabaseAuthClient(supabase: Supabase, appUrl: string): AuthClient {
   const auth = supabase.auth;
 
   return {
