@@ -22,6 +22,7 @@ export function createFakeAuth(options: { requireConfirmation?: boolean } = {}) 
 
   const client: AuthClient = {
     getUser: () => Promise.resolve(current),
+    getAccessToken: () => Promise.resolve(current ? `token-${current.id}` : null),
     onUserChange(listener) {
       listeners.add(listener);
       return () => listeners.delete(listener);

@@ -12,8 +12,10 @@ import { createBackendFromEnv } from './env';
 const root = document.getElementById('root');
 if (!root) throw new Error('Elemento #root não encontrado no index.html');
 
+const backend = createBackendFromEnv();
+
 createRoot(root).render(
   <StrictMode>
-    <App client={createBackendFromEnv().auth} />
+    <App client={backend.auth} services={backend.services} />
   </StrictMode>,
 );

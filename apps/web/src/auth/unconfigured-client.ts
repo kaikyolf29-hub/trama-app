@@ -10,6 +10,7 @@ const notConfigured = <T>(): Promise<AuthResult<T>> =>
 export function createUnconfiguredAuthClient(): AuthClient {
   return {
     getUser: () => Promise.resolve(null),
+    getAccessToken: () => Promise.resolve(null),
     onUserChange: () => () => undefined,
     signUp: notConfigured,
     signIn: notConfigured,

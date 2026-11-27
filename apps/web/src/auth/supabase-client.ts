@@ -28,6 +28,12 @@ export function createSupabaseAuthClient(supabase: Supabase, appUrl: string): Au
       return data.session ? toUser(data.session.user) : null;
     },
 
+    async getAccessToken() {
+      // getSession renova o token sozinho quando ele está perto de vencer.
+      const { data } = await auth.getSession();
+      return data.session?.access_token ?? null;
+    },
+
     onUserChange(listener) {
       // Não chame o Supabase de dentro deste callback: ele roda sob uma trava interna.
       const { data } = auth.onAuthStateChange((_event, session) => {
