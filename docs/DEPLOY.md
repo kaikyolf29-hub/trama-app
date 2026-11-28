@@ -126,3 +126,37 @@ No `pnpm dev`, os mesmos nomes vão em `apps/api/.dev.vars` (segredos) e `apps/w
   `drive_connections`, a função `drive_record_copy` e o limite de um "Aviso do Drive" por dia) e
   `20261128021642_boas_vindas.sql` (colunas de `profiles` e as funções `claim_welcome_email` e
   `release_welcome_email`). Quem já tinha conta conta como "já recebeu" as boas-vindas.
+
+## Resumo semanal e lembrete de revisão por e-mail (etapa 2.6)
+
+O Worker da API roda uma tarefa agendada (Cron Trigger `0 * * * *`, de hora em hora, já no
+`apps/api/wrangler.jsonc`). Ela manda o **resumo semanal** (segunda, 8h no fuso de cada pessoa) e o
+**lembrete de revisão** (todo dia, 8h, só para quem ligou em Configurações). Quem falhou às 8h tenta
+de novo até as 10h59. Nada sai enquanto faltar algum dos itens abaixo: a tarefa só registra no log o
+que falta.
+
+### O que a pessoa dona do projeto precisa configurar
+
+| Nome                           | Onde                                                                                                          | Tipo     |
+| ------------------------------ | ------------------------------------------------------------------------------------------------------------- | -------- |
+| `SUPABASE_SECRET_KEY`          | Worker da API (`wrangler secret put SUPABASE_SECRET_KEY`), a `sb_secret_...` do painel do Supabase (API Keys) | Segredo  |
+| `RESEND_API_KEY`, `EMAIL_FROM` | Os mesmos da etapa 1.6                                                                                        | Segredo  |
+| `TOKEN_ENCRYPTION_KEY`         | O mesmo da etapa 1.6 (assina o link de descadastro)                                                           | Segredo  |
+| `API_URL`                      | Opcional: endereço público da API, se não for `trama-api.<subdomínio>.workers.dev`                            | Variável |
+| `APP_URL`                      | Opcional: endereço do site, se não for `trama.<subdomínio>.workers.dev`                                       | Variável |
+
+E aplicar a migration `supabase/migrations/20261128065500_emails_estudos.sql` no projeto (CLI
+`supabase db push` ou o conector do Supabase). Depois, rodar `supabase/tests/emails_estudos_rls.sql`
+no SQL Editor (sem erro, passou) e o "Security Advisor" do painel.
+
+### Como funciona (para quem for mexer)
+
+- A chave secreta **ignora a RLS**. Por isso ela só é usada em `apps/api/src/digest` e só chama
+  cinco funções do banco (`email_candidates`, `claim_email`, `release_email`, `digest_data`,
+  `set_email_preference`), liberadas apenas para `service_role`. Nunca se consulta uma tabela.
+- Limite do Resend no plano grátis: 100 e-mails por dia. A tabela `email_log` conta os envios do
+  dia (UTC); passou, a tarefa para e registra no log, sem dado pessoal.
+- Limite do Worker no plano grátis: 50 chamadas externas por execução. A tarefa faz no máximo 44
+  e deixa o resto para a hora seguinte.
+- O link de descadastro (`/unsubscribe?t=...`) não precisa de login e desliga só aquele tipo de
+  e-mail. Para ver as contagens de cada execução: `wrangler tail`.
