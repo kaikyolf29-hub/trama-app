@@ -1,7 +1,9 @@
 import { Link } from '@tanstack/react-router';
+import { aiOrganizeFormatLabels, type AiOrganizeFormat } from '@trama/core';
 import { Alert, Button, cn } from '@trama/ui';
 import { VoiceIcon } from '@trama/ui/icons';
 import { useEffect, useRef, useState } from 'react';
+import { useServices } from '../services';
 import { copyText } from './copy';
 import { deviceNotice } from './device';
 import { micErrorText } from './mic-errors';
@@ -13,15 +15,15 @@ import {
   voiceModelList,
   type VoiceModelId,
 } from './models';
+import { FORMAT_ORDER, effortLine, estimateText, formatHints, settingsLine } from './organize';
 import { MAX_RECORDING_SECONDS } from './recording-state';
+import { ResultPanel } from './ResultPanel';
 import type { VoiceServices } from './services';
 import { modelNotice, statusLines } from './status-text';
 import { appendTranscript } from './text';
+import { useOrganizer, type EstimateState, type Readiness } from './use-organizer';
 import { useComputeDevice, useVoiceSession } from './use-voice-session';
 import { VoiceWaveform } from './VoiceWaveform';
-
-/** Os formatos que a IA vai montar; ligados na próxima etapa. */
-const FORMATS = ['Fluxo', 'Roteiro', 'Plano com tarefas', 'Prompt organizado'] as const;
 
 const label = 'text-[13px] text-text-muted';
 const sectionLabel = 'text-[13px] font-semibold tracking-wider text-text-muted uppercase';
@@ -29,9 +31,10 @@ const selectClass =
   'h-10 rounded-control border border-border bg-field px-3 text-sm text-text transition-colors hover:border-text-muted focus-visible:outline-2 focus-visible:outline-selection disabled:cursor-not-allowed disabled:opacity-60';
 
 /**
- * "Falar e organizar" (tela 5). Esta etapa traz a metade da esquerda funcionando: gravar,
- * transcrever no navegador, corrigir à mão e copiar. A metade da direita (a IA organizando o
- * texto) e a escolha do formato ficam no lugar, desligadas, até a etapa da organização.
+ * "Falar e organizar" (tela 5). À esquerda: gravar, transcrever no navegador (etapa 3.2), corrigir
+ * à mão, escolher o formato e organizar. À direita: o que a IA entendeu, com as correções que
+ * percebeu, "Refazer" e "Inserir no quadro" (etapa 3.3). Só o texto vai para a IA que a pessoa
+ * escolheu em Configurações, com a chave dela; o áudio nunca sai do computador.
  */
 export function VoiceWorkspace({
   projectId,
@@ -44,6 +47,8 @@ export function VoiceWorkspace({
 }) {
   const [text, setText] = useState('');
   const [modelId, setModelId] = useState<VoiceModelId>(DEFAULT_VOICE_MODEL);
+  const [format, setFormat] = useState<AiOrganizeFormat>('flow');
+  const { ai, aiEstimateDelay } = useServices();
   const device = useComputeDevice(services);
   const { session, state } = useVoiceSession({
     services,
@@ -54,6 +59,14 @@ export function VoiceWorkspace({
 
   const recording = state.phase === 'recording';
   const busy = state.phase !== 'idle';
+  const organizer = useOrganizer({
+    ai,
+    text,
+    format,
+    paused: busy,
+    estimateDelay: aiEstimateDelay,
+  });
+  const running = organizer.run.kind === 'running';
   const lines = statusLines(state, text.trim() !== '');
   const model = modelNotice(state.model);
   const slow = device ? deviceNotice(device) : null;
@@ -92,15 +105,10 @@ export function VoiceWorkspace({
               ))}
             </select>
           </label>
-          <label
-            className="flex items-center gap-3"
-            title="A organização pela IA chega na próxima etapa"
-          >
+          <div className="flex items-center gap-3">
             <span className={label}>Organizar com</span>
-            <select disabled className={selectClass}>
-              <option>Claude</option>
-            </select>
-          </label>
+            <OrganizeWith readiness={organizer.readiness} />
+          </div>
         </div>
       </header>
 
@@ -203,59 +211,94 @@ export function VoiceWorkspace({
             </p>
           </div>
 
-          <div
-            className="flex flex-wrap items-center gap-2"
-            role="group"
-            aria-label="Organizar como"
-          >
-            <span className={label}>Organizar como:</span>
-            {FORMATS.map((format, index) => (
-              <button
-                key={format}
-                type="button"
-                disabled
-                aria-pressed={index === 0}
-                title="A organização pela IA chega na próxima etapa"
-                className={cn(
-                  'h-10 cursor-not-allowed rounded-control border px-3 text-sm opacity-60',
-                  index === 0
-                    ? 'border-brand-paper bg-brand-paper font-semibold text-brand-ink'
-                    : 'border-border text-text',
-                )}
-              >
-                {format}
-              </button>
-            ))}
+          <EstimateLine readiness={organizer.readiness} estimate={organizer.estimate} />
+
+          <div className="flex flex-wrap items-center gap-2">
+            <div
+              className="flex flex-wrap items-center gap-2"
+              role="group"
+              aria-label="Organizar como"
+            >
+              <span className={label}>Organizar como:</span>
+              {FORMAT_ORDER.map((option) => (
+                <button
+                  key={option}
+                  type="button"
+                  disabled={running}
+                  aria-pressed={option === format}
+                  title={formatHints[option]}
+                  onClick={() => setFormat(option)}
+                  className={cn(
+                    'h-10 rounded-control border px-3 text-sm transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-selection disabled:cursor-not-allowed disabled:opacity-60',
+                    option === format
+                      ? 'border-brand-paper bg-brand-paper font-semibold text-brand-ink'
+                      : 'border-border text-text hover:bg-hover',
+                  )}
+                >
+                  {aiOrganizeFormatLabels[option]}
+                </button>
+              ))}
+            </div>
+            <Button
+              className="ml-auto"
+              loading={running}
+              disabled={organizer.readiness.kind !== 'ready' || text.trim() === '' || busy}
+              onClick={organizer.organize}
+            >
+              Organizar
+            </Button>
           </div>
         </section>
 
-        <section
-          aria-label="O que a IA entendeu"
-          className="bg-canvas-dots flex min-h-[320px] flex-col gap-6 rounded-block border border-border p-6"
-        >
-          <div className="flex items-center justify-between gap-3">
-            <h2 className={sectionLabel}>A IA entendeu assim</h2>
-            <div className="flex gap-2">
-              <Button variant="secondary" disabled>
-                Refazer
-              </Button>
-              <Button disabled>Inserir no quadro</Button>
-            </div>
-          </div>
-          <div className="mx-auto mt-8 max-w-md text-center">
-            <p className="text-base font-semibold text-text-strong">
-              A organização pela IA chega na próxima etapa
-            </p>
-            <p className="mt-2 text-[13px] leading-relaxed text-text-muted">
-              Por enquanto o Trama grava a sua fala e escreve o texto aqui ao lado, no seu
-              computador. Corrija o que precisar e use &ldquo;Copiar texto&rdquo;. Depois, a IA vai
-              transformar esse texto em fluxo, roteiro, plano ou prompt, e você poderá inserir no
-              quadro.
-            </p>
-          </div>
-        </section>
+        <ResultPanel
+          projectId={projectId}
+          readiness={organizer.readiness}
+          run={organizer.run}
+          text={text}
+          format={format}
+          onOrganize={organizer.organize}
+        />
       </main>
     </div>
+  );
+}
+
+/** "Organizar com Claude · modelo": vem de Configurações → IA e leva para lá para trocar. */
+function OrganizeWith({ readiness }: { readiness: Readiness }) {
+  const box =
+    'inline-flex h-10 items-center rounded-control border border-border bg-field px-3 text-sm text-text transition-colors hover:border-text-muted focus-visible:outline-2 focus-visible:outline-selection';
+  if (readiness.kind === 'ready') {
+    return (
+      <Link
+        to="/configuracoes"
+        title={`${effortLine(readiness.settings)}. Trocar em Configurações → IA`}
+        className={box}
+      >
+        {settingsLine(readiness.settings)}
+      </Link>
+    );
+  }
+  if (readiness.kind === 'loading') return <span className={cn(box, 'opacity-60')}>…</span>;
+  if (readiness.kind === 'off') return <span className={cn(box, 'opacity-60')}>Sem API</span>;
+  return (
+    <Link to="/configuracoes" className={box}>
+      {readiness.kind === 'no-key' ? 'Guardar a chave' : 'Configurar a IA'}
+    </Link>
+  );
+}
+
+/** A estimativa de custo, antes de enviar (`POST /ai/estimate`, sem gastar nada). */
+function EstimateLine({ readiness, estimate }: { readiness: Readiness; estimate: EstimateState }) {
+  if (readiness.kind !== 'ready') return null;
+  let content: string | null = null;
+  if (estimate.kind === 'loading') content = 'Calculando a estimativa…';
+  if (estimate.kind === 'ready')
+    content = `Estimativa antes de enviar: ${estimateText(estimate.estimate)}`;
+  if (estimate.kind === 'failed') content = `Não deu para estimar o custo: ${estimate.message}`;
+  return (
+    <p role="status" aria-live="polite" className="min-h-5 text-xs text-text-muted">
+      {content}
+    </p>
   );
 }
 

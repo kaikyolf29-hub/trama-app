@@ -2,12 +2,15 @@ import {
   aiKeyLast4,
   type AiKeySummary,
   type AiModel,
+  type AiOrganizeRequest,
+  type AiOrganizeResponse,
   type AiProvider,
   type AiSettings,
 } from '@trama/core';
 import { vi } from 'vitest';
 import type { AiApi } from '../api/ai-api';
 import { ApiError } from '../api/http';
+import { sampleEstimate, sampleResponses } from './ai-samples';
 
 const model = (id: string, name: string): AiModel => ({
   id,
@@ -43,6 +46,18 @@ export function createFakeAi(
     /** Falha só na lista de modelos (gasta ao falhar). */
     failModels: null as { message: string; code?: ApiError['code'] } | null,
     now: '2026-11-28T12:00:00.000Z',
+    /** O que `estimate` responde; um erro faz a próxima chamada falhar. */
+    estimate: sampleEstimate,
+    /** Pedidos de estimativa e de organizar que chegaram, na ordem. */
+    estimates: [] as AiOrganizeRequest[],
+    organized: [] as AiOrganizeRequest[],
+    /** A resposta de `organize` por formato; troque para testar outra saída. */
+    responses: { ...sampleResponses } as Record<AiOrganizeRequest['format'], AiOrganizeResponse>,
+    /** Erro das próximas chamadas de organizar (uma por item, na ordem). */
+    organizeFailures: [] as { message: string; code?: ApiError['code']; status?: number }[],
+    estimateFailure: null as { message: string; code?: ApiError['code'] } | null,
+    /** Se definido, `organize` só responde quando o teste chama isto (para ver o carregando). */
+    hold: null as Promise<void> | null,
   };
   const fail = () => {
     const next = state.failNext;
@@ -92,8 +107,21 @@ export function createFakeAi(
       const error = next ? new ApiError(next.message, 422, next.code) : fail();
       return error ? Promise.reject(error) : Promise.resolve(state.models[provider]);
     },
-    estimate: vi.fn(() => Promise.reject(new Error('fora desta tela'))),
-    organize: vi.fn(() => Promise.reject(new Error('fora desta tela'))),
+    estimate: vi.fn((request: AiOrganizeRequest) => {
+      state.estimates.push(request);
+      if (state.estimateFailure) {
+        const { message, code } = state.estimateFailure;
+        return Promise.reject(new ApiError(message, 422, code));
+      }
+      return Promise.resolve(state.estimate);
+    }),
+    organize: vi.fn(async (request: AiOrganizeRequest) => {
+      state.organized.push(request);
+      if (state.hold) await state.hold;
+      const failure = state.organizeFailures.shift();
+      if (failure) throw new ApiError(failure.message, failure.status ?? 422, failure.code);
+      return state.responses[request.format];
+    }),
   };
   return { api, state };
 }

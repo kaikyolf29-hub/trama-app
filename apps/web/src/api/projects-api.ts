@@ -2,8 +2,11 @@ import {
   flowProjectSchema,
   projectSummarySchema,
   saveProjectResponseSchema,
+  scriptProjectSchema,
   type CreateFlowProjectRequest,
+  type CreateScriptProjectRequest,
   type FlowProject,
+  type ScriptProject,
   type ProjectSummary,
   type SaveProjectRequest,
   type SaveProjectResponse,
@@ -18,6 +21,8 @@ export { ApiError };
 export interface ProjectsApi {
   list(): Promise<ProjectSummary[]>;
   create(input: CreateFlowProjectRequest): Promise<FlowProject>;
+  /** Cria um roteiro ("Falar e organizar" monta as cenas com a IA). */
+  createScript(input: CreateScriptProjectRequest): Promise<ScriptProject>;
   get(id: string): Promise<FlowProject>;
   /** Renomeia e/ou muda o status, sem mexer no conteúdo. */
   update(id: string, patch: UpdateProjectRequest): Promise<ProjectSummary>;
@@ -44,6 +49,8 @@ export function createProjectsApi(config: {
     list: () => call('/projects', z.array(projectSummarySchema)),
     create: (input) =>
       call('/projects', flowProjectSchema, { method: 'POST', body: JSON.stringify(input) }),
+    createScript: (input) =>
+      call('/projects', scriptProjectSchema, { method: 'POST', body: JSON.stringify(input) }),
     get: (id) => call(`/projects/${encodeURIComponent(id)}`, flowProjectSchema),
     update: (id, patch) =>
       call(`/projects/${encodeURIComponent(id)}`, projectSummarySchema, {
