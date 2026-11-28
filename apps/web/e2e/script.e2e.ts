@@ -30,6 +30,7 @@ test.describe('roteiro (/p/<id> de um projeto script)', () => {
     await panel(page)
       .getByRole('button', { name: /próxima cena/ })
       .click();
+    await expect(editor(page)).toBeFocused();
     await page.keyboard.type('Mostrar o problema');
     await page.keyboard.press('Tab');
     await page.keyboard.type('0:15–1:00');
@@ -44,10 +45,13 @@ test.describe('roteiro (/p/<id> de um projeto script)', () => {
     await page.keyboard.type('/fala');
     await expect(page.getByRole('listbox', { name: 'Blocos de roteiro' })).toBeVisible();
     await page.keyboard.press('Enter');
+    await expect(page.getByRole('listbox', { name: 'Blocos de roteiro' })).toBeHidden();
     await page.keyboard.type('Olha como está essa timeline.');
     await page.keyboard.press('Enter');
     await page.keyboard.type('/plano');
+    await expect(page.getByRole('listbox', { name: 'Blocos de roteiro' })).toBeVisible();
     await page.keyboard.press('Enter');
+    await expect(page.getByRole('listbox', { name: 'Blocos de roteiro' })).toBeHidden();
     await page.keyboard.type('Zoom nos trechos mortos');
 
     // O salvamento sozinho espera 2 s e depois mostra "Salvo".

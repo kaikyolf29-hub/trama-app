@@ -41,4 +41,3 @@ export function SceneTitleView({ node, editor, getPos, updateAttributes }: NodeV
     </NodeViewWrapper>
   );
 }
-

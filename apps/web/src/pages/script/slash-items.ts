@@ -41,4 +41,3 @@ export const SLASH_ITEMS: readonly SlashItem[] = [
     run: turnInto(NODE.notes),
   },
 ];
-

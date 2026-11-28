@@ -14,6 +14,7 @@ import { App } from '../App';
 import { defaultServices, type Services } from '../services';
 import { createFakeAuth } from '../test/fake-auth';
 import { createFakeProjects } from '../test/fake-projects';
+import { createFakeVoiceServices } from '../test/fake-voice';
 
 // O jsdom não tem ResizeObserver nem DOMMatrixReadOnly, que o quadro (React Flow) usa.
 beforeAll(() => {
@@ -118,14 +119,15 @@ describe('Início: modelos', () => {
     });
   });
 
-  it('"Falar e organizar" abre o quadro com a nota que explica que a voz vem depois', async () => {
-    const { fake, history } = renderHome();
+  it('"Falar e organizar" cria o projeto e abre a tela de voz, não o quadro', async () => {
+    const { fake, history } = renderHome([], {
+      voice: createFakeVoiceServices().services,
+    });
     fireEvent.click(await screen.findByRole('button', { name: /Falar e organizar/ }));
-    await waitFor(() => expect(history.location.pathname).toMatch(/^\/p\//));
-    const [created] = [...fake.projects.values()];
-    const blocks = created?.kind === 'flow' ? created.content.blocks : [];
-    expect(blocks).toHaveLength(1);
-    expect(blocks[0]).toMatchObject({ type: 'sticky' });
+    await waitFor(() => expect(history.location.pathname).toMatch(/^\/p\/[^/]+\/falar$/));
+    expect(fake.projects.size).toBe(1);
+    expect(await screen.findByRole('heading', { name: 'Falar e organizar' })).toBeDefined();
+    expect(screen.getByRole('button', { name: 'Gravar' })).toBeDefined();
   });
 
   it('se criar falha, avisa, continua no Início e libera os modelos de novo', async () => {

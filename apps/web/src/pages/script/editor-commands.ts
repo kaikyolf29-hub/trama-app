@@ -50,4 +50,3 @@ export function goToBody(editor: Editor, titlePos: number): boolean {
     .setTextSelection(after + 1)
     .run();
 }
-

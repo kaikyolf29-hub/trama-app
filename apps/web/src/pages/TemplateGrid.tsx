@@ -26,7 +26,11 @@ export function TemplateGrid() {
     setError(null);
     try {
       const project = await projects.create(createRequestFromProjectTemplate(template));
-      await navigate({ to: '/p/$projectId', params: { projectId: project.id } });
+      // "Falar e organizar" abre a tela de voz do projeto (tela 5); os outros, o quadro.
+      await navigate({
+        to: template.id === 'voice' ? '/p/$projectId/falar' : '/p/$projectId',
+        params: { projectId: project.id },
+      });
     } catch (failure) {
       setError(failure instanceof Error ? failure.message : 'Não deu para criar o projeto.');
       setCreating(null);
