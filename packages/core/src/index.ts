@@ -17,4 +17,5 @@ export * from './project';
 export * from './agenda';
 export * from './api';
 export * from './api-organization';
+export * from './drive';
 export * from './templates';

@@ -1,7 +1,9 @@
+import { createAccountApi, createDriveApi } from './api/drive-api';
 import { createProjectsApi } from './api/projects-api';
 import { createSupabaseAuthClient } from './auth/supabase-client';
 import type { AuthClient } from './auth/types';
 import { createUnconfiguredAuthClient } from './auth/unconfigured-client';
+import { appIdFromClientId, createPicker } from './drive/picker';
 import { defaultServices, type Services } from './services';
 import { createSupabaseMedia, filesBucket } from './storage/supabase-media';
 import { createSupabase, type Supabase } from './supabase';
@@ -25,14 +27,23 @@ export function createBackendFromEnv(): Backend {
   const supabase = createSupabase(url, key);
   const auth = createSupabaseAuthClient(supabase, appUrl);
   const bucket = filesBucket(supabase);
+  const api = apiUrl ? { baseUrl: apiUrl, getToken: () => auth.getAccessToken() } : null;
+  // O Picker precisa da chave de API (restrita a ele) e do número do projeto do Google Cloud.
+  const googleApiKey = import.meta.env.VITE_GOOGLE_API_KEY;
+  const googleAppId =
+    import.meta.env.VITE_GOOGLE_APP_ID || appIdFromClientId(import.meta.env.VITE_GOOGLE_CLIENT_ID);
   return {
     auth,
     supabase,
     services: {
       ...defaultServices,
-      projects: apiUrl
-        ? createProjectsApi({ baseUrl: apiUrl, getToken: () => auth.getAccessToken() })
-        : null,
+      projects: api ? createProjectsApi(api) : null,
+      drive: api ? createDriveApi(api) : null,
+      account: api ? createAccountApi(api) : null,
+      pickDriveFile:
+        googleApiKey && googleAppId
+          ? createPicker({ apiKey: googleApiKey, appId: googleAppId })
+          : null,
       mediaFor: (userId) => createSupabaseMedia(bucket, userId),
     },
   };
