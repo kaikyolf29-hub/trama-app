@@ -94,9 +94,35 @@ describe('API de projetos', () => {
     expect(store.projects.get(id)?.revision).toBe(1);
     expect((await call('/projects', { method: 'POST', body: '{não é json' })).status).toBe(400);
     expect(
-      (await call('/projects', { method: 'POST', body: JSON.stringify({ kind: 'script' }) }))
+      (await call('/projects', { method: 'POST', body: JSON.stringify({ kind: 'planilha' }) }))
         .status,
     ).toBe(400);
+  });
+
+  it('cria roteiro e caderno (conector MCP), vazios ou com conteúdo, e recusa conteúdo inválido', async () => {
+    const { call, json } = setup();
+    const script = await call('/projects', {
+      method: 'POST',
+      body: JSON.stringify({ kind: 'script', title: 'Roteiro' }),
+    });
+    expect(script.status).toBe(201);
+    expect(await json<{ kind: string; content: { scenes: unknown[] } }>(script)).toMatchObject({
+      kind: 'script',
+      content: { scenes: [] },
+    });
+    const notebook = await call('/projects', {
+      method: 'POST',
+      body: JSON.stringify({ kind: 'notebook', title: 'Inglês', content: { reviewAfterDays: 3 } }),
+    });
+    expect(notebook.status).toBe(201);
+    expect(
+      await json<{ kind: string; content: { reviewAfterDays: number } }>(notebook),
+    ).toMatchObject({ kind: 'notebook', content: { reviewAfterDays: 3 } });
+    const bad = await call('/projects', {
+      method: 'POST',
+      body: JSON.stringify({ kind: 'script', content: { scenes: [{ id: 'a' }, { id: 'a' }] } }),
+    });
+    expect(bad.status).toBe(400);
   });
 
   it('gravação com revisão velha vale, avisa e guarda a substituída no histórico', async () => {

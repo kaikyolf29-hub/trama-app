@@ -1,0 +1,28 @@
+// O conector MCP do Trama no Cloudflare Workers (plano grátis): https://trama-mcp.<subdomínio>.workers.dev
+// Segredo (MCP_ENCRYPTION_KEY) nunca aqui: `wrangler secret put` (docs/DEPLOY.md, "Conector MCP").
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "trama-mcp",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-11-20",
+  // Os clientes que se identificam por um documento na web (CIMD) fazem o Worker buscá-lo; a
+  // opção impede que essa busca alcance endereços internos.
+  "compatibility_flags": ["global_fetch_strictly_public"],
+  "workers_dev": true,
+  "observability": { "enabled": true },
+  // Valores públicos (os mesmos da API e do site). No deploy, APP_URL e MCP_URL levam o
+  // subdomínio da conta (.github/workflows/deploy.yml); estes são os do `pnpm dev`.
+  "vars": {
+    "SUPABASE_URL": "https://jebksiyftodpbvhndoqf.supabase.co",
+    "SUPABASE_PUBLISHABLE_KEY": "sb_publishable_OSFV9POclQok-BaNlc-agw_LJ0vnssB",
+    "APP_URL": "http://localhost:5173",
+  },
+  // Onde a biblioteca de OAuth guarda clientes, concessões e tokens (só hashes e dados cifrados).
+  // O id abaixo é de exemplo: crie o namespace (`wrangler kv namespace create trama-mcp-oauth`)
+  // e guarde o id na variável MCP_KV_NAMESPACE_ID do GitHub; o deploy o põe no lugar
+  // (docs/DEPLOY.md). Plano grátis: 1.000 gravações por dia.
+  "kv_namespaces": [{ "binding": "OAUTH_KV", "id": "00000000000000000000000000000000" }],
+  // A API do Trama, de Worker para Worker (grátis, sem passar pela internet). Sem esta ligação,
+  // o MCP chama TRAMA_API_URL.
+  "services": [{ "binding": "TRAMA_API", "service": "trama-api" }],
+}

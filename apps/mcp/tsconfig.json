@@ -1,4 +1,10 @@
 {
   "extends": "../../tsconfig.base.json",
-  "include": ["src"]
+  "compilerOptions": {
+    // Workers usam as APIs web padrão (fetch, Request, Response); os tipos do Workers dão KV,
+    // service bindings e o contexto de execução.
+    "lib": ["ES2023"],
+    "types": ["@cloudflare/workers-types"]
+  },
+  "include": ["src", "vitest.config.ts"]
 }

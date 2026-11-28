@@ -1,6 +1,8 @@
 import {
+  createAnyProjectRequestSchema,
   createEmptyFlow,
-  createProjectRequestSchema,
+  createEmptyNotebook,
+  createEmptyScript,
   flowContentSchema,
   saveProjectRequestSchema,
   updateProjectRequestSchema,
@@ -40,14 +42,25 @@ export function projectRoutes() {
   routes.get('/', async (c) => c.json(await c.var.store.list()));
 
   routes.post('/', async (c) => {
-    const parsed = createProjectRequestSchema.safeParse(await body(c));
+    // Fluxo (o site) e, pelo conector MCP, roteiro e caderno (etapa 3.4).
+    const parsed = createAnyProjectRequestSchema.safeParse(await body(c));
     if (!parsed.success) return invalid(c, 'Dados do projeto inválidos.');
-    const { kind, title, content } = parsed.data;
-    const project = await c.var.store.create({
-      kind,
-      title,
-      content: content ?? createEmptyFlow(),
-    });
+    const request = parsed.data;
+    const project = await c.var.store.create(
+      request.kind === 'flow'
+        ? { kind: 'flow', title: request.title, content: request.content ?? createEmptyFlow() }
+        : request.kind === 'script'
+          ? {
+              kind: 'script',
+              title: request.title,
+              content: request.content ?? createEmptyScript(),
+            }
+          : {
+              kind: 'notebook',
+              title: request.title,
+              content: request.content ?? createEmptyNotebook(),
+            },
+    );
     return c.json(project, 201);
   });
 

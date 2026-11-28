@@ -1,11 +1,13 @@
 import type {
   FlowContent,
+  NotebookContent,
   ProjectKind,
   ProjectStatus,
   ProjectSummary,
   ProjectVersion,
   SaveProjectRequest,
   SaveProjectResponse,
+  ScriptContent,
   UpdateProjectRequest,
 } from '@trama/core';
 
@@ -22,6 +24,12 @@ export interface StoredProject {
   content: unknown;
 }
 
+/** O que se cria: fluxo (o site) ou roteiro e caderno (o conector MCP). */
+export type NewProject =
+  | { kind: 'flow'; title: string; content: FlowContent }
+  | { kind: 'script'; title: string; content: ScriptContent }
+  | { kind: 'notebook'; title: string; content: NotebookContent };
+
 /**
  * Onde os projetos moram, do ponto de vista das rotas. A versão de verdade fala com o
  * Supabase usando o token da pessoa (a RLS decide o que ela vê); os testes usam uma em memória.
@@ -30,7 +38,7 @@ export interface StoredProject {
 export interface ProjectStore {
   list(): Promise<ProjectSummary[]>;
   get(id: string): Promise<StoredProject | null>;
-  create(input: { kind: 'flow'; title: string; content: FlowContent }): Promise<StoredProject>;
+  create(input: NewProject): Promise<StoredProject>;
   /** Renomeia e/ou muda o status; o conteúdo e a revisão ficam como estão. */
   update(id: string, patch: UpdateProjectRequest): Promise<ProjectSummary | null>;
   save(id: string, request: SaveProjectRequest): Promise<SaveProjectResponse | null>;
