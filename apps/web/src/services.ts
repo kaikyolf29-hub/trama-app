@@ -4,6 +4,8 @@ import type { DriveApi } from './api/drive-api';
 import { DRIVE_COPY_INTERVAL } from './api/drive-copier';
 import { AUTOSAVE_DELAY } from './api/autosave';
 import type { AccountApi } from './api/account-api';
+import type { AgendaApi } from './api/agenda-api';
+import type { LessonsApi } from './api/lessons-api';
 import type { ProjectsApi } from './api/projects-api';
 import type { PickDriveFile } from './drive/picker';
 
@@ -11,6 +13,10 @@ import type { PickDriveFile } from './drive/picker';
 export interface Services {
   /** null quando o site não tem a API configurada (VITE_API_URL). */
   projects: ProjectsApi | null;
+  /** Eventos da Agenda (null sem API configurada, como `projects`). */
+  agenda: AgendaApi | null;
+  /** Aulas dos cadernos de Estudos (null sem API configurada). */
+  lessons: LessonsApi | null;
   /** Google Drive (conectar, copiar, abrir); null quando o site não tem a API. */
   drive: DriveApi | null;
   /** Perfil (Configurações) e e-mail de boas-vindas; null quando o site não tem a API. */
@@ -29,6 +35,8 @@ export interface Services {
 
 export const defaultServices: Services = {
   projects: null,
+  agenda: null,
+  lessons: null,
   drive: null,
   account: null,
   pickDriveFile: null,
