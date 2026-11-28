@@ -1,13 +1,11 @@
 import { describe, expect, it } from 'vitest';
+import { DEFAULT_TIME_ZONE, isValidTimeZone, timeZoneSchema } from './calendar';
 import {
   applyProfileUpdate,
   DEFAULT_EMAIL_PREFERENCES,
-  DEFAULT_TIME_ZONE,
   emailPreferencesSchema,
-  isValidTimeZone,
   profileNameSchema,
   profileSchema,
-  timeZoneSchema,
   updateProfileRequestSchema,
 } from './profile';
 
