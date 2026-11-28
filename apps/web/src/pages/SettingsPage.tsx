@@ -3,11 +3,13 @@ import { Alert, Button, Spinner } from '@trama/ui';
 import { useEffect, useState } from 'react';
 import type { AccountApi } from '../api/account-api';
 import type { AiApi } from '../api/ai-api';
+import type { ConnectorsApi } from '../api/connectors-api';
 import { useAuth } from '../auth/context';
 import { GENERIC_ERROR } from '../auth/errors';
 import { useServices } from '../services';
 import { AppSidebar } from './AppSidebar';
 import { AiSection } from './settings/AiSection';
+import { ConnectorsSection } from './settings/ConnectorsSection';
 import {
   AccountSection,
   EmailPreferencesSection,
@@ -22,7 +24,7 @@ type Load =
 /** Configurações (etapa 2.5): conta, e-mail, senha, fuso e e-mails do Trama. */
 export function SettingsPage() {
   const { user, client } = useAuth();
-  const { account, ai } = useServices();
+  const { account, ai, connectors } = useServices();
 
   return (
     <div className="min-h-dvh bg-page md:flex">
@@ -30,7 +32,7 @@ export function SettingsPage() {
       <main className="mx-auto flex min-w-0 max-w-[720px] flex-1 flex-col gap-6 px-4 py-10 sm:px-8 md:px-12 md:py-16">
         <h1 className="text-4xl font-bold text-text-strong">Configurações</h1>
         {account ? (
-          <SettingsBody api={account} ai={ai} />
+          <SettingsBody api={account} ai={ai} connectors={connectors} />
         ) : (
           <Alert tone="info">
             A API ainda não está ligada neste ambiente. Preencha VITE_API_URL em apps/web/.env.
@@ -41,7 +43,15 @@ export function SettingsPage() {
   );
 }
 
-function SettingsBody({ api, ai }: { api: AccountApi; ai: AiApi | null }) {
+function SettingsBody({
+  api,
+  ai,
+  connectors,
+}: {
+  api: AccountApi;
+  ai: AiApi | null;
+  connectors: ConnectorsApi | null;
+}) {
   const [load, setLoad] = useState<Load>({ kind: 'loading' });
 
   const [attempt, setAttempt] = useState(0);
@@ -101,6 +111,7 @@ function SettingsBody({ api, ai }: { api: AccountApi; ai: AiApi | null }) {
       <TimeZoneSection {...shared} />
       <EmailPreferencesSection {...shared} />
       {ai ? <AiSection api={ai} /> : null}
+      {connectors ? <ConnectorsSection api={connectors} /> : null}
     </>
   );
 }

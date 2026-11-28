@@ -1,6 +1,7 @@
 import { createAccountApi } from './api/account-api';
 import { createAgendaApi } from './api/agenda-api';
 import { createAiApi } from './api/ai-api';
+import { createConnectorsApi } from './api/connectors-api';
 import { createDriveApi } from './api/drive-api';
 import { createLessonsApi } from './api/lessons-api';
 import { createProjectsApi } from './api/projects-api';
@@ -24,13 +25,15 @@ export function createBackendFromEnv(): Backend {
   const url = import.meta.env.VITE_SUPABASE_URL;
   const key = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
   const apiUrl = import.meta.env.VITE_API_URL;
+  const mcpUrl = import.meta.env.VITE_MCP_URL;
   const appUrl = (import.meta.env.VITE_APP_URL || window.location.origin).replace(/\/$/, '');
   if (!url || !key) {
     return { auth: createUnconfiguredAuthClient(), supabase: null, services: defaultServices };
   }
   const supabase = createSupabase(url, key);
-  const auth = createSupabaseAuthClient(supabase, appUrl);
+  const auth = createSupabaseAuthClient(supabase, appUrl, { url, publishableKey: key });
   const bucket = filesBucket(supabase);
+  const mcp = mcpUrl ? { baseUrl: mcpUrl, getToken: () => auth.getAccessToken() } : null;
   const api = apiUrl ? { baseUrl: apiUrl, getToken: () => auth.getAccessToken() } : null;
   // O Picker precisa da chave de API (restrita a ele) e do número do projeto do Google Cloud.
   const googleApiKey = import.meta.env.VITE_GOOGLE_API_KEY;
@@ -47,6 +50,7 @@ export function createBackendFromEnv(): Backend {
       drive: api ? createDriveApi(api) : null,
       account: api ? createAccountApi(api) : null,
       ai: api ? createAiApi(api) : null,
+      connectors: mcp ? createConnectorsApi(mcp) : null,
       pickDriveFile:
         googleApiKey && googleAppId
           ? createPicker({ apiKey: googleApiKey, appId: googleAppId })

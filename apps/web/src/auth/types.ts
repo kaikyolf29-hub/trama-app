@@ -44,5 +44,16 @@ export interface AuthClient {
   updateEmail(email: string): Promise<AuthResult>;
   /** Confere o link do e-mail de troca de endereço (a tela /confirmar-email). */
   verifyEmailChange(tokenHash: string): Promise<AuthResult>;
+  /**
+   * Abre uma sessão nova e separada no Supabase (com a senha da pessoa) só para um conector MCP.
+   * A sessão do site não é emprestada: o Supabase troca o refresh token a cada uso, e dois
+   * lugares com o mesmo token derrubariam o site. Nada disto fica guardado no navegador.
+   */
+  openConnectorSession(password: string): Promise<AuthResult<ConnectorSession>>;
   signOut(): Promise<void>;
+}
+
+export interface ConnectorSession {
+  accessToken: string;
+  refreshToken: string;
 }

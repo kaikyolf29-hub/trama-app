@@ -1,12 +1,12 @@
 # Deploy
 
-O site e a API rodam no **Cloudflare Workers, plano grátis**. O workflow
+O site, a API e o conector MCP rodam no **Cloudflare Workers, plano grátis**. O workflow
 `.github/workflows/deploy.yml` publica sozinho:
 
-| Quando          | O que sai                                                | Endereço                                                                                |
-| --------------- | -------------------------------------------------------- | --------------------------------------------------------------------------------------- |
-| Merge na `main` | Site e API em produção                                   | `https://trama.<subdomínio>.workers.dev` e `https://trama-api.<subdomínio>.workers.dev` |
-| Cada PR         | Preview do site; o endereço aparece num comentário do PR | `https://pr-<número>-trama.<subdomínio>.workers.dev`                                    |
+| Quando          | O que sai                                                | Endereço                                                                                                                              |
+| --------------- | -------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| Merge na `main` | Site, API e conector MCP em produção                     | `https://trama.<subdomínio>.workers.dev`, `https://trama-api.<subdomínio>.workers.dev` e `https://trama-mcp.<subdomínio>.workers.dev` |
+| Cada PR         | Preview do site; o endereço aparece num comentário do PR | `https://pr-<número>-trama.<subdomínio>.workers.dev`                                                                                  |
 
 O site é só arquivos estáticos (`apps/web/wrangler.jsonc`): qualquer caminho sem arquivo abre o
 `index.html`, e o roteador decide a tela. A API é o Worker de `apps/api`.
@@ -126,3 +126,75 @@ No `pnpm dev`, os mesmos nomes vão em `apps/api/.dev.vars` (segredos) e `apps/w
   `drive_connections`, a função `drive_record_copy` e o limite de um "Aviso do Drive" por dia) e
   `20261128021642_boas_vindas.sql` (colunas de `profiles` e as funções `claim_welcome_email` e
   `release_welcome_email`). Quem já tinha conta conta como "já recebeu" as boas-vindas.
+
+## Conector MCP (etapa 3.4)
+
+O Worker `trama-mcp` (`apps/mcp`) deixa o Claude, o ChatGPT e o Codex lerem e criarem fluxos,
+roteiros e estudos na conta da pessoa, com login do Trama e as permissões que ela der. Nada
+depende dele para o resto do app funcionar: enquanto a configuração abaixo não existe, o deploy
+do conector é pulado com um aviso (o CI continua verde).
+
+### O que a pessoa dona do projeto cria (uma vez)
+
+1. **O namespace KV** da biblioteca de OAuth (plano grátis: 1.000 gravações e 100 mil leituras
+   por dia):
+
+   ```bash
+   pnpm --filter @trama/mcp exec wrangler kv namespace create trama-mcp-oauth
+   ```
+
+   O comando mostra o `id` (32 letras e números).
+
+2. **A variável `MCP_KV_NAMESPACE_ID`** no GitHub (Settings → Secrets and variables → Actions →
+   Variables) com esse `id`. O deploy troca o id de exemplo do `apps/mcp/wrangler.jsonc` por ele.
+3. **O segredo `MCP_ENCRYPTION_KEY`** no Worker, depois do primeiro deploy (cifra o refresh token
+   guardado nas concessões e assina o bilhete da tela de consentimento; 32 bytes em base64):
+
+   ```bash
+   openssl rand -base64 32      # copie o valor
+   pnpm --filter @trama/mcp exec wrangler secret put MCP_ENCRYPTION_KEY
+   ```
+
+   Guarde a chave num cofre. Se ela se perder ou mudar, as concessões não abrem mais e cada
+   pessoa precisa conectar os aplicativos de novo. É uma chave **só do conector**, diferente da
+   `TOKEN_ENCRYPTION_KEY` da API.
+
+Não há mais nada: o conector usa a chave **publicável** do Supabase (já nas `vars` do
+`wrangler.jsonc`), nunca a secreta, e fala com a API pelo service binding `TRAMA_API` (de Worker
+para Worker, grátis). A API precisa estar publicada antes: o deploy a publica primeiro. O site é
+construído com `VITE_MCP_URL`, que liga a tela de consentimento e Configurações → Conectores.
+
+### Endereço e como conectar
+
+O endereço é `https://trama-mcp.<subdomínio>.workers.dev/mcp` (aparece também em Configurações →
+Conectores, com o botão Copiar). O login é a conta do Trama: o aplicativo abre o navegador numa
+tela do site (`/conectar`) que mostra quem está pedindo, as permissões (leitura sempre; escrita
+se a pessoa deixar) e pede a senha para permitir.
+
+| Cliente | Como conectar                                                                                                                                                             |
+| ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Claude  | Configurações → Conectores → Adicionar conector personalizado → cole o endereço. No Claude Code: `claude mcp add --transport http trama <endereço>` e `/mcp` para entrar. |
+| ChatGPT | Configurações → Conectores → (modo desenvolvedor) Criar → URL do servidor MCP = o endereço, autenticação OAuth.                                                           |
+| Codex   | `codex mcp add trama --url <endereço>` e `codex mcp login trama`.                                                                                                         |
+
+Estes passos seguem a documentação de cada cliente, mas **só foram conferidos até onde dá sem
+eles**: o fluxo de OAuth e as nove ferramentas têm testes automáticos com o cliente do SDK, e o
+Worker foi aberto no `wrangler dev` (workerd). Falta validar com cada cliente de verdade depois
+do primeiro deploy, e com o MCP Inspector (`npx @modelcontextprotocol/inspector`, transporte
+"Streamable HTTP", endereço `/mcp`).
+
+### Como funciona (para quem for mexer)
+
+- `GET /authorize` (o cliente abre) confere o pedido e leva a pessoa a `/conectar#t=<bilhete>`. O
+  bilhete é assinado e vale 10 minutos. Nada é concedido ali.
+- `POST /connect/decision` recebe a decisão do site. Permitir traz a sessão **nova** do Supabase
+  que o site abriu com a senha (o token de acesso no cabeçalho, o refresh token no corpo): o
+  Supabase troca o refresh token a cada uso, então a sessão do site não pode ser emprestada.
+- A cada troca de código ou renovação do token do MCP, o Worker renova essa sessão e guarda o
+  refresh token novo cifrado. O token de acesso do Supabase só vive dentro do token do MCP.
+- As ferramentas chamam a API do Trama com esse token (a RLS vale como se fosse a pessoa).
+  Nenhuma apaga nada. Cada escrita deixa uma anotação na Agenda com o nome do cliente.
+- `GET /connectors` e `DELETE /connectors/:id` (com o token do site) alimentam Configurações →
+  Conectores; revogar apaga a concessão e os tokens na hora.
+- No `pnpm dev`: `apps/mcp/.dev.vars` com `MCP_ENCRYPTION_KEY` e `TRAMA_API_URL`
+  (`.env.example`); o Worker sobe em http://localhost:8788 (`pnpm --filter @trama/mcp dev`).

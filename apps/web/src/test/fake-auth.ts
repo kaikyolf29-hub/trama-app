@@ -19,6 +19,7 @@ export function createFakeAuth(options: { requireConfirmation?: boolean } = {}) 
     updateEmail: [] as string[],
     updateName: [] as string[],
     verifyEmailChange: [] as string[],
+    openConnectorSession: [] as string[],
   };
 
   const setCurrent = (user: AuthUser | null) => {
@@ -107,6 +108,17 @@ export function createFakeAuth(options: { requireConfirmation?: boolean } = {}) 
           ? ok
           : { ok: false, error: 'Este link expirou ou já foi usado. Peça um link novo.' },
       );
+    },
+    openConnectorSession(password) {
+      calls.openConnectorSession.push(password);
+      const account = current ? accounts.get(current.email) : undefined;
+      if (!account || account.password !== password) {
+        return Promise.resolve({ ok: false, error: 'E-mail ou senha incorretos.' });
+      }
+      return Promise.resolve({
+        ok: true,
+        value: { accessToken: 'acesso-do-conector', refreshToken: 'refresh-do-conector' },
+      });
     },
     signOut() {
       setCurrent(null);

@@ -7,6 +7,7 @@ import { AUTOSAVE_DELAY } from './api/autosave';
 import type { AccountApi } from './api/account-api';
 import type { AgendaApi } from './api/agenda-api';
 import type { AiApi } from './api/ai-api';
+import type { ConnectorsApi } from './api/connectors-api';
 import type { LessonsApi } from './api/lessons-api';
 import type { ProjectsApi } from './api/projects-api';
 import type { PickDriveFile } from './drive/picker';
@@ -26,6 +27,8 @@ export interface Services {
   account: AccountApi | null;
   /** Chaves, modelos e organização por IA (Configurações → IA); null quando o site não tem a API. */
   ai: AiApi | null;
+  /** Conector MCP (consentimento e Configurações → Conectores); null sem VITE_MCP_URL. */
+  connectors: ConnectorsApi | null;
   /** O seletor de arquivos do Google; null quando faltam a chave de API e o ID do cliente. */
   pickDriveFile: PickDriveFile | null;
   /** Imagens do quadro de uma pessoa (Supabase Storage); sem armazenamento, ficam na aba. */
@@ -54,6 +57,7 @@ export const defaultServices: Services = {
   drive: null,
   account: null,
   ai: null,
+  connectors: null,
   pickDriveFile: null,
   mediaFor: () => localMedia,
   autosaveDelay: AUTOSAVE_DELAY,

@@ -1,4 +1,4 @@
-import type { User } from '@supabase/supabase-js';
+import { createClient, type User } from '@supabase/supabase-js';
 import type { Supabase } from '../supabase';
 import { authErrorMessage, EMAIL_SEND_ERROR, isServerError, RECOVERY_SEND_ERROR } from './errors';
 import type { AuthClient, AuthResult, AuthUser } from './types';
@@ -19,7 +19,12 @@ const ok: AuthResult = { ok: true, value: undefined };
  * A recuperação usa o `token_hash` do e-mail (supabase/templates/recovery.html), conferido
  * na tela /nova-senha. Assim o link funciona mesmo aberto em outro aparelho.
  */
-export function createSupabaseAuthClient(supabase: Supabase, appUrl: string): AuthClient {
+export function createSupabaseAuthClient(
+  supabase: Supabase,
+  appUrl: string,
+  /** Endereço e chave publicável: só para abrir a sessão separada do conector. */
+  config?: { url: string; publishableKey: string },
+): AuthClient {
   const auth = supabase.auth;
 
   return {
@@ -103,6 +108,36 @@ export function createSupabaseAuthClient(supabase: Supabase, appUrl: string): Au
     async verifyEmailChange(tokenHash) {
       const { error } = await auth.verifyOtp({ token_hash: tokenHash, type: 'email_change' });
       return error ? { ok: false, error: authErrorMessage(error) } : ok;
+    },
+
+    async openConnectorSession(password) {
+      const { data: current } = await auth.getSession();
+      const email = current.session?.user.email;
+      if (!config || !email) return { ok: false, error: 'Entre de novo para continuar.' };
+      // Um cliente à parte, que não guarda nada nem renova sozinho: a sessão é só do conector.
+      const separate = createClient(config.url, config.publishableKey, {
+        auth: {
+          // Chave própria: nada se mistura com a sessão do site, e nada é guardado.
+          storageKey: 'trama-conector',
+          persistSession: false,
+          autoRefreshToken: false,
+          detectSessionInUrl: false,
+        },
+      });
+      const { data, error } = await separate.auth.signInWithPassword({ email, password });
+      if (error || !data.session) {
+        return {
+          ok: false,
+          error: error ? authErrorMessage(error) : 'Não deu para confirmar a senha.',
+        };
+      }
+      return {
+        ok: true,
+        value: {
+          accessToken: data.session.access_token,
+          refreshToken: data.session.refresh_token,
+        },
+      };
     },
 
     async signOut() {
