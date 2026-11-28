@@ -6,7 +6,7 @@ import {
   type UpdateLessonRequest,
 } from '@trama/core';
 import { z } from 'zod';
-import { createCaller, type ApiClientOptions } from './http';
+import { createCaller } from './http';
 
 /** O que a tela Estudos usa da API (rotas `/notebooks/:id/lessons`). */
 export interface LessonsApi {
@@ -20,8 +20,8 @@ export interface LessonsApi {
 const base = (notebookId: string) => `/notebooks/${encodeURIComponent(notebookId)}/lessons`;
 
 /** Cliente das aulas dos cadernos. Toda resposta passa pelos esquemas do `@trama/core`. */
-export function createLessonsApi(options: ApiClientOptions): LessonsApi {
-  const call = createCaller(options);
+export function createLessonsApi(config: Parameters<typeof createCaller>[0]): LessonsApi {
+  const call = createCaller(config);
 
   return {
     list: (notebookId) => call(base(notebookId), lessonListSchema),

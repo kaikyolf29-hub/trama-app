@@ -23,6 +23,9 @@ supabase/.branches/
 playwright-report/
 test-results/
 
+# Worktrees dos agentes do Claude Code
+.claude/worktrees/
+
 # Sistema e editores
 .DS_Store
 *.log

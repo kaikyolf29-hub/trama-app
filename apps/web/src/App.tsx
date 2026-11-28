@@ -1,5 +1,6 @@
 import { RouterProvider, type RouterHistory } from '@tanstack/react-router';
 import { useEffect, useState } from 'react';
+import { WelcomeSender } from './auth/WelcomeSender';
 import { AuthProvider } from './auth/AuthProvider';
 import { useAuth } from './auth/context';
 import type { AuthClient } from './auth/types';
@@ -20,6 +21,7 @@ export function App({ client, services = defaultServices, history }: AppProps) {
   return (
     <ServicesContext.Provider value={services}>
       <AuthProvider client={client}>
+        <WelcomeSender />
         <RouterWithAuth router={router} />
       </AuthProvider>
     </ServicesContext.Provider>

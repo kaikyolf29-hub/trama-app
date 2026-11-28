@@ -10,6 +10,7 @@ import { safeReturnPath } from './auth/return-path';
 import type { AuthClient } from './auth/types';
 import { DesignPreview } from './DesignPreview';
 import { AgendaPage } from './pages/agenda/AgendaPage';
+import { DriveReturnPage } from './pages/DriveReturnPage';
 import { ExampleBoardPage } from './pages/ExampleBoardPage';
 import { ForgotPasswordPage } from './pages/ForgotPasswordPage';
 import { HomePage } from './pages/HomePage';
@@ -63,6 +64,18 @@ const projectRoute = createRoute({
   path: '/p/$projectId',
   beforeLoad: signedInOnly,
   component: ProjectPage,
+});
+
+/** Para onde o Google devolve a pessoa depois de conectar o Drive (etapa 1.6). */
+const driveReturnRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/drive/retorno',
+  validateSearch: (search: Record<string, unknown>): { erro?: string; volta?: string } => ({
+    erro: typeof search.erro === 'string' && search.erro ? search.erro : undefined,
+    volta: safeReturnPath(search.volta),
+  }),
+  beforeLoad: signedInOnly,
+  component: DriveReturnPage,
 });
 
 const guestOnly = async ({ context }: { context: RouterContext }) => {
@@ -120,6 +133,7 @@ const routeTree = rootRoute.addChildren([
   homeRoute,
   agendaRoute,
   projectRoute,
+  driveReturnRoute,
   signInRoute,
   signUpRoute,
   forgotPasswordRoute,

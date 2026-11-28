@@ -1,75 +1,43 @@
 import { Hono } from 'hono';
 import { bodyLimit } from 'hono/body-limit';
 import { cors } from 'hono/cors';
+import { accountRoutes } from './account/routes';
+import { defaultDeps, type Deps } from './deps';
+import { driveRoutes } from './drive/routes';
+import type { Env } from './env';
 import { eventRoutes, lessonRoutes } from './organization/routes';
 import type { OrganizationStore } from './organization/store';
-import { createSupabaseOrganizationStore } from './organization/supabase-store';
+import { isAllowedOrigin } from './origin';
 import { projectRoutes } from './projects/routes';
 import { SessionError, type ProjectStore } from './projects/store';
-import { createSupabaseStore } from './projects/supabase-store';
 
-/** Variáveis e segredos do Worker (wrangler.jsonc e `wrangler secret put`). */
-export interface Env {
-  APP_URL?: string;
-  SUPABASE_URL?: string;
-  /** Chave publicável (pública): com o token da pessoa, o banco aplica a RLS. */
-  SUPABASE_PUBLISHABLE_KEY?: string;
-  SUPABASE_SECRET_KEY?: string;
-  RESEND_API_KEY?: string;
-  EMAIL_FROM?: string;
-  /** Subdomínio workers.dev da conta: libera o site e os previews dos PRs no CORS. */
-  WORKERS_SUBDOMAIN?: string;
-}
+export type { Env } from './env';
+export { isAllowedOrigin } from './origin';
 
 /** Até 5 MB por pedido, o mesmo limite do conteúdo no banco. */
 const MAX_BODY = 5 * 1024 * 1024;
-/** Agenda e aulas: até 256 KB (as aulas levam notas de texto). */
-const MAX_SMALL_BODY = 256 * 1024;
-const LOCAL_ORIGINS = new Set(['http://localhost:5173', 'http://127.0.0.1:5173']);
-
-/** Só o site do Trama (produção e previews dos PRs) e o `pnpm dev` chamam a API. */
-export function isAllowedOrigin(origin: string, env: Env): boolean {
-  if (LOCAL_ORIGINS.has(origin)) return true;
-  if (env.APP_URL && origin === new URL(env.APP_URL).origin) return true;
-  const sub = env.WORKERS_SUBDOMAIN;
-  if (!sub || !/^[a-z0-9-]+$/.test(sub)) return false;
-  return new RegExp(`^https://(?:pr-\\d+-)?trama\\.${sub}\\.workers\\.dev$`).test(origin);
-}
 
 type StoreFactory = (env: Env, token: string) => ProjectStore;
-type OrganizationFactory = (env: Env, token: string) => OrganizationStore;
 
-const supabaseStore: StoreFactory = (env, token) => {
-  if (!env.SUPABASE_URL || !env.SUPABASE_PUBLISHABLE_KEY) {
-    throw new Error('Faltam SUPABASE_URL e SUPABASE_PUBLISHABLE_KEY no Worker.');
-  }
-  return createSupabaseStore(env.SUPABASE_URL, env.SUPABASE_PUBLISHABLE_KEY, token);
+type Variables = {
+  store: ProjectStore;
+  organization: OrganizationStore;
+  token: string;
+  deps: Deps;
 };
-
-const supabaseOrganizationStore: OrganizationFactory = (env, token) => {
-  if (!env.SUPABASE_URL || !env.SUPABASE_PUBLISHABLE_KEY) {
-    throw new Error('Faltam SUPABASE_URL e SUPABASE_PUBLISHABLE_KEY no Worker.');
-  }
-  return createSupabaseOrganizationStore(env.SUPABASE_URL, env.SUPABASE_PUBLISHABLE_KEY, token);
-};
-
-/** O token de login (Supabase) que o site manda em `Authorization: Bearer ...`. */
-function bearerToken(header: string | undefined): string | undefined {
-  return /^Bearer (\S+)$/.exec(header ?? '')?.[1];
-}
 
 /**
  * A API do Trama: a única porta para o banco, o Drive, os e-mails e as IAs
- * (docs/PLAN.md, "Stack técnica e arquitetura"). `storeFor` e `organizationFor` existem para os testes.
+ * (docs/PLAN.md, "Stack técnica e arquitetura"). `storeFor` e `overrides` existem para os
+ * testes trocarem o banco, o Google e o Resend por versões falsas.
  */
-export function createApp(
-  storeFor: StoreFactory = supabaseStore,
-  organizationFor: OrganizationFactory = supabaseOrganizationStore,
-) {
-  const app = new Hono<{
-    Bindings: Env;
-    Variables: { store: ProjectStore; organization: OrganizationStore };
-  }>();
+export function createApp(storeFor?: StoreFactory, overrides: Partial<Deps> = {}) {
+  const deps: Deps = {
+    ...defaultDeps(),
+    ...(storeFor ? { projects: storeFor } : {}),
+    ...overrides,
+  };
+  const app = new Hono<{ Bindings: Env; Variables: Variables }>();
 
   app.use(
     '*',
@@ -92,38 +60,54 @@ export function createApp(
       onError: (c) => c.json({ error: 'O projeto passou de 5 MB.' }, 413),
     }),
   );
-  // Agenda e aulas só recebem textos curtos.
-  for (const path of ['/events/*', '/notebooks/*']) {
+  // Agenda e aulas só recebem textos curtos (as notas de uma aula chegam a 20.000 letras).
+  for (const prefix of ['/events/*', '/notebooks/*']) {
     app.use(
-      path,
+      prefix,
       bodyLimit({
-        maxSize: MAX_SMALL_BODY,
+        maxSize: 256 * 1024,
         onError: (c) => c.json({ error: 'O pedido passou de 256 KB.' }, 413),
       }),
     );
   }
+  // Drive e conta só trocam pedidos pequenos (ids, bilhete); o conteúdo grande vem do Google.
+  for (const prefix of ['/drive/*', '/account/*']) {
+    app.use(
+      prefix,
+      bodyLimit({
+        maxSize: 64 * 1024,
+        onError: (c) => c.json({ error: 'Pedido grande demais.' }, 413),
+      }),
+    );
+  }
 
-  // Toda rota de projeto precisa do token de login (Supabase) da pessoa.
-  app.use('/projects/*', async (c, next) => {
-    const token = bearerToken(c.req.header('Authorization'));
+  // Quase toda rota precisa do token de login (Supabase) da pessoa. A exceção é o retorno do
+  // Google (`/drive/callback`), que chega do navegador sem ele (veja drive/routes.ts).
+  app.use('*', async (c, next) => {
+    const path = new URL(c.req.url).pathname;
+    const needsLogin =
+      path.startsWith('/projects') ||
+      path.startsWith('/events') ||
+      path.startsWith('/notebooks') ||
+      path.startsWith('/account') ||
+      (path.startsWith('/drive') && path !== '/drive/callback');
+    c.set('deps', deps);
+    if (!needsLogin || c.req.method === 'OPTIONS') return next();
+    const token = /^Bearer (\S+)$/.exec(c.req.header('Authorization') ?? '')?.[1];
     if (!token) return c.json({ error: 'Entre na sua conta para continuar.' }, 401);
-    c.set('store', storeFor(c.env ?? {}, token));
+    c.set('token', token);
+    if (path.startsWith('/projects')) c.set('store', deps.projects(c.env ?? {}, token));
+    if (path.startsWith('/events') || path.startsWith('/notebooks')) {
+      c.set('organization', deps.organization(c.env ?? {}, token));
+    }
     await next();
   });
-
-  // O mesmo vale para a Agenda e as aulas.
-  for (const path of ['/events/*', '/notebooks/*']) {
-    app.use(path, async (c, next) => {
-      const token = bearerToken(c.req.header('Authorization'));
-      if (!token) return c.json({ error: 'Entre na sua conta para continuar.' }, 401);
-      c.set('organization', organizationFor(c.env ?? {}, token));
-      await next();
-    });
-  }
 
   app.route('/projects', projectRoutes());
   app.route('/events', eventRoutes());
   app.route('/notebooks', lessonRoutes());
+  app.route('/drive', driveRoutes());
+  app.route('/account', accountRoutes());
 
   app.notFound((c) => c.json({ error: 'Rota não encontrada.' }, 404));
 

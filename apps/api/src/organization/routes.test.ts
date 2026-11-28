@@ -14,13 +14,12 @@ function setup(store = createMemoryOrganizationStore()) {
   store.projects.set(NOTEBOOK, 'notebook');
   store.projects.set(FLOW, 'flow');
   const tokens: string[] = [];
-  const app = createApp(
-    () => createMemoryStore(),
-    (_env, token) => {
+  const app = createApp(() => createMemoryStore(), {
+    organization: (_env, token) => {
       tokens.push(token);
       return store;
     },
-  );
+  });
   const call = (path: string, init: RequestInit = {}) =>
     app.request(path, {
       ...init,
@@ -301,10 +300,7 @@ describe('sessão', () => {
       ...createMemoryOrganizationStore(),
       list: () => Promise.reject(new SessionError()),
     };
-    const app = createApp(
-      () => createMemoryStore(),
-      () => store,
-    );
+    const app = createApp(() => createMemoryStore(), { organization: () => store });
     const response = await app.request(`/events?${RANGE}`, {
       headers: { Authorization: 'Bearer vencido' },
     });
