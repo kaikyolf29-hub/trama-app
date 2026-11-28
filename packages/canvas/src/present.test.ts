@@ -2,6 +2,8 @@ import { flowContentSchema, type FlowContent } from '@trama/core';
 import { videoFlowExample } from '@trama/core/fixtures';
 import { describe, expect, it } from 'vitest';
 import {
+  stepTag,
+  stepTagHolders,
   arrowDimmed,
   arrowVisible,
   boardBounds,
@@ -213,5 +215,32 @@ describe('nomes dos passos', () => {
     const name = nodeName(long, 'card-projeto') ?? '';
     expect(name).toHaveLength(40);
     expect(name.endsWith('…')).toBe(true);
+  });
+});
+
+describe('etiqueta do passo', () => {
+  it('"Passo N · agora" no de agora, "Passo N" nos que passaram, nada em quem só acompanha', () => {
+    expect(stepTag({ kind: 'current', step: 2, own: true })).toBe('Passo 2 · agora');
+    expect(stepTag({ kind: 'past', step: 1, own: true })).toBe('Passo 1');
+    expect(stepTag({ kind: 'current', step: 2, own: false })).toBeNull();
+    expect(stepTag({ kind: 'past', step: 1, own: false })).toBeNull();
+    expect(stepTag({ kind: 'free' })).toBeNull();
+    expect(stepTag({ kind: 'future', step: 3, placeholder: true })).toBeNull();
+  });
+});
+
+describe('quem leva a etiqueta do passo', () => {
+  it('um nó por passo: o mais alto, e empatado o mais à esquerda', () => {
+    const holders = stepTagHolders(flow);
+    expect(holders.size).toBe(flow.presentation.length);
+    for (const step of flow.presentation) {
+      const own = step.targetIds.filter((id) => holders.has(id));
+      expect(own).toHaveLength(1);
+      const tagged = byId(own[0] ?? '');
+      for (const id of step.targetIds) {
+        const other = byId(id);
+        expect(tagged.position.y).toBeLessThanOrEqual(other.position.y);
+      }
+    }
   });
 });

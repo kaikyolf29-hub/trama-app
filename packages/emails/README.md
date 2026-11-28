@@ -3,10 +3,11 @@
 Modelos em React Email, no visual escuro do app, com o logo do Trama no topo. As cores vêm de
 `@trama/ui/tokens`.
 
-| E-mail               | Quem envia                                     | Onde                                                 |
-| -------------------- | ---------------------------------------------- | ---------------------------------------------------- |
-| Recuperação de senha | Supabase Auth, pelo SMTP do Resend             | `RecoveryEmail` → `supabase/templates/recovery.html` |
-| Boas-vindas          | Worker da API, pelo Resend, depois do cadastro | `renderWelcomeEmail({ name, siteUrl })`              |
+| E-mail               | Quem envia                                      | Onde                                                 |
+| -------------------- | ----------------------------------------------- | ---------------------------------------------------- |
+| Recuperação de senha | Supabase Auth, pelo SMTP do Resend              | `RecoveryEmail` → `supabase/templates/recovery.html` |
+| Boas-vindas          | Worker da API, pelo Resend, depois do cadastro  | `renderWelcomeEmail({ name, siteUrl })`              |
+| Aviso do Drive       | Worker da API, pelo Resend, na 3ª falha seguida | `renderDriveNoticeEmail({ name, siteUrl, reason })`  |
 
 - **Logo:** PNG de 80×80 (2× de 40 px) em `apps/web/public/email/logo.png`, servido pelo site
   em `<APP_URL>/email/logo.png`. É PNG porque vários programas de e-mail não mostram SVG, e o
