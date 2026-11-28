@@ -215,7 +215,9 @@ export class FakeApi {
       }
       if (method === 'POST') {
         const parsed = createProjectRequestSchema.safeParse(body);
-        if (!parsed.success) return this.error(route, 400, 'Pedido inválido.');
+        if (!parsed.success || parsed.data.kind !== 'flow') {
+          return this.error(route, 400, 'Pedido inválido.');
+        }
         const project = this.seed({
           title: parsed.data.title,
           content: parsed.data.content ?? createEmptyFlow(),

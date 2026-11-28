@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import type { CreateProjectRequest } from '../api';
+import type { CreateFlowProjectRequest } from '../api';
 import {
   createEmptyFlow,
   flowContentSchema,
@@ -109,6 +109,6 @@ export function getFlowTemplate(id: FlowTemplateId): FlowTemplate {
 }
 
 /** O pedido de criar projeto (`POST /projects`) que parte do modelo. */
-export function createProjectRequestFromTemplate(template: FlowTemplate): CreateProjectRequest {
+export function createProjectRequestFromTemplate(template: FlowTemplate): CreateFlowProjectRequest {
   return { kind: template.kind, title: template.projectTitle, content: template.content() };
 }

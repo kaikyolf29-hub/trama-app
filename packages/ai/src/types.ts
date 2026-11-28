@@ -4,6 +4,7 @@ import type {
   AiModel,
   AiOrganizeFormat,
   AiPromptOutput,
+  AiScriptOutput,
   AiProvider as AiProviderId,
   AiUsage,
 } from '@trama/core';
@@ -19,6 +20,7 @@ export interface OrganizeParams {
 /** A saída da IA já validada com os esquemas do core, mais o uso que o provedor contou. */
 export type OrganizeResult =
   | { format: 'flow' | 'plan'; output: AiFlowOutput; usage: AiUsage }
+  | { format: 'script'; output: AiScriptOutput; usage: AiUsage }
   | { format: 'prompt'; output: AiPromptOutput; usage: AiUsage };
 
 /** Estimativa antes de enviar. `costUsd` é `null` quando o preço do modelo não é conhecido. */

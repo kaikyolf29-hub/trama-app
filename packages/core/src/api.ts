@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { flowContentSchema } from './flow';
 import { projectKindSchema, projectTitleSchema } from './project';
+import { scriptContentSchema } from './script';
 import { dateTimeSchema, projectStatusSchema } from './status';
 
 /**
@@ -20,13 +21,27 @@ export const projectSummarySchema = z.object({
   updatedAt: dateTimeSchema,
 });
 
-/** Criar projeto. Por enquanto só fluxo; roteiros e cadernos chegam na V1. */
-export const createProjectRequestSchema = z.object({
+/** Criar um fluxo (`POST /projects`). */
+export const createFlowProjectRequestSchema = z.object({
   kind: z.literal('flow'),
   title: projectTitleSchema.default('Sem título'),
   /** Conteúdo inicial (um modelo de início); sem ele, o fluxo começa vazio. */
   content: flowContentSchema.optional(),
 });
+
+/** Criar um roteiro (etapa 3.3: "Falar e organizar" cria o roteiro com as cenas da IA). */
+export const createScriptProjectRequestSchema = z.object({
+  kind: z.literal('script'),
+  title: projectTitleSchema.default('Sem título'),
+  /** Cenas iniciais; sem elas, o roteiro começa vazio. */
+  content: scriptContentSchema.optional(),
+});
+
+/** Criar projeto: fluxo ou roteiro. O caderno de estudos ainda não se cria pela API. */
+export const createProjectRequestSchema = z.discriminatedUnion('kind', [
+  createFlowProjectRequestSchema,
+  createScriptProjectRequestSchema,
+]);
 
 /**
  * Renomear ou mudar o status (`PATCH /projects/:id`) sem mexer no conteúdo nem na revisão:
@@ -81,6 +96,8 @@ export const apiErrorSchema = z.object({ error: z.string().min(1) });
 
 export type ProjectSummary = z.infer<typeof projectSummarySchema>;
 export type CreateProjectRequest = z.input<typeof createProjectRequestSchema>;
+export type CreateFlowProjectRequest = z.input<typeof createFlowProjectRequestSchema>;
+export type CreateScriptProjectRequest = z.input<typeof createScriptProjectRequestSchema>;
 export type UpdateProjectRequest = z.infer<typeof updateProjectRequestSchema>;
 export type SaveProjectRequest = z.infer<typeof saveProjectRequestSchema>;
 export type SaveProjectResponse = z.infer<typeof saveProjectResponseSchema>;

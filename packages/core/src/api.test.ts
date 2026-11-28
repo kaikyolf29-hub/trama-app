@@ -25,11 +25,29 @@ describe('contrato da API de projetos', () => {
       content: videoFlowExample,
     });
     expect(withContent.title).toBe('Vídeo novo');
-    expect(withContent.content?.blocks.length).toBeGreaterThan(0);
+    expect(withContent.kind === 'flow' && withContent.content?.blocks.length).toBeGreaterThan(0);
   });
 
-  it('ainda não cria roteiro nem caderno', () => {
-    expect(createProjectRequestSchema.safeParse({ kind: 'script' }).success).toBe(false);
+  it('cria roteiro, com cenas ou vazio, mas ainda não caderno', () => {
+    expect(createProjectRequestSchema.parse({ kind: 'script' })).toEqual({
+      kind: 'script',
+      title: 'Sem título',
+    });
+    const scene = { id: 'c1', title: 'Gancho', narration: 'Oi' };
+    const withScenes = createProjectRequestSchema.parse({
+      kind: 'script',
+      title: 'Roteiro',
+      content: { scenes: [scene] },
+    });
+    expect(withScenes.kind === 'script' && withScenes.content?.scenes).toHaveLength(1);
+    // Cada tipo valida o conteúdo dele: um fluxo não passa como roteiro, e o contrário também.
+    expect(
+      createProjectRequestSchema.safeParse({
+        kind: 'script',
+        content: { scenes: [scene, scene] },
+      }).success,
+    ).toBe(false);
+    expect(createProjectRequestSchema.safeParse({ kind: 'notebook' }).success).toBe(false);
   });
 
   it('salvar exige conteúdo válido e a revisão de base', () => {

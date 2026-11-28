@@ -1,7 +1,7 @@
 import {
   createEmptyFlow,
   flowContentSchema,
-  type CreateProjectRequest,
+  type CreateFlowProjectRequest,
   type FlowProject,
   type SaveProjectRequest,
   type UpdateProjectRequest,
@@ -66,7 +66,7 @@ export function createFakeProjects(initial: FlowProject[] = []) {
           .map((project) => summary(project)),
       );
     }),
-    create: vi.fn(({ title = 'Sem título', content }: CreateProjectRequest) => {
+    create: vi.fn(({ title = 'Sem título', content }: CreateFlowProjectRequest) => {
       const error = failure('create');
       if (error) return Promise.reject(error);
       const at = now();

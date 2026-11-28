@@ -2,12 +2,22 @@ import {
   aiFlowOutputSchema,
   aiOrganizeFormatSchema,
   aiOutputToFlow,
+  aiOutputToScript,
   aiPromptOutputSchema,
+  aiScriptOutputSchema,
   flowContentSchema,
   promptOutputToText,
+  scriptContentSchema,
 } from '@trama/core';
 import { describe, expect, it } from 'vitest';
-import { ORGANIZE_PROMPTS, flowPrompt, planPrompt, promptPrompt, wrapSpeech } from '../prompts';
+import {
+  ORGANIZE_PROMPTS,
+  flowPrompt,
+  planPrompt,
+  promptPrompt,
+  scriptPrompt,
+  wrapSpeech,
+} from '../prompts';
 import { prepareRequest } from './organize';
 
 /**
@@ -28,7 +38,7 @@ describe('prompts versionados', () => {
   });
 
   it('seguem o guia: objetivo, contexto, regras, saída e um exemplo, em tags', () => {
-    for (const prompt of [flowPrompt, planPrompt, promptPrompt]) {
+    for (const prompt of [flowPrompt, scriptPrompt, planPrompt, promptPrompt]) {
       for (const tag of [
         'objetivo',
         'contexto',
@@ -46,7 +56,7 @@ describe('prompts versionados', () => {
   });
 
   it('o prompt não ensina o modelo a escolher cor fora dos nomes de token nem a dar posição', () => {
-    for (const prompt of [flowPrompt, planPrompt]) {
+    for (const prompt of [flowPrompt, scriptPrompt, planPrompt]) {
       expect(prompt.system).not.toMatch(/#[0-9a-fA-F]{3,8}\b/);
       expect(prompt.system).not.toMatch(/position|posição/i);
     }
@@ -74,6 +84,20 @@ describe('o exemplo de cada prompt passa no core', () => {
     expect(output.blocks.some((block) => block.type === 'checklist')).toBe(true);
   });
 
+  it('o exemplo de roteiro vale como saída de roteiro e vira um roteiro com cenas', () => {
+    const output = aiScriptOutputSchema.parse(scriptPrompt.example.output);
+    const script = aiOutputToScript(output);
+    expect(scriptContentSchema.safeParse(script).success).toBe(true);
+    expect(script.scenes).toHaveLength(output.scenes.length);
+    expect(script.scenes[0]!.broll.length).toBeGreaterThan(0);
+    // A fala do exemplo traz "raposa", e a saída usa "gato" e anota a troca.
+    expect(scriptPrompt.example.input).toContain('raposa');
+    expect(output.corrections).toEqual([{ from: 'raposa', to: 'gato' }]);
+    expect(JSON.stringify(output.scenes)).not.toContain('raposa');
+    // O prompt não pede tempos que a pessoa não falou.
+    expect(scriptPrompt.system).toContain('Nunca calcule tempos');
+  });
+
   it('o exemplo de prompt vale como saída de prompt e vira texto', () => {
     const output = aiPromptOutputSchema.parse(promptPrompt.example.output);
     expect(output.sections.map((section) => section.heading)).toContain('Objetivo');
@@ -94,12 +118,15 @@ describe('o pedido montado', () => {
   it('cada formato usa o prompt e o esquema dele', () => {
     const flow = prepareRequest('flow', 'uma fala');
     const plan = prepareRequest('plan', 'uma fala');
+    const script = prepareRequest('script', 'uma fala');
     const prompt = prepareRequest('prompt', 'uma fala');
     expect(flow.system).toBe(flowPrompt.system);
     expect(plan.system).toBe(planPrompt.system);
+    expect(script.system).toBe(scriptPrompt.system);
     expect(prompt.system).toBe(promptPrompt.system);
     expect(flow.schema).toBe(aiFlowOutputSchema);
     expect(plan.schema).toBe(aiFlowOutputSchema);
+    expect(script.schema).toBe(aiScriptOutputSchema);
     expect(prompt.schema).toBe(aiPromptOutputSchema);
     expect(flow.user).toContain('uma fala');
   });

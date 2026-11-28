@@ -1,6 +1,8 @@
 import {
   createEmptyFlow,
+  createEmptyScript,
   flowContentSchema,
+  scriptProjectSchema,
   projectSummarySchema,
   projectVersionSchema,
   saveProjectResponseSchema,
@@ -75,6 +77,35 @@ describe('API de projetos', () => {
     expect((await call(`/projects/${project.id}`)).status).toBe(404);
   });
 
+  it('cria um roteiro com as cenas, vazio ou recusando um conteúdo inválido', async () => {
+    const { call, json } = setup();
+    const scene = { id: 'c1', title: 'Gancho', narration: 'Oi' };
+    const created = await call('/projects', {
+      method: 'POST',
+      body: JSON.stringify({ kind: 'script', title: 'Roteiro', content: { scenes: [scene] } }),
+    });
+    expect(created.status).toBe(201);
+    const project = await json<{ id: string }>(created);
+    const opened = scriptProjectSchema.parse(await (await call(`/projects/${project.id}`)).json());
+    expect(opened).toMatchObject({ kind: 'script', title: 'Roteiro' });
+    expect(opened.content.scenes.map((item) => item.title)).toEqual(['Gancho']);
+
+    const empty = await json<{ id: string }>(
+      await call('/projects', { method: 'POST', body: JSON.stringify({ kind: 'script' }) }),
+    );
+    const emptyOpened = await json<{ content: unknown }>(await call(`/projects/${empty.id}`));
+    expect(emptyOpened.content).toEqual(createEmptyScript());
+
+    const bad = await call('/projects', {
+      method: 'POST',
+      body: JSON.stringify({ kind: 'script', content: { scenes: [scene, scene] } }),
+    });
+    expect(bad.status).toBe(400);
+    // Um roteiro aparece na lista, com o tipo dele.
+    const list = await json<unknown[]>(await call('/projects'));
+    expect(list.map((item) => projectSummarySchema.parse(item).kind)).toEqual(['script', 'script']);
+  });
+
   it('recusa fluxo inválido antes de chegar no banco', async () => {
     const store = createMemoryStore();
     const { call, json } = setup(store);
@@ -94,7 +125,7 @@ describe('API de projetos', () => {
     expect(store.projects.get(id)?.revision).toBe(1);
     expect((await call('/projects', { method: 'POST', body: '{não é json' })).status).toBe(400);
     expect(
-      (await call('/projects', { method: 'POST', body: JSON.stringify({ kind: 'script' }) }))
+      (await call('/projects', { method: 'POST', body: JSON.stringify({ kind: 'notebook' }) }))
         .status,
     ).toBe(400);
   });

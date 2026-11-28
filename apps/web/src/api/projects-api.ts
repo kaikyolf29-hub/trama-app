@@ -2,7 +2,7 @@ import {
   flowProjectSchema,
   projectSummarySchema,
   saveProjectResponseSchema,
-  type CreateProjectRequest,
+  type CreateFlowProjectRequest,
   type FlowProject,
   type ProjectSummary,
   type SaveProjectRequest,
@@ -17,7 +17,7 @@ export { ApiError };
 /** O que as telas usam da API de projetos (apps/api). */
 export interface ProjectsApi {
   list(): Promise<ProjectSummary[]>;
-  create(input: CreateProjectRequest): Promise<FlowProject>;
+  create(input: CreateFlowProjectRequest): Promise<FlowProject>;
   get(id: string): Promise<FlowProject>;
   /** Renomeia e/ou muda o status, sem mexer no conteúdo. */
   update(id: string, patch: UpdateProjectRequest): Promise<ProjectSummary>;

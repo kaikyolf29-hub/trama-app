@@ -6,6 +6,7 @@ import type {
   ProjectVersion,
   SaveProjectRequest,
   SaveProjectResponse,
+  ScriptContent,
   UpdateProjectRequest,
 } from '@trama/core';
 
@@ -30,7 +31,11 @@ export interface StoredProject {
 export interface ProjectStore {
   list(): Promise<ProjectSummary[]>;
   get(id: string): Promise<StoredProject | null>;
-  create(input: { kind: 'flow'; title: string; content: FlowContent }): Promise<StoredProject>;
+  create(
+    input:
+      | { kind: 'flow'; title: string; content: FlowContent }
+      | { kind: 'script'; title: string; content: ScriptContent },
+  ): Promise<StoredProject>;
   /** Renomeia e/ou muda o status; o conteúdo e a revisão ficam como estão. */
   update(id: string, patch: UpdateProjectRequest): Promise<ProjectSummary | null>;
   save(id: string, request: SaveProjectRequest): Promise<SaveProjectResponse | null>;
