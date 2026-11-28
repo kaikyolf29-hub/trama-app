@@ -1,4 +1,5 @@
 import { localMedia, type CanvasMedia } from '@trama/canvas';
+import { DEFAULT_TIME_ZONE } from '@trama/core';
 import { createContext, useContext } from 'react';
 import type { DriveApi } from './api/drive-api';
 import { DRIVE_COPY_INTERVAL } from './api/drive-copier';
@@ -31,6 +32,13 @@ export interface Services {
   driveCopyInterval: number;
   /** Leva o navegador a outro site (a tela de consentimento do Google); os testes trocam. */
   redirectTo: (url: string) => void;
+  /**
+   * Fuso horário da pessoa (a Agenda agrupa por dia nele). Enquanto as Configurações não leem o
+   * fuso do perfil (etapa 2.5), vale o padrão America/Sao_Paulo.
+   */
+  timeZone: string;
+  /** O relógio das telas; os testes fixam. */
+  now: () => Date;
 }
 
 export const defaultServices: Services = {
@@ -44,6 +52,8 @@ export const defaultServices: Services = {
   autosaveDelay: AUTOSAVE_DELAY,
   driveCopyInterval: DRIVE_COPY_INTERVAL,
   redirectTo: (url) => window.location.assign(url),
+  timeZone: DEFAULT_TIME_ZONE,
+  now: () => new Date(),
 };
 
 export const ServicesContext = createContext<Services>(defaultServices);
