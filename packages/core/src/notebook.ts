@@ -13,13 +13,16 @@ export const NOTEBOOK_SCHEMA_VERSION = 1;
 /** Dias entre estudar uma aula e revisá-la, quando o caderno não diz outra coisa. */
 export const DEFAULT_REVIEW_AFTER_DAYS = 7;
 
+export const notebookDescriptionSchema = z.string().trim().max(2000);
+/** Dias entre estudar e revisar. */
+export const reviewAfterDaysSchema = z.number().int().min(1).max(365);
+
 export const notebookContentSchema = z.object({
   schemaVersion: z.literal(NOTEBOOK_SCHEMA_VERSION).default(NOTEBOOK_SCHEMA_VERSION),
-  description: z.string().trim().max(2000).default(''),
+  description: notebookDescriptionSchema.default(''),
   /** Cor do cartão do caderno (nome de token das notas: azul, verde, amarelo ou rosa). */
   color: noteColorSchema.default('blue'),
-  /** Dias entre estudar e revisar. */
-  reviewAfterDays: z.number().int().min(1).max(365).default(DEFAULT_REVIEW_AFTER_DAYS),
+  reviewAfterDays: reviewAfterDaysSchema.default(DEFAULT_REVIEW_AFTER_DAYS),
 });
 
 export type NotebookContent = z.infer<typeof notebookContentSchema>;
@@ -155,4 +158,69 @@ export function summarizeLessons(
   const toReview = lessons.filter((lesson) => lessonNeedsReview(lesson, today)).length;
   const studied = lessons.filter((lesson) => lesson.status !== 'studying').length;
   return { total, toReview, studied, progress: total === 0 ? 0 : studied / total };
+}
+
+/** Aulas para revisar hoje ou antes, da data mais antiga à mais nova (a aba "Revisões"). */
+export function lessonsToReview<T extends ReviewFields & Pick<Lesson, 'id' | 'title'>>(
+  lessons: readonly T[],
+  today: DateKey,
+): T[] {
+  // Sem data de revisão (status "Revisar" posto à mão) vai para o fim; o título desempata.
+  const dayOf = (lesson: T) => lesson.reviewOn ?? '9999-12-31';
+  return lessons
+    .filter((lesson) => lessonNeedsReview(lesson, today))
+    .sort(
+      (a, b) =>
+        dayOf(a).localeCompare(dayOf(b)) ||
+        a.title.localeCompare(b.title, 'pt-BR') ||
+        a.id.localeCompare(b.id),
+    );
+}
+
+export interface LessonMove {
+  id: string;
+  /** A nova posição da aula (de 0 em diante). */
+  position: number;
+}
+
+/**
+ * Sobe ou desce uma aula no caderno. Devolve só as aulas cuja posição mudou, já com as posições
+ * renumeradas de 0 a N-1 (posições repetidas ou com buraco, como as que a API aceita, ficam
+ * certas). Lista vazia quando a aula já está na ponta ou não existe.
+ */
+export function reorderLessons(
+  lessons: readonly Pick<Lesson, 'id' | 'position' | 'createdAt'>[],
+  id: string,
+  direction: 'up' | 'down',
+): LessonMove[] {
+  const ordered = sortLessons(lessons);
+  const from = ordered.findIndex((lesson) => lesson.id === id);
+  const to = direction === 'up' ? from - 1 : from + 1;
+  if (from === -1 || to < 0 || to >= ordered.length) return [];
+  const next = [...ordered];
+  const [moved] = next.splice(from, 1);
+  if (!moved) return [];
+  next.splice(to, 0, moved);
+  return next.flatMap((lesson, position) =>
+    lesson.position === position ? [] : [{ id: lesson.id, position }],
+  );
+}
+
+/** Campos do caderno que o `PATCH /notebooks/:id` pode mudar (o título é do projeto). */
+export type NotebookContentPatch = Partial<
+  Pick<NotebookContent, 'description' | 'color' | 'reviewAfterDays'>
+>;
+
+/** Aplica a mudança ao conteúdo de agora e valida o resultado (a mesma regra na API e nos testes). */
+export function applyNotebookUpdate(
+  content: NotebookContentInput,
+  patch: NotebookContentPatch,
+): NotebookContent {
+  const current = notebookContentSchema.parse(content);
+  return notebookContentSchema.parse({
+    ...current,
+    ...(patch.description === undefined ? {} : { description: patch.description }),
+    ...(patch.color === undefined ? {} : { color: patch.color }),
+    ...(patch.reviewAfterDays === undefined ? {} : { reviewAfterDays: patch.reviewAfterDays }),
+  });
 }

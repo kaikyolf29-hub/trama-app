@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import {
   createLessonRequestSchema,
+  createNotebookRequestSchema,
+  notebookListSchema,
+  updateNotebookRequestSchema,
   createNoteRequestSchema,
   listEventsQuerySchema,
   updateLessonRequestSchema,
@@ -97,5 +100,54 @@ describe('aulas', () => {
     ).toBe(true);
     expect(updateLessonRequestSchema.safeParse({ status: 'pausada' }).success).toBe(false);
     expect(updateLessonRequestSchema.safeParse({ title: ' ' }).success).toBe(false);
+  });
+});
+
+describe('POST /notebooks', () => {
+  it('o título é o único campo obrigatório de verdade (sem ele vale "Sem título")', () => {
+    expect(createNotebookRequestSchema.parse({})).toEqual({ title: 'Sem título' });
+    expect(createNotebookRequestSchema.parse({ title: '  Inglês ' }).title).toBe('Inglês');
+    expect(createNotebookRequestSchema.safeParse({ title: ' ' }).success).toBe(false);
+  });
+
+  it('a cor é um nome de token das notas e o intervalo tem limite', () => {
+    expect(
+      createNotebookRequestSchema.safeParse({ title: 'A', content: { color: 'green' } }).success,
+    ).toBe(true);
+    expect(
+      createNotebookRequestSchema.safeParse({ title: 'A', content: { color: '#ff0000' } }).success,
+    ).toBe(false);
+    expect(
+      createNotebookRequestSchema.safeParse({ title: 'A', content: { reviewAfterDays: 0 } })
+        .success,
+    ).toBe(false);
+  });
+});
+
+describe('PATCH /notebooks/:id', () => {
+  it('pede ao menos um campo', () => {
+    expect(updateNotebookRequestSchema.safeParse({}).success).toBe(false);
+    expect(updateNotebookRequestSchema.safeParse({ title: 'Novo nome' }).success).toBe(true);
+    expect(
+      updateNotebookRequestSchema.safeParse({ color: 'pink', reviewAfterDays: 3 }).success,
+    ).toBe(true);
+    expect(updateNotebookRequestSchema.safeParse({ color: 'red' }).success).toBe(false);
+  });
+});
+
+describe('GET /notebooks', () => {
+  it('cada item é um projeto do tipo caderno, e conteúdo {} vira o padrão', () => {
+    const [notebook] = notebookListSchema.parse([
+      {
+        id: '6f1c2d3e-4b5a-4c7d-8e9f-0a1b2c3d4e5f',
+        kind: 'notebook',
+        title: 'Premiere Pro',
+        content: {},
+        createdAt: '2026-11-01T10:00:00.000Z',
+        updatedAt: '2026-11-01T10:00:00.000Z',
+      },
+    ]);
+    expect(notebook?.content).toMatchObject({ color: 'blue', reviewAfterDays: 7 });
+    expect(notebookListSchema.safeParse([{ ...notebook, kind: 'flow' }]).success).toBe(false);
   });
 });

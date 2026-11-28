@@ -1,7 +1,17 @@
 import { z } from 'zod';
 import { eventDetailSchema, eventSchema, eventTitleSchema } from './agenda';
 import { dateKeySchema } from './calendar';
-import { lessonNotesSchema, lessonSchema, lessonStatusSchema, lessonTitleSchema } from './notebook';
+import { noteColorSchema } from './blocks';
+import {
+  lessonNotesSchema,
+  lessonSchema,
+  lessonStatusSchema,
+  lessonTitleSchema,
+  notebookContentSchema,
+  notebookDescriptionSchema,
+  reviewAfterDaysSchema,
+} from './notebook';
+import { notebookProjectSchema, projectTitleSchema } from './project';
 import { dateTimeSchema } from './status';
 
 /**
@@ -70,7 +80,36 @@ export const updateLessonRequestSchema = createLessonRequestSchema
 
 export const lessonListSchema = z.array(lessonSchema);
 
+/**
+ * `POST /notebooks`: cria um caderno de Estudos (projeto do tipo `notebook`). Sem conteúdo, vale
+ * o caderno vazio (cor azul, revisão em 7 dias). As aulas entram depois, em `/notebooks/:id/lessons`.
+ */
+export const createNotebookRequestSchema = z.object({
+  title: projectTitleSchema.default('Sem título'),
+  content: notebookContentSchema.partial().optional(),
+});
+
+/**
+ * `PATCH /notebooks/:id`: renomeia o caderno ou muda a descrição, a cor e o intervalo de
+ * revisão. Só o que mudou; ao menos um campo.
+ */
+export const updateNotebookRequestSchema = z
+  .object({
+    title: projectTitleSchema.optional(),
+    description: notebookDescriptionSchema.optional(),
+    color: noteColorSchema.optional(),
+    reviewAfterDays: reviewAfterDaysSchema.optional(),
+  })
+  .refine((body) => Object.values(body).some((value) => value !== undefined), {
+    message: 'informe ao menos um campo',
+  });
+
+/** `GET /notebooks`: os cadernos da pessoa, com o conteúdo (cor, descrição, intervalo). */
+export const notebookListSchema = z.array(notebookProjectSchema);
+
 export type ListEventsQuery = z.infer<typeof listEventsQuerySchema>;
 export type CreateNoteRequest = z.infer<typeof createNoteRequestSchema>;
 export type CreateLessonRequest = z.infer<typeof createLessonRequestSchema>;
 export type UpdateLessonRequest = z.infer<typeof updateLessonRequestSchema>;
+export type CreateNotebookRequest = z.input<typeof createNotebookRequestSchema>;
+export type UpdateNotebookRequest = z.infer<typeof updateNotebookRequestSchema>;

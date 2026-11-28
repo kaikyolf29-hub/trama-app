@@ -1,13 +1,16 @@
 import { describe, expect, it } from 'vitest';
 import {
+  applyNotebookUpdate,
   createEmptyNotebook,
   displayStatus,
   lessonNeedsReview,
   lessonSchema,
+  lessonsToReview,
   markReviewed,
   markStudied,
   nextReviewDate,
   notebookContentSchema,
+  reorderLessons,
   sortLessons,
   summarizeLessons,
   type Lesson,
@@ -167,5 +170,91 @@ describe('ordem e resumo', () => {
       studied: 0,
       progress: 0,
     });
+  });
+});
+
+describe('lessonsToReview', () => {
+  it('só traz o que é para revisar hoje ou antes, da data mais antiga à mais nova', () => {
+    const lessons = [
+      lesson(1, { status: 'done', reviewOn: '2026-11-30' }),
+      lesson(2, { status: 'done', reviewOn: '2026-11-27' }),
+      lesson(3, { status: 'studying', reviewOn: '2026-11-01' }),
+      lesson(4, { status: 'done', reviewOn: '2026-11-20' }),
+      lesson(5, { status: 'review', reviewOn: null }),
+    ];
+    expect(lessonsToReview(lessons, '2026-11-27').map((l) => l.title)).toEqual([
+      'Aula 4',
+      'Aula 2',
+      'Aula 5',
+    ]);
+  });
+
+  it('não muda a lista que recebeu', () => {
+    const lessons = [lesson(1, { status: 'review' })];
+    lessonsToReview(lessons, '2026-11-27');
+    expect(lessons).toHaveLength(1);
+  });
+});
+
+describe('reorderLessons', () => {
+  const three = [
+    lesson(1, { position: 0 }),
+    lesson(2, { position: 1 }),
+    lesson(3, { position: 2 }),
+  ];
+
+  it('troca a aula com a vizinha e devolve só as posições que mudaram', () => {
+    expect(reorderLessons(three, three[1]!.id, 'up')).toEqual([
+      { id: three[1]!.id, position: 0 },
+      { id: three[0]!.id, position: 1 },
+    ]);
+    expect(reorderLessons(three, three[1]!.id, 'down')).toEqual([
+      { id: three[2]!.id, position: 1 },
+      { id: three[1]!.id, position: 2 },
+    ]);
+  });
+
+  it('na ponta, ou com um id que não existe, não muda nada', () => {
+    expect(reorderLessons(three, three[0]!.id, 'up')).toEqual([]);
+    expect(reorderLessons(three, three[2]!.id, 'down')).toEqual([]);
+    expect(reorderLessons(three, '00000000-0000-4000-8000-000000000099', 'up')).toEqual([]);
+  });
+
+  it('renumera posições repetidas ou com buraco', () => {
+    const messy = [
+      lesson(1, { position: 0 }),
+      lesson(2, { position: 0, createdAt: '2026-11-02T10:00:00-03:00' }),
+      lesson(3, { position: 9, createdAt: '2026-11-03T10:00:00-03:00' }),
+    ];
+    // Ordem de hoje: 1, 2, 3. Subir a 3 deixa 1, 3, 2 e renumera de 0 a 2.
+    expect(reorderLessons(messy, messy[2]!.id, 'up')).toEqual([
+      { id: messy[2]!.id, position: 1 },
+      { id: messy[1]!.id, position: 2 },
+    ]);
+  });
+});
+
+describe('applyNotebookUpdate', () => {
+  it('muda só o que veio e preenche o resto com os padrões', () => {
+    expect(applyNotebookUpdate({}, { color: 'green' })).toEqual({
+      schemaVersion: 1,
+      description: '',
+      color: 'green',
+      reviewAfterDays: 7,
+    });
+    const content = applyNotebookUpdate(
+      { description: 'Cortes e cor', color: 'pink', reviewAfterDays: 3 },
+      { reviewAfterDays: 14 },
+    );
+    expect(content).toMatchObject({
+      description: 'Cortes e cor',
+      color: 'pink',
+      reviewAfterDays: 14,
+    });
+  });
+
+  it('recusa um intervalo de revisão fora do limite', () => {
+    expect(() => applyNotebookUpdate({}, { reviewAfterDays: 0 })).toThrow();
+    expect(() => applyNotebookUpdate({}, { reviewAfterDays: 366 })).toThrow();
   });
 });

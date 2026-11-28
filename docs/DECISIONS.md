@@ -269,3 +269,8 @@ Não apague: escreva uma linha nova dizendo o que substitui.
 - 2026-11-28 · **`aiOutputToFlow` posiciona de forma provisória na grade de 8 px (o que está fora de grupo em linhas de até três colunas, cada grupo numa moldura abaixo), corta texto maior que o esquema do bloco e descarta ligação de um nó para ele mesmo ou repetida.** Motivo: o resultado já abre no quadro e passa pelo `flowContentSchema`; a IA que erra um tamanho não derruba a inserção.
 - 2026-11-28 · **As correções que a IA percebeu são `{ from, to }` (código em inglês); a tela as mostra, e elas não entram no fluxo.** Motivo: são um aviso à pessoa ("trocou raposa por gato"), não conteúdo do quadro.
 - 2026-11-28 · **Texto de até 20 mil caracteres por pedido.** Motivo: cabe mais de 20 minutos de fala sem estourar a janela dos modelos nem o preço de um erro.
+
+## Etapa 2.4 — Estudos
+
+- 2026-11-28 · **Cadernos têm contrato próprio: `POST /notebooks` (`createNotebookRequestSchema`), `PATCH /notebooks/:id` (`updateNotebookRequestSchema`: título, descrição, cor e intervalo de revisão) e `GET /notebooks` (`notebookListSchema`, já com o conteúdo). `createProjectRequestSchema` continua só com fluxo.** Motivo: a tela Estudos precisa da cor de cada caderno numa consulta só, e o PUT de `/projects/:id` só entende o conteúdo do fluxo; assim o contrato do fluxo e o do caderno não se misturam.
+- 2026-11-28 · **Reordenar aulas é uma função pura do core (`reorderLessons`): troca a aula com a vizinha, renumera de 0 a N-1 e devolve só o que mudou; "Revisões" é `lessonsToReview` (da data mais antiga à mais nova, sem data por último).** Motivo: o site, a API e o MCP ordenam igual, e posições repetidas ou com buraco (a API aceita) se acertam sozinhas.
