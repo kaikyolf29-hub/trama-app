@@ -12,6 +12,9 @@ export interface Env {
   /** Cliente OAuth web do Google (Google Cloud Console > Credenciais). Segredo do Worker. */
   GOOGLE_CLIENT_ID?: string;
   GOOGLE_CLIENT_SECRET?: string;
-  /** 32 bytes em base64 (`openssl rand -base64 32`): cifra o refresh token e assina o `state`. */
+  /**
+   * 32 bytes em base64 (`openssl rand -base64 32`): cifra o refresh token do Drive e as chaves de
+   * IA das pessoas, e assina o `state`.
+   */
   TOKEN_ENCRYPTION_KEY?: string;
 }

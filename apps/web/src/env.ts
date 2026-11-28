@@ -1,5 +1,6 @@
 import { createAccountApi } from './api/account-api';
 import { createAgendaApi } from './api/agenda-api';
+import { createAiApi } from './api/ai-api';
 import { createDriveApi } from './api/drive-api';
 import { createLessonsApi } from './api/lessons-api';
 import { createProjectsApi } from './api/projects-api';
@@ -45,6 +46,7 @@ export function createBackendFromEnv(): Backend {
       lessons: api ? createLessonsApi(api) : null,
       drive: api ? createDriveApi(api) : null,
       account: api ? createAccountApi(api) : null,
+      ai: api ? createAiApi(api) : null,
       pickDriveFile:
         googleApiKey && googleAppId
           ? createPicker({ apiKey: googleApiKey, appId: googleAppId })

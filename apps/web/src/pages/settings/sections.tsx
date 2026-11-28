@@ -374,18 +374,3 @@ export function EmailPreferencesSection({ profile, api, onProfile }: ProfileSect
     </Section>
   );
 }
-
-/** Lugar da IA, desligado: chaves, provedor e modelo chegam na etapa 3.1. */
-export function AiSection() {
-  return (
-    <Section
-      title="IA"
-      description="Escolha o provedor, o modelo e coloque a sua chave. Chega numa próxima etapa."
-      disabled
-    >
-      <Button variant="secondary" disabled>
-        Em breve
-      </Button>
-    </Section>
-  );
-}

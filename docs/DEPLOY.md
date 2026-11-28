@@ -95,7 +95,7 @@ No [Google Cloud Console](https://console.cloud.google.com), num projeto novo (p
 | ----------------------- | -------------------------------------------------------------------------------- | -------- |
 | `GOOGLE_CLIENT_ID`      | Worker da API (`wrangler secret put GOOGLE_CLIENT_ID`)                           | Segredo  |
 | `GOOGLE_CLIENT_SECRET`  | Worker da API (`wrangler secret put GOOGLE_CLIENT_SECRET`)                       | Segredo  |
-| `TOKEN_ENCRYPTION_KEY`  | Worker da API; gere com `openssl rand -base64 32`                                | Segredo  |
+| `TOKEN_ENCRYPTION_KEY`  | Worker da API; gere com `openssl rand -base64 32` (Drive e chaves de IA)         | Segredo  |
 | `RESEND_API_KEY`        | Worker da API (a mesma do SMTP do Supabase, ou outra)                            | Segredo  |
 | `EMAIL_FROM`            | Worker da API, ex.: `Trama <ola@seu-dominio>` (domínio no Resend com SPF e DKIM) | Segredo  |
 | `VITE_GOOGLE_CLIENT_ID` | GitHub (Settings > Variables > Actions): o mesmo ID do cliente                   | Variável |
@@ -103,8 +103,8 @@ No [Google Cloud Console](https://console.cloud.google.com), num projeto novo (p
 
 O site embute as duas `VITE_` no build (o `deploy.yml` já as repassa). O número do projeto, que o
 Picker pede como `appId`, vem do começo do ID do cliente (`VITE_GOOGLE_APP_ID` só se for preciso
-trocar). Guarde a `TOKEN_ENCRYPTION_KEY` num cofre: sem ela, os tokens do Drive já gravados não
-abrem e as pessoas precisam conectar de novo.
+trocar). Guarde a `TOKEN_ENCRYPTION_KEY` num cofre: sem ela, os tokens do Drive e as chaves de IA já
+gravados não abrem e as pessoas precisam conectar o Drive e colar as chaves de novo.
 
 No `pnpm dev`, os mesmos nomes vão em `apps/api/.dev.vars` (segredos) e `apps/web/.env.local`
 (`VITE_`), como no `.env.example`.
@@ -122,7 +122,7 @@ No `pnpm dev`, os mesmos nomes vão em `apps/api/.dev.vars` (segredos) e `apps/w
 - O refresh token fica criptografado na tabela; o token de acesso do Google (1 hora) nunca é
   guardado, só pedido de novo a cada cópia. O único lugar que recebe um token de acesso é o
   navegador, para o Picker (`POST /drive/picker-token`, `Cache-Control: no-store`).
-- Migrations novas (aplicar na ordem, depois de aprovadas): `20261127170904_drive.sql` (tabela
-  `drive_connections` e a função `drive_record_copy`) e `20261127170905_boas_vindas.sql` (coluna
-  `profiles.welcome_email_sent_at` e as funções `claim_welcome_email` e `release_welcome_email`).
-  Quem já tem conta conta como "já recebeu" as boas-vindas.
+- Migrations (já aplicadas em produção em 28 nov 2026): `20261128021617_drive.sql` (tabela
+  `drive_connections`, a função `drive_record_copy` e o limite de um "Aviso do Drive" por dia) e
+  `20261128021642_boas_vindas.sql` (colunas de `profiles` e as funções `claim_welcome_email` e
+  `release_welcome_email`). Quem já tinha conta conta como "já recebeu" as boas-vindas.

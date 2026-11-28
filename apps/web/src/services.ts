@@ -6,6 +6,7 @@ import { DRIVE_COPY_INTERVAL } from './api/drive-copier';
 import { AUTOSAVE_DELAY } from './api/autosave';
 import type { AccountApi } from './api/account-api';
 import type { AgendaApi } from './api/agenda-api';
+import type { AiApi } from './api/ai-api';
 import type { LessonsApi } from './api/lessons-api';
 import type { ProjectsApi } from './api/projects-api';
 import type { PickDriveFile } from './drive/picker';
@@ -23,6 +24,8 @@ export interface Services {
   drive: DriveApi | null;
   /** Perfil (Configurações) e e-mail de boas-vindas; null quando o site não tem a API. */
   account: AccountApi | null;
+  /** Chaves, modelos e organização por IA (Configurações → IA); null quando o site não tem a API. */
+  ai: AiApi | null;
   /** O seletor de arquivos do Google; null quando faltam a chave de API e o ID do cliente. */
   pickDriveFile: PickDriveFile | null;
   /** Imagens do quadro de uma pessoa (Supabase Storage); sem armazenamento, ficam na aba. */
@@ -50,6 +53,7 @@ export const defaultServices: Services = {
   lessons: null,
   drive: null,
   account: null,
+  ai: null,
   pickDriveFile: null,
   mediaFor: () => localMedia,
   autosaveDelay: AUTOSAVE_DELAY,

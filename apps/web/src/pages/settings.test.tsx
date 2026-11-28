@@ -4,6 +4,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { App } from '../App';
 import { defaultServices, type Services } from '../services';
 import { createFakeAccount } from '../test/fake-account';
+import { createFakeAi } from '../test/fake-ai';
 import { createFakeAuth } from '../test/fake-auth';
 import { createFakeProjects } from '../test/fake-projects';
 import { browserTimeZones, groupTimeZones } from './settings/time-zones';
@@ -11,9 +12,15 @@ import { browserTimeZones, groupTimeZones } from './settings/time-zones';
 afterEach(cleanup);
 
 function renderSettings(
-  options: { path?: string; signedIn?: boolean; services?: Partial<Services> } = {},
+  options: {
+    path?: string;
+    signedIn?: boolean;
+    services?: Partial<Services>;
+    ai?: Parameters<typeof createFakeAi>[0];
+  } = {},
 ) {
   const { path = '/configuracoes', signedIn = true, services } = options;
+  const ai = createFakeAi(options.ai);
   const auth = createFakeAuth();
   auth.addAccount('Ana Souza', 'ana@exemplo.com', 'senha-segura-1');
   auth.addAccount('Bia Lima', 'bia@exemplo.com', 'outra-senha-1');
@@ -28,11 +35,12 @@ function renderSettings(
         ...defaultServices,
         projects: createFakeProjects([]).api,
         account: account.api,
+        ai: ai.api,
         ...services,
       }}
     />,
   );
-  return { auth, account, history };
+  return { auth, account, ai, history };
 }
 
 const section = (name: string) => within(screen.getByRole('region', { name }));
@@ -40,7 +48,7 @@ const type = (label: string, value: string, scope: Pick<typeof screen, 'getByLab
   fireEvent.change(scope.getByLabelText(label), { target: { value } });
 
 describe('Configurações: a tela', () => {
-  it('mostra as seções, com a IA desligada no lugar dela', async () => {
+  it('mostra todas as seções, com a IA funcionando', async () => {
     renderSettings();
     expect(await screen.findByRole('heading', { level: 1, name: 'Configurações' })).toBeDefined();
     for (const name of ['Conta', 'E-mail', 'Senha', 'Fuso horário', 'E-mails do Trama', 'IA']) {
@@ -48,10 +56,8 @@ describe('Configurações: a tela', () => {
     }
     expect(section('Conta').getByLabelText('Nome')).toHaveProperty('value', 'Ana Souza');
     expect(section('Conta').getByText('ana@exemplo.com')).toBeDefined();
-    expect(section('IA').getByRole('button', { name: 'Em breve' })).toHaveProperty(
-      'disabled',
-      true,
-    );
+    expect(section('IA').queryByRole('button', { name: 'Em breve' })).toBeNull();
+    expect(await section('IA').findByRole('radio', { name: /Claude/ })).toBeDefined();
   });
 
   it('o item da barra lateral leva do Início às Configurações', async () => {
