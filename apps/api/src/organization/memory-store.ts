@@ -59,6 +59,15 @@ export function createMemoryOrganizationStore(
     },
 
     lessons: {
+      listAll: () =>
+        Promise.resolve(
+          [...new Set([...lessonRows.values()].map((l) => l.notebookId))]
+            .sort()
+            .flatMap((id) =>
+              sortLessons([...lessonRows.values()].filter((l) => l.notebookId === id)),
+            ),
+        ),
+
       list: (notebookId) =>
         Promise.resolve(
           isNotebook(notebookId)

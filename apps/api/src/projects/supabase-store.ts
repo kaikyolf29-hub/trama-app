@@ -91,6 +91,19 @@ export function createSupabaseStore(
       }));
     },
 
+    async listByKind(kind) {
+      const { data, error, status } = await supabase
+        .from('projects')
+        .select(FULL)
+        .eq('kind', kind)
+        .order('created_at', { ascending: true })
+        .order('id', { ascending: true })
+        .limit(500)
+        .returns<ProjectRow[]>();
+      check(error, status);
+      return (data ?? []).map(toProject);
+    },
+
     async get(id) {
       const { data, error, status } = await supabase
         .from('projects')

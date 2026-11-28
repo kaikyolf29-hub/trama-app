@@ -39,6 +39,12 @@ export function createMemoryStore(clock: () => Date = () => new Date()): Project
             updatedAt,
           })),
       ),
+    listByKind: (kind) =>
+      Promise.resolve(
+        [...projects.values()]
+          .filter((project) => project.kind === kind)
+          .sort((a, b) => a.createdAt.localeCompare(b.createdAt) || a.id.localeCompare(b.id)),
+      ),
     get: (id) => Promise.resolve(projects.get(id) ?? null),
     create: ({ kind, title, content }) => {
       const at = now();

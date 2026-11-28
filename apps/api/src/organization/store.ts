@@ -25,6 +25,8 @@ export interface EventStore {
 
 /** Aulas de um caderno. `null` quer dizer "este caderno não existe para esta pessoa". */
 export interface LessonStore {
+  /** Todas as aulas de todos os cadernos da pessoa (a tabela "Todas as aulas"). */
+  listAll(): Promise<Lesson[]>;
   list(notebookId: string): Promise<Lesson[] | null>;
   create(notebookId: string, input: CreateLessonRequest): Promise<Lesson | null>;
   update(notebookId: string, lessonId: string, patch: UpdateLessonRequest): Promise<Lesson | null>;
