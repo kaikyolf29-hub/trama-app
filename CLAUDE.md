@@ -2,6 +2,8 @@
 
 ## Só para o Claude Code
 
+- Comece por `docs/ANDAMENTO.md`: o que está no ar, os PRs abertos na ordem de merge, o que
+  falta e como o trabalho vinha sendo feito.
 - Você faz todas as partes do projeto e decide o que é técnico. Faça o merge quando o CI estiver
   verde (PRs empilhados em ordem, com commit de merge). O Codex revisa no fim, no GitHub.
 - Travou em algo que só a pessoa dona do projeto pode fazer (conta, chave, painel) ou precisa de

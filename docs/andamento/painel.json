@@ -1,0 +1,559 @@
+{
+  "exportadoEm": "2026-11-28T12:10:00Z",
+  "painel": [
+    {
+      "id": "agora",
+      "atualizadoEm": "2026-11-28T06:55:00Z",
+      "texto": "No ar: Fases 1 e 2 quase inteiras, IA (3.1) e voz local (3.2). Quatro agentes trabalhando: Roteiros (2.3), Estudos e e-mails (2.4, 2.6), Falar e organizar (3.3) e o conector MCP (3.4)."
+    }
+  ],
+  "etapas": [
+    {
+      "id": "0.1",
+      "atualizadoEm": "2026-11-27T03:22:00Z",
+      "codigo": "0.1",
+      "fase": 0,
+      "nota": "Na main. As correções da primeira revisão do Codex entraram junto.",
+      "ordem": 1,
+      "pr": "https://github.com/kaikyolf29-hub/trama-app/pull/1",
+      "prTexto": "PR #1",
+      "referencia": "",
+      "status": "feito",
+      "titulo": "Repositório, monorepo, AGENTS.md e CLAUDE.md, contrato do fluxo (packages/core) e CI"
+    },
+    {
+      "id": "0.2",
+      "atualizadoEm": "2026-11-27T03:23:00Z",
+      "codigo": "0.2",
+      "fase": 0,
+      "nota": "Na main. A vitrine dos componentes fica em /design.",
+      "ordem": 2,
+      "pr": "https://github.com/kaikyolf29-hub/trama-app/pull/2",
+      "prTexto": "PR #2",
+      "referencia": "telas 1, 4 e 8",
+      "status": "feito",
+      "titulo": "Tokens (packages/ui/tokens.ts), Tailwind, componentes base, logo em SVG e docs/DESIGN.md"
+    },
+    {
+      "id": "0.3",
+      "atualizadoEm": "2026-11-27T16:59:00Z",
+      "codigo": "0.3",
+      "fase": 0,
+      "nota": "No ar: cadastro sem confirmar e-mail, senha mínima de 8, recuperação pelo Resend com o modelo do Trama. Testado de ponta a ponta no site publicado.",
+      "ordem": 3,
+      "pr": "https://github.com/kaikyolf29-hub/trama-app/pull/5",
+      "prTexto": "PR #5",
+      "referencia": "",
+      "status": "feito",
+      "titulo": "Supabase: tabela profiles com RLS, cadastro com nome, e-mail e senha, login e recuperação de senha"
+    },
+    {
+      "id": "0.4",
+      "atualizadoEm": "2026-11-27T03:23:30Z",
+      "codigo": "0.4",
+      "fase": 0,
+      "nota": "Na main. O link da recuperação agora leva a /nova-senha e funciona aberto em outro aparelho.",
+      "ordem": 4,
+      "pr": "https://github.com/kaikyolf29-hub/trama-app/pull/3",
+      "prTexto": "PR #3",
+      "referencia": "tela 8",
+      "status": "feito",
+      "titulo": "E-mails de recuperação de senha e de boas-vindas, com o logo, pelo Resend"
+    },
+    {
+      "id": "0.5",
+      "atualizadoEm": "2026-11-27T03:28:00Z",
+      "codigo": "0.5",
+      "fase": 0,
+      "nota": "Na main: entrar, criar conta, esqueci a senha, senha nova e a proteção das rotas, com 31 testes.",
+      "ordem": 5,
+      "pr": "https://github.com/kaikyolf29-hub/trama-app/pull/4",
+      "prTexto": "PR #4",
+      "referencia": "telas 4 e 8",
+      "status": "feito",
+      "titulo": "Casca do app e as telas de entrar, criar conta, esqueci a senha e nova senha"
+    },
+    {
+      "id": "0.6",
+      "atualizadoEm": "2026-11-27T16:59:00Z",
+      "codigo": "0.6",
+      "fase": 0,
+      "nota": "No ar em trama.trama-kaiky.workers.dev (site) e trama-api.trama-kaiky.workers.dev (API). Cada merge na main publica sozinho.",
+      "ordem": 6,
+      "pr": "https://github.com/kaikyolf29-hub/trama-app/pull/6",
+      "prTexto": "PR #6",
+      "referencia": "",
+      "status": "feito",
+      "titulo": "Deploy na Cloudflare (site e API) e preview em todo PR"
+    },
+    {
+      "id": "1.1",
+      "atualizadoEm": "2026-11-27T05:45:00Z",
+      "codigo": "1.1",
+      "fase": 1,
+      "nota": "Na main: quadro com o fluxo da tela 1 em /exemplo.",
+      "ordem": 1,
+      "pr": "https://github.com/kaikyolf29-hub/trama-app/pull/7",
+      "prTexto": "PR #7",
+      "referencia": "tela 1",
+      "status": "feito",
+      "titulo": "Quadro base: grade de 8 px, zoom, minimapa, Ajustar, ferramentas flutuantes"
+    },
+    {
+      "id": "1.2",
+      "atualizadoEm": "2026-11-27T06:05:00Z",
+      "codigo": "1.2",
+      "fase": 1,
+      "nota": "No ar na main: criar com T, C, N, R, F ou clique duplo, editar no lugar, selo de status e Delete.",
+      "ordem": 2,
+      "pr": "https://github.com/kaikyolf29-hub/trama-app/pull/8",
+      "prTexto": "PR #8",
+      "referencia": "tela 1",
+      "status": "feito",
+      "titulo": "Blocos de texto, cartão com selo de status, nota adesiva, forma e moldura"
+    },
+    {
+      "id": "1.3",
+      "atualizadoEm": "2026-11-27T07:14:00Z",
+      "codigo": "1.3",
+      "fase": 1,
+      "nota": "No ar na main: imagem (botão, arrastar, colar) guardada no Supabase Storage com RLS por pessoa, vídeo do YouTube/Vimeo, link e etapas.",
+      "ordem": 3,
+      "pr": "https://github.com/kaikyolf29-hub/trama-app/pull/10",
+      "prTexto": "PRs #9 e #10",
+      "referencia": "tela 1",
+      "status": "feito",
+      "titulo": "Blocos de imagem (com upload), vídeo ou link, e etapas"
+    },
+    {
+      "id": "1.4",
+      "atualizadoEm": "2026-11-27T08:25:00Z",
+      "codigo": "1.4",
+      "fase": 1,
+      "nota": "No ar na main: setas (#11), desfazer/refazer, Ctrl+D e Ctrl+G (#12), barra de contexto e clique direito (#13), guias de alinhamento (#14).",
+      "ordem": 4,
+      "pr": "https://github.com/kaikyolf29-hub/trama-app/pull/14",
+      "prTexto": "PR #14",
+      "referencia": "tela 1",
+      "status": "feito",
+      "titulo": "Setas, seleção, barra de contexto, guias, atalhos, desfazer e refazer, clique direito"
+    },
+    {
+      "id": "1.5",
+      "atualizadoEm": "2026-11-27T15:52:00Z",
+      "codigo": "1.5",
+      "fase": 1,
+      "nota": "No ar na main: tabelas e regras no Supabase, API de projetos com histórico de versões (#16), tela do projeto que salva sozinha em 2 s e “Seus fluxos” no Início (#17).",
+      "ordem": 5,
+      "pr": "https://github.com/kaikyolf29-hub/trama-app/pull/17",
+      "prTexto": "PRs #16 e #17",
+      "referencia": "",
+      "status": "feito",
+      "titulo": "Salvamento: API de projetos, salvar sozinho em 2 s, histórico de versões"
+    },
+    {
+      "id": "1.6",
+      "atualizadoEm": "2026-11-28T02:20:00Z",
+      "codigo": "1.6",
+      "fase": 1,
+      "nota": "No ar (#19, #23, #30), com as 2 migrations aplicadas no Supabase e limite contra e-mails em laço. Para ligar de verdade faltam as chaves do Google e do Resend no Worker (pedido pronto para o Codex).",
+      "ordem": 6,
+      "pr": "https://github.com/kaikyolf29-hub/trama-app/pull/23",
+      "prTexto": "PRs #19 e #23",
+      "referencia": "tela 4",
+      "status": "feito",
+      "titulo": "Google Drive: conectar, pasta Trama, projeto.trama, cópia a cada 30 s, Abrir do Drive, e-mail de aviso"
+    },
+    {
+      "id": "1.7",
+      "atualizadoEm": "2026-11-27T20:40:00Z",
+      "codigo": "1.7",
+      "fase": 1,
+      "nota": "No ar (PR #22): ordem da apresentação, tela cheia, câmera suave, caneta e destaque. Conferido no preview.",
+      "ordem": 7,
+      "referencia": "tela 2",
+      "status": "feito",
+      "titulo": "Modo aula: ordem da apresentação, tela cheia, câmera, destaque e caneta"
+    },
+    {
+      "id": "1.8",
+      "atualizadoEm": "2026-11-27T20:33:00Z",
+      "codigo": "1.8",
+      "fase": 1,
+      "nota": "No ar na main: seis modelos de início (#20) e a tela Início igual à tela 4, com renomear, status e apagar (#21).",
+      "ordem": 8,
+      "pr": "https://github.com/kaikyolf29-hub/trama-app/pull/21",
+      "prTexto": "PRs #20 e #21",
+      "referencia": "tela 4",
+      "status": "feito",
+      "titulo": "Modelos de início e a tela Início"
+    },
+    {
+      "id": "1.9",
+      "atualizadoEm": "2026-11-28T01:45:00Z",
+      "codigo": "1.9",
+      "fase": 1,
+      "nota": "No ar (#24): 48 testes Playwright rodam em todo PR; o quadro com 500 blocos abre em 0,35 s a ~58 fps.",
+      "ordem": 9,
+      "pr": "https://github.com/kaikyolf29-hub/trama-app/pull/24",
+      "prTexto": "PR #24",
+      "referencia": "",
+      "status": "feito",
+      "titulo": "Testes Playwright dos fluxos do MVP e teste de 500 blocos no CI"
+    },
+    {
+      "id": "2.1",
+      "atualizadoEm": "2026-11-28T06:45:00Z",
+      "codigo": "2.1",
+      "fase": 2,
+      "nota": "No ar (#25, #28): roteiro, caderno, aulas e eventos no core; tabelas events e lessons aplicadas no Supabase, com eventos gravados sozinhos (conferido em produção).",
+      "ordem": 1,
+      "pr": "https://github.com/kaikyolf29-hub/trama-app/pull/28",
+      "prTexto": "PRs #25 e #28",
+      "referencia": "",
+      "status": "feito",
+      "titulo": "Formatos de roteiro, caderno e eventos no core; tabelas events e lessons"
+    },
+    {
+      "id": "2.2",
+      "atualizadoEm": "2026-11-28T06:45:00Z",
+      "codigo": "2.2",
+      "fase": 2,
+      "nota": "No ar (#31): Agenda com visões de ano, mês e dia, eventos automáticos e Registrar algo.",
+      "ordem": 2,
+      "pr": "https://github.com/kaikyolf29-hub/trama-app/pull/31",
+      "prTexto": "PR #31",
+      "referencia": "tela 7",
+      "status": "feito",
+      "titulo": "Agenda com data e hora registradas sozinhas"
+    },
+    {
+      "id": "2.3",
+      "atualizadoEm": "2026-11-28T06:45:00Z",
+      "codigo": "2.3",
+      "fase": 2,
+      "nota": "Agente trabalhando: editor de roteiro com Tiptap (tela 3) e cenas ligadas aos cartões do quadro.",
+      "ordem": 3,
+      "referencia": "tela 3",
+      "status": "fazendo",
+      "titulo": "Roteiros (Tiptap), com cada cena ligada a um cartão do quadro"
+    },
+    {
+      "id": "2.4",
+      "atualizadoEm": "2026-11-28T06:45:00Z",
+      "codigo": "2.4",
+      "fase": 2,
+      "nota": "Agente trabalhando: cadernos, aulas, datas de estudo e de revisão (tela 6).",
+      "ordem": 4,
+      "referencia": "tela 6",
+      "status": "fazendo",
+      "titulo": "Estudos: cadernos, aulas, datas de estudo e de revisão"
+    },
+    {
+      "id": "2.5",
+      "atualizadoEm": "2026-11-28T02:20:00Z",
+      "codigo": "2.5",
+      "fase": 2,
+      "nota": "No ar (#26, #29): conta, troca de e-mail e senha, fuso, preferências de e-mail. Falta colar o modelo do e-mail de troca no painel do Supabase (pedido ao Codex).",
+      "ordem": 5,
+      "pr": "https://github.com/kaikyolf29-hub/trama-app/pull/29",
+      "prTexto": "PRs #26 e #29",
+      "referencia": "",
+      "status": "feito",
+      "titulo": "Configurações: conta, troca de e-mail e de senha, preferências de e-mail"
+    },
+    {
+      "id": "2.6",
+      "atualizadoEm": "2026-11-28T06:45:00Z",
+      "codigo": "2.6",
+      "fase": 2,
+      "nota": "Mesmo agente da 2.4: resumo semanal e lembrete de revisão, com descadastro e tarefa agendada.",
+      "ordem": 6,
+      "referencia": "tela 6",
+      "status": "fazendo",
+      "titulo": "Resumo semanal e lembrete de revisão por e-mail"
+    },
+    {
+      "id": "3.1",
+      "atualizadoEm": "2026-11-28T06:45:00Z",
+      "codigo": "3.1",
+      "fase": 3,
+      "nota": "No ar (#32, #34): Claude, Gemini e ChatGPT com a chave da própria pessoa (cifrada), esforço Rápido/Equilibrado/Caprichado, prompts versionados e Configurações → IA. Tabelas aplicadas no Supabase.",
+      "ordem": 1,
+      "pr": "https://github.com/kaikyolf29-hub/trama-app/pull/34",
+      "prTexto": "PRs #32 e #34",
+      "referencia": "",
+      "status": "feito",
+      "titulo": "packages/ai: Claude, Gemini e ChatGPT, esforço, prompts versionados, chaves criptografadas, Configurações de IA"
+    },
+    {
+      "id": "3.2",
+      "atualizadoEm": "2026-11-28T06:55:00Z",
+      "codigo": "3.2",
+      "fase": 3,
+      "nota": "No ar (#33): Whisper no navegador (WebGPU ou WASM), gravação até 10 min, texto editável e a tela Falar e organizar. O áudio não sai do computador.",
+      "ordem": 2,
+      "pr": "https://github.com/kaikyolf29-hub/trama-app/pull/33",
+      "prTexto": "PR #33",
+      "referencia": "tela 5",
+      "status": "feito",
+      "titulo": "Voz local com Whisper no navegador"
+    },
+    {
+      "id": "3.3",
+      "atualizadoEm": "2026-11-28T06:55:00Z",
+      "codigo": "3.3",
+      "fase": 3,
+      "nota": "Agente trabalhando: organizar com a IA escolhida, estimativa de custo, layout automático e Inserir no quadro.",
+      "ordem": 3,
+      "referencia": "tela 5",
+      "status": "fazendo",
+      "titulo": "Falar e organizar, com layout automático e Inserir no quadro"
+    },
+    {
+      "id": "3.4",
+      "atualizadoEm": "2026-11-28T06:55:00Z",
+      "codigo": "3.4",
+      "fase": 3,
+      "nota": "Agente trabalhando: Worker do MCP com login da conta do Trama, permissões de leitura e escrita e as 9 ferramentas do plano.",
+      "ordem": 4,
+      "referencia": "",
+      "status": "fazendo",
+      "titulo": "Conector MCP com login e permissões"
+    },
+    {
+      "id": "4.1",
+      "codigo": "4.1",
+      "fase": 4,
+      "ordem": 1,
+      "referencia": "",
+      "status": "a_fazer",
+      "titulo": "Exportar PNG e PDF, link só para leitura"
+    },
+    {
+      "id": "4.2",
+      "codigo": "4.2",
+      "fase": 4,
+      "ordem": 2,
+      "referencia": "",
+      "status": "a_fazer",
+      "titulo": "Domínio, SPF e DKIM, Supabase Pro"
+    },
+    {
+      "id": "4.3",
+      "codigo": "4.3",
+      "fase": 4,
+      "ordem": 3,
+      "referencia": "",
+      "status": "a_fazer",
+      "titulo": "App de computador com Tauri"
+    }
+  ],
+  "registro": [
+    {
+      "id": "r001",
+      "em": "2026-11-27T02:39:43Z",
+      "texto": "PR #1 aberto: fundação do repositório."
+    },
+    {
+      "id": "r002",
+      "em": "2026-11-27T02:40:23Z",
+      "texto": "CI do PR #1 verde: tipos, lint, formatação, testes e build."
+    },
+    {
+      "id": "r003",
+      "em": "2026-11-27T02:46:03Z",
+      "texto": "Codex revisou o PR #1: 5 bloqueios e 2 sugestões."
+    },
+    {
+      "id": "r004",
+      "em": "2026-11-27T02:57:00Z",
+      "texto": "Revisão corrigida e respondida no PR #1 (90 testes passando). Plano atualizado: Claude Code faz tudo, Codex revisa; login por e-mail e senha."
+    },
+    {
+      "id": "r005",
+      "em": "2026-11-27T03:00:30Z",
+      "texto": "Página de andamento publicada. Etapa 0.2 começou."
+    },
+    {
+      "id": "r006",
+      "em": "2026-11-27T03:04:00Z",
+      "texto": "Componentes base e tokens funcionando no site; um erro de nomes de classe (textStrong) foi pego na captura de tela e corrigido com teste."
+    },
+    {
+      "id": "r007",
+      "em": "2026-11-27T03:06:30Z",
+      "texto": "PR #2 aberto (etapa 0.2: tokens, Tailwind, logo e componentes base). Etapa 0.4 começou."
+    },
+    {
+      "id": "r008",
+      "em": "2026-11-27T03:11:30Z",
+      "texto": "PR #3 aberto (etapa 0.4: e-mails de recuperação de senha e boas-vindas com o logo). 119 testes passando."
+    },
+    {
+      "id": "r009",
+      "em": "2026-11-27T03:13:00Z",
+      "texto": "CI verde nos PRs #1, #2 e #3. Etapa 0.5 começou."
+    },
+    {
+      "id": "r010",
+      "em": "2026-11-27T03:23:30Z",
+      "texto": "Merge dos PRs #1, #2 e #3 na main (CI verde). A partir de agora o Claude Code faz o merge e o Codex revisa no fim."
+    },
+    {
+      "id": "r011",
+      "em": "2026-11-27T03:28:00Z",
+      "texto": "PR #4 (telas de login) na main. Projeto Supabase “trama” criado em São Paulo, de graça, com a tabela profiles e RLS."
+    },
+    {
+      "id": "r012",
+      "em": "2026-11-27T05:33:00Z",
+      "texto": "PR #5 (Supabase) na main. PR #6 aberto: deploy do site e da API na Cloudflare, com preview em cada PR."
+    },
+    {
+      "id": "r013",
+      "em": "2026-11-27T05:43:00Z",
+      "texto": "Fase 1 começou: PR #7 com o quadro base (React Flow), testado com o fluxo de vídeo da tela 1. 161 testes passando."
+    },
+    {
+      "id": "r014",
+      "em": "2026-11-27T05:55:00Z",
+      "texto": "PR #8 (etapa 1.2): blocos com o visual da tela 1, criação por ferramenta, tecla e clique duplo, edição no lugar e Delete que limpa setas e passos da aula. 178 testes passando; testado no navegador."
+    },
+    {
+      "id": "r015",
+      "em": "2026-11-27T06:05:00Z",
+      "texto": "PR #8 (etapa 1.2) com CI verde e merge feito. Começou a etapa 1.3."
+    },
+    {
+      "id": "r016",
+      "em": "2026-11-27T06:12:00Z",
+      "texto": "PR #9 (etapa 1.3, parte 1): imagem por botão, arrastar ou colar; vídeo que toca no bloco; link com o site; etapas com marcar e contador. 202 testes passando."
+    },
+    {
+      "id": "r017",
+      "em": "2026-11-27T06:30:00Z",
+      "texto": "PR #9 (etapa 1.3, parte 1) com CI verde e merge feito. Preparando a parte 2: imagens no Supabase Storage."
+    },
+    {
+      "id": "r018",
+      "em": "2026-11-27T06:52:00Z",
+      "texto": "PR #10 (etapa 1.3, parte 2): bucket privado de imagens com RLS por pessoa e o envio pelo site. 207 testes passando. Deploy (PR #6) conferido de novo: os segredos da Cloudflare ainda não estão no GitHub."
+    },
+    {
+      "id": "r019",
+      "em": "2026-11-27T07:13:00Z",
+      "texto": "Migration do bucket “arquivos” aplicada com a sua aprovação. Teste das regras passou no projeto, sem sobra de dados de teste e sem alertas de segurança."
+    },
+    {
+      "id": "r020",
+      "em": "2026-11-27T07:14:00Z",
+      "texto": "PR #10 com CI verde e merge feito: etapa 1.3 concluída. Começou a etapa 1.4."
+    },
+    {
+      "id": "r021",
+      "em": "2026-11-27T07:35:00Z",
+      "texto": "PR #11 (etapa 1.4, parte 1): setas com a barrinha Curva/Reta/Texto/Apagar, testadas no navegador. 211 testes passando."
+    },
+    {
+      "id": "r022",
+      "em": "2026-11-27T07:45:00Z",
+      "texto": "PR #11 (setas) com CI verde e merge feito. PR #12: desfazer, refazer, duplicar e agrupar, testados no navegador. 224 testes passando."
+    },
+    {
+      "id": "r023",
+      "em": "2026-11-27T08:05:00Z",
+      "texto": "PR #12 (desfazer/refazer, duplicar, agrupar) com CI verde e merge feito. PR #13 aberto: barra de contexto igual à da tela 1 e clique direito. 236 testes passando."
+    },
+    {
+      "id": "r024",
+      "em": "2026-11-27T08:15:00Z",
+      "texto": "PR #13 (barra de contexto e clique direito) com CI verde e merge feito. PR #14 aberto: guias de alinhamento, testadas no navegador. 241 testes passando."
+    },
+    {
+      "id": "r025",
+      "em": "2026-11-27T08:25:00Z",
+      "texto": "PR #14 (guias de alinhamento) com CI verde e merge feito: etapa 1.4 concluída. PR #6 atualizado com a main para entrar antes da 1.5; o deploy continua pulado até o Codex guardar os segredos."
+    },
+    {
+      "id": "r026",
+      "em": "2026-11-27T10:36:00Z",
+      "texto": "PR #6 (Worker da API e deploy) entrou na main com a publicação ainda pulada. PR #15 aberto: contrato da API de projetos no core."
+    },
+    {
+      "id": "r027",
+      "em": "2026-11-27T10:50:00Z",
+      "texto": "PR #15 (contrato no core) com CI verde e merge feito. PR #16 aberto: projetos e versões no Supabase e as rotas da API. 258 testes passando."
+    },
+    {
+      "id": "r028",
+      "em": "2026-11-27T11:25:00Z",
+      "texto": "PR #17 aberto: tela do projeto que salva sozinha em 2 s e lista “Seus fluxos”, testada no navegador com a API simulada. 274 testes passando. Deploy conferido de novo: os segredos da Cloudflare ainda não estão no GitHub."
+    },
+    {
+      "id": "r029",
+      "em": "2026-11-27T15:42:00Z",
+      "texto": "Tabelas de projetos e versões criadas no Supabase com a sua aprovação. Teste das regras passou no projeto, sem sobra de dados de teste e sem alertas de segurança."
+    },
+    {
+      "id": "r030",
+      "em": "2026-11-27T15:48:00Z",
+      "texto": "PR #16 com CI verde e merge feito: tabelas, regras e rotas de projetos na main."
+    },
+    {
+      "id": "r031",
+      "em": "2026-11-27T15:52:00Z",
+      "texto": "PR #17 com CI verde e merge feito: etapa 1.5 concluída. 274 testes passando."
+    },
+    {
+      "id": "r032",
+      "em": "2026-11-27T16:59:00Z",
+      "texto": "Codex terminou a configuração. Site e API no ar. Teste de ponta a ponta no site publicado passou (cadastro, fluxo salvo, login, recuperação de senha com o link do e-mail); as contas de teste foram apagadas."
+    },
+    {
+      "id": "r033",
+      "em": "2026-11-27T17:05:00Z",
+      "texto": "Novo jeito de trabalhar, a seu pedido: agentes em paralelo por blocos grandes. Onda 1: etapas 1.6, 1.7 e 1.8 começaram juntas. PR #18 (mensagem de erro da recuperação) no ar."
+    },
+    {
+      "id": "r034",
+      "em": "2026-11-27T17:22:00Z",
+      "texto": "Agente da 1.8 entregou: PR #20 (seis modelos de início no core) com CI verde e merge feito; PR #21 (tela Início da tela 4) esperando o CI."
+    },
+    {
+      "id": "r035",
+      "em": "2026-11-27T20:33:00Z",
+      "texto": "PR #21 (tela Início) com CI verde e merge feito: etapa 1.8 concluída. Os agentes pararam no limite do Sonnet e foram retomados quando o limite voltou."
+    },
+    {
+      "id": "r036",
+      "quando": "2026-11-27T20:40:00Z",
+      "texto": "Merge do PR #22: modo aula (etapa 1.7) publicado no site."
+    },
+    {
+      "id": "r037",
+      "quando": "2026-11-27T20:55:00Z",
+      "texto": "Merge do PR #19 (core do Drive). Revisão do #23 com uma correção (o Início não quebra antes da migration). Fase 2 aberta com dois agentes."
+    },
+    {
+      "id": "r038",
+      "quando": "2026-11-28T01:45:00Z",
+      "texto": "Merges: Drive (#23), testes Playwright (#24) e ajustes do modo aula (#27). Produção conferida: API e site respondendo."
+    },
+    {
+      "id": "r039",
+      "quando": "2026-11-28T02:20:00Z",
+      "texto": "Merges: Configurações (#26, #29) e limite de e-mails (#30). Migrations drive e boas_vindas aplicadas no Supabase com aprovação da pessoa dona."
+    },
+    {
+      "id": "r040",
+      "quando": "2026-11-28T06:45:00Z",
+      "texto": "Merges: Agenda (#25, #28, #31), IA (#32, #34) e nomes das migrations (#35). Migrations agenda_aulas e ia aplicadas; gatilhos conferidos em produção sem deixar dado."
+    },
+    {
+      "id": "r041",
+      "quando": "2026-11-28T06:55:00Z",
+      "texto": "Merges: voz local (#33) e o nome da migration da IA (#38). Agentes de Roteiros e Estudos retomados depois do limite de uso; novos agentes para Falar e organizar e para o MCP."
+    }
+  ]
+}
