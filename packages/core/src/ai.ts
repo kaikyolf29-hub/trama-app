@@ -335,6 +335,8 @@ export const aiErrorCodeSchema = z.enum([
   'not_configured',
   /** A pessoa ainda não guardou uma chave deste provedor. */
   'no_key',
+  /** A pessoa ainda não escolheu provedor e modelo em Configurações → IA. */
+  'no_settings',
   /** O provedor recusou a chave. */
   'key_rejected',
   /** O provedor pediu para esperar (limite de uso da conta da pessoa). */
