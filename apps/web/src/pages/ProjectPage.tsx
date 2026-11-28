@@ -1,7 +1,7 @@
-import { Link, useParams } from '@tanstack/react-router';
+import { useParams } from '@tanstack/react-router';
 import { FlowCanvas } from '@trama/canvas';
 import type { FlowProject } from '@trama/core';
-import { Alert, cn, Spinner } from '@trama/ui';
+import { cn, Spinner } from '@trama/ui';
 import { useEffect, useRef, useState } from 'react';
 import { Autosaver, type SaveStatus } from '../api/autosave';
 import { DriveCopier, type DriveCopyStatus } from '../api/drive-copier';
@@ -9,7 +9,7 @@ import type { ProjectsApi } from '../api/projects-api';
 import { useAuth } from '../auth/context';
 import { useServices } from '../services';
 import { BoardTitle, PresentButton } from './BoardChrome';
-import { textLinkClass } from './styles';
+import { PageMessage as Message } from './PageMessage';
 
 type Loaded =
   | { state: 'loading'; id: string }
@@ -62,19 +62,6 @@ export function ProjectPage() {
   }
   if (loaded.state === 'failed') return <Message>{loaded.message}</Message>;
   return <ProjectBoard key={loaded.project.id} project={loaded.project} api={projects} />;
-}
-
-function Message({ children }: { children: string }) {
-  return (
-    <div className="flex min-h-dvh items-center justify-center bg-page px-4">
-      <div className="flex max-w-md flex-col gap-4">
-        <Alert tone="error">{children}</Alert>
-        <Link to="/" className={cn(textLinkClass, 'self-start text-sm')}>
-          Voltar para o início
-        </Link>
-      </div>
-    </div>
-  );
 }
 
 function ProjectBoard({ project, api }: { project: FlowProject; api: ProjectsApi }) {
