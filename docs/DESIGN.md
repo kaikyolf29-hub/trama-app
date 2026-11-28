@@ -27,6 +27,7 @@ http://localhost:5173/design.
 | `textStrong`, `text`, `textMuted`       | `text-text-strong`, `text-text`, `text-text-muted` | Títulos, texto, texto discreto                        |
 | `selection`                             | `outline-selection`, `bg-selection`                | Contorno, alças, pontos de conexão e foco             |
 | `done`, `doneText`, `doneSurface`       | `bg-done`, `text-done-text`, `bg-done-surface`     | "Vídeo pronto", etapas feitas, sucesso                |
+| `recording`                             | `bg-recording`                                     | O botão de parar enquanto grava (tela 5)              |
 | `brandPaper`, `brandInk`, `brandShadow` | `bg-brand-paper`, `text-brand-ink`                 | O logo e o botão principal                            |
 
 **Notas** (`noteColors.*`, classes `bg-note-<cor>-bg` e `text-note-<cor>-fg`): amarelo, azul,

@@ -14,7 +14,8 @@ test.describe('tela Início: modelos', () => {
     expect(api.projects.size).toBe(0);
   });
 
-  for (const template of flowTemplates) {
+  // "Falar e organizar" abre a tela de voz, não o quadro (veja voice.e2e.ts).
+  for (const template of flowTemplates.filter((item) => item.id !== 'voice')) {
     test(`"${template.title}" cria o projeto e abre no quadro`, async ({ page, api, signIn }) => {
       await signIn();
       await page.goto('/');
