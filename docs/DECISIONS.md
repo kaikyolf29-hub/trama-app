@@ -283,6 +283,11 @@ Não apague: escreva uma linha nova dizendo o que substitui.
 - 2026-11-28 · **Em Configurações → IA cada escolha salva na hora (provedor com chave, modelo, esforço); trocar de provedor mostra a chave e a lista de modelos dele, e, sem modelo escolhido, o Trama seleciona a sugestão (Haiku 5.5 no Claude) ou o primeiro da lista.** Motivo: mesmo padrão de fuso e e-mails; a lista vem sempre da API do provedor, então modelo novo aparece sem mudar o código.
 - 2026-11-28 · **O Worker da API passou de 2,9 MB para 6,4 MB sem compressão (602 KiB para 1,1 MB com gzip) com os três SDKs; o limite do plano grátis é 3 MB comprimido.** Motivo: medido com `wrangler deploy --dry-run`; sobra folga, e import dinâmico por provedor foi testado e não diminuiu o bundle nem o tempo de início, então ficou o import estático.
 
+## Etapa 2.4 — Estudos
+
+- 2026-11-28 · **Cadernos têm contrato próprio: `POST /notebooks` (`createNotebookRequestSchema`), `PATCH /notebooks/:id` (`updateNotebookRequestSchema`: título, descrição, cor e intervalo de revisão) e `GET /notebooks` (`notebookListSchema`, já com o conteúdo). `createProjectRequestSchema` continua só com fluxo.** Motivo: a tela Estudos precisa da cor de cada caderno numa consulta só, e o PUT de `/projects/:id` só entende o conteúdo do fluxo; assim o contrato do fluxo e o do caderno não se misturam.
+- 2026-11-28 · **Reordenar aulas é uma função pura do core (`reorderLessons`): troca a aula com a vizinha, renumera de 0 a N-1 e devolve só o que mudou; "Revisões" é `lessonsToReview` (da data mais antiga à mais nova, sem data por último).** Motivo: o site, a API e o MCP ordenam igual, e posições repetidas ou com buraco (a API aceita) se acertam sozinhas.
+
 ## Etapa 3.2 — Voz local com Whisper no navegador
 
 - 2026-11-28 · **O modelo padrão é o `onnx-community/whisper-base` (multilíngue); "Whisper local · mais preciso" usa o `whisper-small`. Nunca os `.en`.** Motivo: o base baixa pouco (cerca de 80 MB no processador) e já escreve português razoável; o small é opção para quem tem máquina e paciência (cerca de 250 MB). O item "escolher o padrão depois de testar no seu computador" do plano continua com a pessoa dona do projeto: trocar é mudar `DEFAULT_VOICE_MODEL` em `apps/web/src/voice/models.ts`.
