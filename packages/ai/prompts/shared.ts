@@ -1,4 +1,4 @@
-import type { AiFlowOutput, AiPromptOutput } from '@trama/core';
+import type { AiFlowOutput, AiPromptOutput, AiScriptOutput } from '@trama/core';
 
 /**
  * Peças comuns dos prompts do Trama. Cada prompt (um arquivo por formato, com a versão no nome)
@@ -10,7 +10,7 @@ import type { AiFlowOutput, AiPromptOutput } from '@trama/core';
 /** Um prompt pronto para enviar: o texto de sistema, um exemplo e como montar a mensagem. */
 export interface OrganizePrompt<Output> {
   /** Formato do pedido a que ele serve. */
-  id: 'flow' | 'plan' | 'prompt';
+  id: 'flow' | 'script' | 'plan' | 'prompt';
   /** Sobe a cada mudança que altera a saída. */
   version: number;
   /** Instruções fixas (a parte que não muda de pedido para pedido). */
@@ -35,7 +35,7 @@ export const COMMON_CONTEXT = `Você é o assistente de organização do Trama, 
 - Escreva no mesmo idioma da fala (em geral, português do Brasil), com frases curtas e claras, sem emoji.
 </contexto>`;
 
-/** A regra das correções, igual nos três formatos. */
+/** A regra das correções, igual nos quatro formatos. */
 export const CORRECTIONS_RULE = `<correcoes>
 Quando uma palavra ou nome da transcrição estiver claramente errado pelo contexto (por exemplo, "raposa" onde o assunto inteiro é sobre gatos), use a palavra certa no resultado e anote a troca em "corrections", com "from" (como estava na fala) e "to" (como ficou). Só anote trocas de que você tem certeza; na dúvida, mantenha a palavra e não anote nada. Sem nenhuma troca, devolva a lista vazia. Não anote hesitações que você apenas cortou.
 </correcoes>`;
@@ -46,7 +46,10 @@ Responda só com o JSON no formato pedido, sem texto antes ou depois. Todo campo
 </saida>`;
 
 /** O exemplo, escrito no formato que o prompt mostra ao modelo. */
-export function renderExample(input: string, output: AiFlowOutput | AiPromptOutput): string {
+export function renderExample(
+  input: string,
+  output: AiFlowOutput | AiPromptOutput | AiScriptOutput,
+): string {
   return `<exemplo>
 <fala>
 ${input}

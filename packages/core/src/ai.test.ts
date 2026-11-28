@@ -13,6 +13,7 @@ import {
   aiOrganizeRequestSchema,
   aiOrganizeResponseSchema,
   aiPromptOutputSchema,
+  aiScriptOutputSchema,
   aiProviderSchema,
   aiSettingsResponseSchema,
   aiSettingsSchema,
@@ -21,6 +22,8 @@ import {
   type AiFlowOutput,
 } from './ai';
 import { aiOutputToFlow, aiSuggestedTitle, clipText } from './ai-flow';
+import { aiOutputToScript } from './ai-script';
+import { scriptContentSchema } from './script';
 import { flowContentSchema } from './flow';
 import { snapToGrid } from './geometry';
 
@@ -55,6 +58,8 @@ function counter() {
   let n = 0;
   return () => `id-${String(++n)}`;
 }
+
+const usage = { inputTokens: 1200, outputTokens: 800 };
 
 describe('IA: preferências e chaves', () => {
   it('conhece os três provedores e os três esforços', () => {
@@ -134,11 +139,11 @@ describe('IA: pedido de organizar', () => {
     );
   });
 
-  it('só aceita os formatos de agora (o roteiro entra depois)', () => {
-    for (const format of ['flow', 'plan', 'prompt']) {
+  it('aceita os quatro formatos e recusa outro', () => {
+    for (const format of ['flow', 'script', 'plan', 'prompt']) {
       expect(aiOrganizeRequestSchema.safeParse({ text: 'x', format }).success).toBe(true);
     }
-    expect(aiOrganizeRequestSchema.safeParse({ text: 'x', format: 'script' }).success).toBe(false);
+    expect(aiOrganizeRequestSchema.safeParse({ text: 'x', format: 'slides' }).success).toBe(false);
   });
 });
 
@@ -206,9 +211,81 @@ describe('IA: saída de prompt', () => {
   });
 });
 
-describe('IA: resposta de organizar', () => {
-  const usage = { inputTokens: 1200, outputTokens: 800 };
+const scriptSample = {
+  title: 'O gato sem memória',
+  targetDuration: '8 a 10 min',
+  scenes: [
+    {
+      title: 'Gancho',
+      time: '0:00-0:15',
+      narration: 'E se você acordasse sem lembrar de nada?',
+      broll: ['Gato na janela', '  ', 'Close nos olhos'],
+      notes: null,
+    },
+    { title: 'Fase 1', time: null, narration: '', broll: [], notes: 'Cena lenta' },
+  ],
+  corrections: [{ from: 'raposa', to: 'gato' }],
+};
 
+describe('IA: saída de roteiro', () => {
+  it('valida e exige ao menos uma cena', () => {
+    expect(aiScriptOutputSchema.safeParse(scriptSample).success).toBe(true);
+    expect(aiScriptOutputSchema.safeParse({ ...scriptSample, scenes: [] }).success).toBe(false);
+    const { time: _time, ...noTime } = scriptSample.scenes[0]!;
+    expect(aiScriptOutputSchema.safeParse({ ...scriptSample, scenes: [noTime] }).success).toBe(
+      false,
+    );
+  });
+
+  it('vira o conteúdo de um roteiro válido, com uma cena por cena da IA', () => {
+    const script = aiOutputToScript(aiScriptOutputSchema.parse(scriptSample), {
+      newId: counter(),
+    });
+    expect(scriptContentSchema.safeParse(script).success).toBe(true);
+    expect(script.targetDuration).toBe('8 a 10 min');
+    expect(script.flowId).toBeNull();
+    expect(script.scenes.map((scene) => scene.id)).toEqual(['id-1', 'id-2']);
+    expect(script.scenes[0]).toMatchObject({
+      title: 'Gancho',
+      time: '0:00-0:15',
+      narration: 'E se você acordasse sem lembrar de nada?',
+      broll: ['Gato na janela', 'Close nos olhos'],
+      notes: '',
+    });
+    expect(script.scenes[1]).toMatchObject({ time: '', narration: '', notes: 'Cena lenta' });
+    expect(script.scenes.every((scene) => scene.cardId === undefined)).toBe(true);
+  });
+
+  it('corta o que passa do limite do roteiro, sem recusar', () => {
+    const script = aiOutputToScript(
+      {
+        ...scriptSample,
+        targetDuration: 'x'.repeat(100),
+        scenes: [{ ...scriptSample.scenes[0]!, title: 'y'.repeat(300), time: 'z'.repeat(80) }],
+      },
+      { newId: counter() },
+    );
+    expect(script.targetDuration).toHaveLength(40);
+    expect(script.scenes[0]!.title).toHaveLength(200);
+    expect(script.scenes[0]!.time).toHaveLength(40);
+  });
+
+  it('a resposta de organizar traz o roteiro, e só ele', () => {
+    const base = { provider: 'anthropic', model: 'claude-haiku-5-5', usage };
+    expect(
+      aiOrganizeResponseSchema.safeParse({ ...base, format: 'script', output: scriptSample })
+        .success,
+    ).toBe(true);
+    expect(
+      aiOrganizeResponseSchema.safeParse({ ...base, format: 'flow', output: scriptSample }).success,
+    ).toBe(false);
+    expect(
+      aiOrganizeResponseSchema.safeParse({ ...base, format: 'script', output: sample() }).success,
+    ).toBe(false);
+  });
+});
+
+describe('IA: resposta de organizar', () => {
   it('a saída do fluxo e a do plano passam pelo esquema de fluxo; a do prompt, pelo dela', () => {
     for (const format of ['flow', 'plan'] as const) {
       const response = aiOrganizeResponseSchema.parse({
@@ -261,11 +338,11 @@ describe('IA: da saída para o fluxo', () => {
     expect(flowContentSchema.safeParse(flow).success).toBe(true);
     expect(flow.blocks.map((b) => b.type)).toEqual([
       'text',
+      'card',
+      'card',
       'sticky',
       'shape',
       'checklist',
-      'card',
-      'card',
     ]);
     expect(flow.frames.map((f) => f.title)).toEqual(['Produção']);
     expect(flow.arrows).toHaveLength(2);
@@ -297,14 +374,17 @@ describe('IA: da saída para o fluxo', () => {
         frame.position.y + frame.size.height,
       );
     }
-    // O que não está em grupo vem antes da moldura.
-    const loose = flow.blocks.filter((b) => b.frameId === undefined);
+    // O que não tem ligação com ninguém vem depois do que tem, nas últimas linhas.
+    const loose = flow.blocks.filter((b) => b.frameId === undefined && b.type !== 'shape');
     for (const block of loose) {
-      expect(block.position.y + block.size.height).toBeLessThanOrEqual(frame.position.y);
+      expect(block.position.y).toBeGreaterThanOrEqual(frame.position.y + frame.size.height);
     }
+    // A forma que recebe a seta do grupo fica à direita dele.
+    const shape = flow.blocks.find((b) => b.type === 'shape')!;
+    expect(shape.position.x).toBeGreaterThanOrEqual(frame.position.x + frame.size.width);
   });
 
-  it('as posições provisórias ficam na grade de 8 px e não se sobrepõem', () => {
+  it('as posições ficam na grade de 8 px e não se sobrepõem', () => {
     const flow = aiOutputToFlow(sample(), { newId: counter() });
     const boxes = [...flow.blocks, ...flow.frames.filter(() => false)];
     for (const node of [...flow.blocks, ...flow.frames]) {

@@ -1,9 +1,11 @@
 import {
   aiFlowOutputSchema,
   aiPromptOutputSchema,
+  aiScriptOutputSchema,
   type AiFlowOutput,
   type AiOrganizeFormat,
   type AiPromptOutput,
+  type AiScriptOutput,
   type AiUsage,
 } from '@trama/core';
 import { z } from 'zod';
@@ -31,10 +33,24 @@ export function prepareRequest(format: AiOrganizeFormat, text: string): Prepared
   return {
     system: prompt.system,
     user: wrapSpeech(text),
-    schema: format === 'prompt' ? aiPromptOutputSchema : aiFlowOutputSchema,
-    schemaName: format === 'prompt' ? 'trama_prompt' : 'trama_fluxo',
+    schema: SCHEMAS[format],
+    schemaName: SCHEMA_NAMES[format],
   };
 }
+
+const SCHEMAS = {
+  flow: aiFlowOutputSchema,
+  plan: aiFlowOutputSchema,
+  script: aiScriptOutputSchema,
+  prompt: aiPromptOutputSchema,
+} as const satisfies Record<AiOrganizeFormat, z.ZodType>;
+
+const SCHEMA_NAMES = {
+  flow: 'trama_fluxo',
+  plan: 'trama_fluxo',
+  script: 'trama_roteiro',
+  prompt: 'trama_prompt',
+} as const satisfies Record<AiOrganizeFormat, string>;
 
 /**
  * Valida a saída com o esquema do core, de novo, venha de onde vier (o provedor já tentou
@@ -49,6 +65,11 @@ export function finishOutput(
     const parsed = aiPromptOutputSchema.safeParse(raw);
     if (!parsed.success) throw messages.badOutput();
     return { format, output: parsed.data satisfies AiPromptOutput, usage };
+  }
+  if (format === 'script') {
+    const parsed = aiScriptOutputSchema.safeParse(raw);
+    if (!parsed.success) throw messages.badOutput();
+    return { format, output: parsed.data satisfies AiScriptOutput, usage };
   }
   const parsed = aiFlowOutputSchema.safeParse(raw);
   if (!parsed.success) throw messages.badOutput();

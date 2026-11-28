@@ -377,9 +377,19 @@ describe('API de IA: organizar', () => {
     ]);
     expect(made).toEqual([{ provider: 'anthropic', apiKey: SECRET }]);
     // E o que volta vira um fluxo que o quadro abre.
-    if (result.format !== 'prompt') {
+    if (result.format === 'flow' || result.format === 'plan') {
       expect(aiOutputToFlow(result.output).blocks.length).toBeGreaterThan(0);
     }
+  });
+
+  it('organiza um roteiro', async () => {
+    const { saveKey, choose, send } = setup();
+    await saveKey();
+    await choose();
+    const response = await send('POST', '/ai/organize', { text: 'um vídeo', format: 'script' });
+    const result = aiOrganizeResponseSchema.parse(await response.json());
+    expect(result.format).toBe('script');
+    if (result.format === 'script') expect(result.output.scenes.length).toBeGreaterThan(0);
   });
 
   it('organiza um prompt', async () => {
@@ -398,7 +408,7 @@ describe('API de IA: organizar', () => {
       {},
       { text: '   ', format: 'flow' },
       { text: 'a'.repeat(20_001), format: 'flow' },
-      { text: 'x', format: 'script' },
+      { text: 'x', format: 'slides' },
     ]) {
       expect((await send('POST', '/ai/organize', body)).status).toBe(400);
     }

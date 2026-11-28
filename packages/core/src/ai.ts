@@ -121,14 +121,15 @@ export const aiModelsResponseSchema = z.object({ models: z.array(aiModelSchema) 
 /* -------------------------------------------------------------------------------------------- */
 
 /**
- * Formatos de saída: fluxo, plano com tarefas e prompt organizado. O roteiro entra quando o
- * formato de roteiro da etapa 2.1 chegar ao core.
+ * Formatos de saída: fluxo, roteiro (cenas), plano com tarefas e prompt organizado. Fluxo e plano
+ * viram blocos no quadro, o roteiro vira um projeto do tipo roteiro e o prompt é só texto.
  */
-export const aiOrganizeFormatSchema = z.enum(['flow', 'plan', 'prompt']);
+export const aiOrganizeFormatSchema = z.enum(['flow', 'script', 'plan', 'prompt']);
 export type AiOrganizeFormat = z.infer<typeof aiOrganizeFormatSchema>;
 
 export const aiOrganizeFormatLabels: Record<AiOrganizeFormat, string> = {
   flow: 'Fluxo',
+  script: 'Roteiro',
   plan: 'Plano com tarefas',
   prompt: 'Prompt organizado',
 };
@@ -148,7 +149,7 @@ export const aiOrganizeRequestSchema = z.object({
 export type AiOrganizeRequest = z.infer<typeof aiOrganizeRequestSchema>;
 
 /* Saída da IA. Todo campo é obrigatório e "não tem" é `null`: é o que os três provedores
- * aceitam como esquema de saída estruturada. Sem posições: o layout automático é da etapa 3.3. */
+ * aceitam como esquema de saída estruturada. Sem posições: o layout automático (`ai-layout.ts`) as calcula. */
 
 /** Nome interno de um bloco ou grupo na saída ("b1", "g1"); só existe dentro desta resposta. */
 const aiRefSchema = z.string().min(1).max(64);
@@ -222,7 +223,14 @@ export type AiLink = z.infer<typeof aiLinkSchema>;
 export const aiCorrectionSchema = z.object({ from: z.string(), to: z.string() });
 export type AiCorrection = z.infer<typeof aiCorrectionSchema>;
 
-export const AI_LIMITS = { blocks: 80, groups: 20, links: 150, corrections: 50, sections: 12 };
+export const AI_LIMITS = {
+  blocks: 80,
+  groups: 20,
+  links: 150,
+  corrections: 50,
+  sections: 12,
+  scenes: 60,
+};
 
 const aiFlowOutputShape = z.object({
   /** Sugestão de título do projeto. */
@@ -274,6 +282,30 @@ export type AiFlowOutput = z.infer<typeof aiFlowOutputSchema>;
 export const aiPromptSectionSchema = z.object({ heading: z.string(), content: z.string() });
 export type AiPromptSection = z.infer<typeof aiPromptSectionSchema>;
 
+/** Uma cena do roteiro: o que se vê na tela, o que se diz e o que se filma. */
+export const aiSceneSchema = z.object({
+  title: z.string(),
+  /** Marcação de tempo livre ("0:00–0:15"), só se a pessoa falou de duração. */
+  time: z.string().nullable(),
+  /** O que é dito (a fala da cena). */
+  narration: z.string(),
+  /** Planos, imagens e B-roll, um por item. */
+  broll: z.array(z.string()).max(30),
+  /** Direção e anotações da cena. */
+  notes: z.string().nullable(),
+});
+export type AiScene = z.infer<typeof aiSceneSchema>;
+
+/** Saída de "organizar" para roteiro: vira o conteúdo de um projeto `script`. */
+export const aiScriptOutputSchema = z.object({
+  title: z.string(),
+  /** "Duração alvo" em texto livre ("8 a 10 min"), se a pessoa falou. */
+  targetDuration: z.string().nullable(),
+  scenes: z.array(aiSceneSchema).min(1).max(AI_LIMITS.scenes),
+  corrections: z.array(aiCorrectionSchema).max(AI_LIMITS.corrections),
+});
+export type AiScriptOutput = z.infer<typeof aiScriptOutputSchema>;
+
 /** Saída de "organizar" para prompt. */
 export const aiPromptOutputSchema = z.object({
   title: z.string(),
@@ -309,6 +341,7 @@ export const aiOrganizeResponseSchema = z.discriminatedUnion('format', [
     format: z.literal(['flow', 'plan']),
     output: aiFlowOutputSchema,
   }),
+  z.object({ ...organizeResultBase, format: z.literal('script'), output: aiScriptOutputSchema }),
   z.object({ ...organizeResultBase, format: z.literal('prompt'), output: aiPromptOutputSchema }),
 ]);
 export type AiOrganizeResponse = z.infer<typeof aiOrganizeResponseSchema>;

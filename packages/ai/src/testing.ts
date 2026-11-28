@@ -1,5 +1,5 @@
 import type { AiModel, AiProvider as AiProviderId } from '@trama/core';
-import { flowPrompt, promptPrompt } from '../prompts';
+import { flowPrompt, promptPrompt, scriptPrompt } from '../prompts';
 import { messages, type AiError } from './errors';
 import type { AiProvider, Estimate, OrganizeParams, OrganizeResult } from './types';
 
@@ -92,11 +92,13 @@ export function createFakeProvider(
           return Promise.reject(error instanceof Error ? error : messages.other(id));
         }
       }
-      return Promise.resolve(
-        params.format === 'prompt'
-          ? { format: 'prompt', output: promptPrompt.example.output, usage }
-          : { format: params.format, output: flowPrompt.example.output, usage },
-      );
+      if (params.format === 'prompt') {
+        return Promise.resolve({ format: 'prompt', output: promptPrompt.example.output, usage });
+      }
+      if (params.format === 'script') {
+        return Promise.resolve({ format: 'script', output: scriptPrompt.example.output, usage });
+      }
+      return Promise.resolve({ format: params.format, output: flowPrompt.example.output, usage });
     },
     estimate(params) {
       calls.estimate.push(params);
