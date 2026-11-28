@@ -326,6 +326,8 @@ async function sendDriveNotice(c: Ctx, reason: string): Promise<void> {
     if (!identity.email) return;
     const siteUrl = appOrigin(c.req.header('Origin'), env);
     if (!siteUrl) return;
+    // No máximo um aviso por dia, contado no banco (a pessoa não zera reconectando).
+    if (!(await deps.drive(env, token).claimNotice())) return;
     const email = await renderDriveNoticeEmail({ name: identity.name, siteUrl, reason });
     await mailer.send({ to: identity.email, ...email });
   } catch (error) {
