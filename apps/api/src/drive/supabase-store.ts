@@ -64,6 +64,13 @@ export function createSupabaseDriveStore(
       check(error, status);
     },
 
+    async claimNotice() {
+      const result = await supabase.rpc('claim_drive_notice');
+      check(result.error, result.status);
+      const data: unknown = result.data;
+      return data === true;
+    },
+
     async recordCopy(ok, errorText) {
       const result = await supabase.rpc('drive_record_copy', {
         p_ok: ok,

@@ -1,5 +1,7 @@
 import { z } from 'zod';
 import { flowContentSchema } from './flow';
+import { notebookContentSchema } from './notebook';
+import { scriptContentSchema } from './script';
 import { dateTimeSchema, projectStatusSchema } from './status';
 
 /** Título de projeto: sem espaços nas pontas, de 1 a 200 letras. */
@@ -34,18 +36,18 @@ export const flowProjectSchema = z.object({
   content: flowContentSchema,
 });
 
-/** Roteiros entram na V1; o formato do conteúdo será definido lá. */
+/** Roteiro: cenas com fala, B-roll e notas (`script.ts`). Conteúdo `{}` vale como roteiro vazio. */
 export const scriptProjectSchema = z.object({
   ...projectBase,
   kind: z.literal('script'),
-  content: z.record(z.string(), z.unknown()),
+  content: scriptContentSchema,
 });
 
-/** Cadernos de Estudos entram na V1; o formato do conteúdo será definido lá. */
+/** Caderno de Estudos (`notebook.ts`); as aulas ficam na tabela `lessons`. `{}` vale como vazio. */
 export const notebookProjectSchema = z.object({
   ...projectBase,
   kind: z.literal('notebook'),
-  content: z.record(z.string(), z.unknown()),
+  content: notebookContentSchema,
 });
 
 export const projectSchema = z.discriminatedUnion('kind', [
@@ -57,3 +59,5 @@ export const projectSchema = z.discriminatedUnion('kind', [
 export type Project = z.infer<typeof projectSchema>;
 export type ProjectInput = z.input<typeof projectSchema>;
 export type FlowProject = z.infer<typeof flowProjectSchema>;
+export type ScriptProject = z.infer<typeof scriptProjectSchema>;
+export type NotebookProject = z.infer<typeof notebookProjectSchema>;
