@@ -16,13 +16,12 @@ const ana = {
 
 function setup(store: AccountStore = createMemoryAccountStore(ana)) {
   const tokens: string[] = [];
-  const app = createApp(
-    () => createMemoryStore(),
-    (_env, token) => {
+  const app = createApp(() => createMemoryStore(), {
+    account: (_env, token) => {
       tokens.push(token);
       return store;
     },
-  );
+  });
   const call = (path: string, init: RequestInit = {}) =>
     app.request(path, {
       ...init,

@@ -1,7 +1,7 @@
 import { Alert } from '@trama/ui';
 import { useAuth } from '../auth/context';
+import { DriveConnect } from '../drive';
 import { useServices } from '../services';
-import { DriveStatus } from './DriveStatus';
 import { greetingFor } from './greeting';
 import { HomeSidebar } from './HomeSidebar';
 import { RecentProjects } from './RecentProjects';
@@ -35,7 +35,7 @@ export function HomePage() {
             apps/web/.env.
           </Alert>
         )}
-        <DriveStatus />
+        <DriveConnect />
       </main>
     </div>
   );

@@ -1,10 +1,12 @@
 import { render } from '@react-email/render';
 import { createElement } from 'react';
+import { DriveNoticeEmail, type DriveNoticeEmailProps } from './DriveNoticeEmail';
 import { RecoveryEmail, type RecoveryEmailProps } from './RecoveryEmail';
 import { WelcomeEmail, type WelcomeEmailProps } from './WelcomeEmail';
 
 export { EmailLayout } from './Layout';
 export { logoUrl } from './styles';
+export { DriveNoticeEmail, type DriveNoticeEmailProps } from './DriveNoticeEmail';
 export { EmailChangeEmail, type EmailChangeEmailProps } from './EmailChangeEmail';
 export { RecoveryEmail, type RecoveryEmailProps } from './RecoveryEmail';
 export { WelcomeEmail, type WelcomeEmailProps } from './WelcomeEmail';
@@ -34,5 +36,13 @@ export async function renderRecoveryEmail(props: RecoveryEmailProps): Promise<Re
   return {
     subject: 'Crie uma senha nova no Trama',
     ...(await renderBoth(createElement(RecoveryEmail, props))),
+  };
+}
+
+/** "Aviso do Drive": a cópia para o Google Drive falhou 3 vezes seguidas. */
+export async function renderDriveNoticeEmail(props: DriveNoticeEmailProps): Promise<RenderedEmail> {
+  return {
+    subject: 'Não deu para copiar seus projetos para o Drive',
+    ...(await renderBoth(createElement(DriveNoticeEmail, props))),
   };
 }

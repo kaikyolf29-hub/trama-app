@@ -7,6 +7,7 @@ import {
 } from '@trama/core';
 import type { AccountApi } from '../api/account-api';
 import { ApiError } from '../api/projects-api';
+import { vi } from 'vitest';
 
 /** API da conta em memória para os testes das telas. */
 export function createFakeAccount(initial?: Partial<Profile>) {
@@ -38,6 +39,7 @@ export function createFakeAccount(initial?: Partial<Profile>) {
       state.profile = applyProfileUpdate(state.profile, patch);
       return Promise.resolve(state.profile);
     },
+    sendWelcome: vi.fn(() => Promise.resolve()),
   };
   return { api, state };
 }
