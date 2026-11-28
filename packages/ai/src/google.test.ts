@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { flowPrompt, promptPrompt } from '../prompts';
 import { createGoogleProvider } from './google';
-import { createFakeFetch, type FakeReply, type RecordedRequest } from './testing';
+import { at, createFakeFetch, type FakeReply, type RecordedRequest } from './testing';
 
 const KEY = 'AIza-chave-de-teste-1234';
 
@@ -38,13 +38,15 @@ describe('Gemini: organizar', () => {
     const request = requests[0]!;
     expect(request.url.pathname).toMatch(/\/models\/gemini-3-pro:generateContent$/);
     expect(request.headers.get('x-goog-api-key')).toBe(KEY);
-    const body = request.body as Record<string, any>;
-    expect(body.generationConfig.responseMimeType).toBe('application/json');
-    expect(body.generationConfig.responseJsonSchema.type).toBe('object');
-    expect(JSON.stringify(body.generationConfig.responseJsonSchema)).not.toContain('oneOf');
-    expect(body.generationConfig.thinkingConfig).toEqual({ thinkingLevel: 'MEDIUM' });
-    expect(body.systemInstruction.parts[0].text).toBe(flowPrompt.system);
-    expect(JSON.stringify(body.contents)).toContain('<fala>');
+    const body = request.body;
+    expect(at(body, 'generationConfig', 'responseMimeType')).toBe('application/json');
+    expect(at(body, 'generationConfig', 'responseJsonSchema', 'type')).toBe('object');
+    expect(JSON.stringify(at(body, 'generationConfig', 'responseJsonSchema'))).not.toContain(
+      'oneOf',
+    );
+    expect(at(body, 'generationConfig', 'thinkingConfig')).toEqual({ thinkingLevel: 'MEDIUM' });
+    expect(at(body, 'systemInstruction', 'parts', '0', 'text')).toBe(flowPrompt.system);
+    expect(JSON.stringify(at(body, 'contents'))).toContain('<fala>');
   });
 
   it.each([
@@ -54,13 +56,15 @@ describe('Gemini: organizar', () => {
   ] as const)('esforço %s vira o nível %s', async (effort, level) => {
     const { provider, requests } = setup(() => answer(JSON.stringify(flowPrompt.example.output)));
     await provider.organize({ ...params, effort });
-    expect((requests[0]!.body as any).generationConfig.thinkingConfig.thinkingLevel).toBe(level);
+    expect(at(requests[0]!.body, 'generationConfig', 'thinkingConfig', 'thinkingLevel')).toBe(
+      level,
+    );
   });
 
   it('o Gemini 2.5 usa orçamento de raciocínio, não nível', async () => {
     const { provider, requests } = setup(() => answer(JSON.stringify(flowPrompt.example.output)));
     await provider.organize({ ...params, model: 'gemini-2.5-pro', effort: 'thorough' });
-    expect((requests[0]!.body as any).generationConfig.thinkingConfig).toEqual({
+    expect(at(requests[0]!.body, 'generationConfig', 'thinkingConfig')).toEqual({
       thinkingBudget: 16384,
     });
   });
@@ -140,7 +144,12 @@ describe('Gemini: modelos e estimativa', () => {
       },
     }));
     expect(await provider.listModels()).toEqual([
-      { id: 'gemini-3-pro', name: 'Gemini 3 Pro', maxInputTokens: 1_000_000, maxOutputTokens: 65_536 },
+      {
+        id: 'gemini-3-pro',
+        name: 'Gemini 3 Pro',
+        maxInputTokens: 1_000_000,
+        maxOutputTokens: 65_536,
+      },
     ]);
     expect(requests[0]!.url.pathname).toMatch(/\/models$/);
   });

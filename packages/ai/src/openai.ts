@@ -32,7 +32,10 @@ export function createOpenAiProvider(apiKey: string, options: ProviderOptions = 
       return await run();
     } catch (error) {
       if (error instanceof AiError) throw error;
-      if (error instanceof OpenAI.AuthenticationError || error instanceof OpenAI.PermissionDeniedError) {
+      if (
+        error instanceof OpenAI.AuthenticationError ||
+        error instanceof OpenAI.PermissionDeniedError
+      ) {
         throw messages.keyRejected('openai');
       }
       if (error instanceof OpenAI.RateLimitError) throw messages.rateLimited('openai');

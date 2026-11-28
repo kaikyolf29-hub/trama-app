@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { flowPrompt, promptPrompt } from '../prompts';
 import { createAnthropicProvider } from './anthropic';
 import { AiError } from './errors';
-import { createFakeFetch, type FakeReply, type RecordedRequest } from './testing';
+import { at, createFakeFetch, type FakeReply, type RecordedRequest } from './testing';
 
 const KEY = 'sk-ant-chave-de-teste-1234';
 
@@ -47,13 +47,16 @@ describe('Claude: organizar', () => {
     const request = requests[0]!;
     expect(request.url.pathname).toBe('/v1/messages');
     expect(request.headers.get('authorization')).toBe(`Bearer ${KEY}`);
-    const body = request.body as Record<string, any>;
-    expect(body.model).toBe('claude-haiku-5-5');
-    expect(body.output_config.effort).toBe('medium');
-    expect(body.output_config.format.type).toBe('json_schema');
-    expect(body.output_config.format.schema.type).toBe('object');
-    expect(body.system).toBe(flowPrompt.system);
-    expect(body.messages).toEqual([{ role: 'user', content: expect.stringContaining('<fala>') }]);
+    const body = request.body;
+    expect(at(body, 'model')).toBe('claude-haiku-5-5');
+    expect(at(body, 'output_config', 'effort')).toBe('medium');
+    expect(at(body, 'output_config', 'format', 'type')).toBe('json_schema');
+    expect(at(body, 'output_config', 'format', 'schema', 'type')).toBe('object');
+    expect(at(body, 'system')).toBe(flowPrompt.system);
+    const sent = at(body, 'messages') as { role: string; content: string }[];
+    expect(sent).toHaveLength(1);
+    expect(sent[0]?.role).toBe('user');
+    expect(sent[0]?.content).toContain('<fala>');
   });
 
   it.each([
@@ -63,7 +66,7 @@ describe('Claude: organizar', () => {
   ] as const)('esforço %s vai como %s', async (effort, expected) => {
     const { provider, requests } = setup(() => message(JSON.stringify(flowPrompt.example.output)));
     await provider.organize({ ...params, effort });
-    expect((requests[0]!.body as any).output_config.effort).toBe(expected);
+    expect(at(requests[0]!.body, 'output_config', 'effort')).toBe(expected);
   });
 
   it('não manda thinking, temperature, top_p, top_k nem resposta pré-preenchida', async () => {
@@ -73,7 +76,7 @@ describe('Claude: organizar', () => {
     for (const field of ['thinking', 'temperature', 'top_p', 'top_k']) {
       expect(body, field).not.toHaveProperty(field);
     }
-    const messages = body.messages as { role: string }[];
+    const messages = at(body, 'messages') as { role: string }[];
     expect(messages.at(-1)?.role).toBe('user');
   });
 
@@ -188,7 +191,10 @@ describe('Claude: modelos', () => {
     const { provider } = setup(() => ({
       status: 401,
       headers: { 'x-should-retry': 'false' },
-      json: { type: 'error', error: { type: 'authentication_error', message: 'invalid x-api-key' } },
+      json: {
+        type: 'error',
+        error: { type: 'authentication_error', message: 'invalid x-api-key' },
+      },
     }));
     await expect(provider.listModels()).rejects.toMatchObject({ code: 'key_rejected' });
   });
@@ -206,6 +212,8 @@ describe('Claude: estimativa', () => {
 
   it('modelo sem preço na tabela dá só os tokens', async () => {
     const { provider } = setup(() => ({ json: { input_tokens: 100 } }));
-    expect((await provider.estimate({ ...params, model: 'claude-novo-demais' })).costUsd).toBeNull();
+    expect(
+      (await provider.estimate({ ...params, model: 'claude-novo-demais' })).costUsd,
+    ).toBeNull();
   });
 });

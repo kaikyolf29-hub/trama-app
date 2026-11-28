@@ -18,7 +18,9 @@ import { prepareRequest } from './organize';
 
 describe('prompts versionados', () => {
   it('há um prompt por formato, com versão', () => {
-    expect(Object.keys(ORGANIZE_PROMPTS).sort()).toEqual([...aiOrganizeFormatSchema.options].sort());
+    expect(Object.keys(ORGANIZE_PROMPTS).sort()).toEqual(
+      [...aiOrganizeFormatSchema.options].sort(),
+    );
     for (const [format, prompt] of Object.entries(ORGANIZE_PROMPTS)) {
       expect(prompt.id).toBe(format);
       expect(prompt.version).toBeGreaterThanOrEqual(1);
@@ -27,7 +29,14 @@ describe('prompts versionados', () => {
 
   it('seguem o guia: objetivo, contexto, regras, saída e um exemplo, em tags', () => {
     for (const prompt of [flowPrompt, planPrompt, promptPrompt]) {
-      for (const tag of ['objetivo', 'contexto', 'como_organizar', 'correcoes', 'saida', 'exemplo']) {
+      for (const tag of [
+        'objetivo',
+        'contexto',
+        'como_organizar',
+        'correcoes',
+        'saida',
+        'exemplo',
+      ]) {
         expect(prompt.system, `${prompt.id}: <${tag}>`).toContain(`<${tag}>`);
         expect(prompt.system, `${prompt.id}: </${tag}>`).toContain(`</${tag}>`);
       }

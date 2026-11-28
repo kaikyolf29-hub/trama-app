@@ -1,6 +1,7 @@
 import { Hono } from 'hono';
 import { bodyLimit } from 'hono/body-limit';
 import { cors } from 'hono/cors';
+import { aiRoutes } from './ai/routes';
 import { accountRoutes } from './account/routes';
 import { defaultDeps, type Deps } from './deps';
 import { driveRoutes } from './drive/routes';
@@ -64,6 +65,15 @@ export function createApp(storeFor?: StoreFactory, overrides: Partial<Deps> = {}
     );
   }
 
+  // O texto a organizar tem até 20 mil caracteres (até 4 bytes cada, em UTF-8) e vai em JSON.
+  app.use(
+    '/ai/*',
+    bodyLimit({
+      maxSize: 128 * 1024,
+      onError: (c) => c.json({ error: 'Pedido grande demais.' }, 413),
+    }),
+  );
+
   // Quase toda rota precisa do token de login (Supabase) da pessoa. A exceção é o retorno do
   // Google (`/drive/callback`), que chega do navegador sem ele (veja drive/routes.ts).
   app.use('*', async (c, next) => {
@@ -71,6 +81,7 @@ export function createApp(storeFor?: StoreFactory, overrides: Partial<Deps> = {}
     const needsLogin =
       path.startsWith('/projects') ||
       path.startsWith('/account') ||
+      path.startsWith('/ai') ||
       (path.startsWith('/drive') && path !== '/drive/callback');
     c.set('deps', deps);
     if (!needsLogin || c.req.method === 'OPTIONS') return next();
@@ -84,6 +95,7 @@ export function createApp(storeFor?: StoreFactory, overrides: Partial<Deps> = {}
   app.route('/projects', projectRoutes());
   app.route('/drive', driveRoutes());
   app.route('/account', accountRoutes());
+  app.route('/ai', aiRoutes());
 
   app.notFound((c) => c.json({ error: 'Rota não encontrada.' }, 404));
 

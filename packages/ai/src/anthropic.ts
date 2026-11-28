@@ -19,7 +19,10 @@ const MODELS_LIMIT = 100;
 /** Erros tipados do SDK viram `AiError`; nunca se compara o texto da mensagem. */
 function toAiError(error: unknown): AiError {
   if (error instanceof AiError) return error;
-  if (error instanceof Anthropic.AuthenticationError || error instanceof Anthropic.PermissionDeniedError) {
+  if (
+    error instanceof Anthropic.AuthenticationError ||
+    error instanceof Anthropic.PermissionDeniedError
+  ) {
     return messages.keyRejected('anthropic');
   }
   if (error instanceof Anthropic.RateLimitError) return messages.rateLimited('anthropic');
@@ -52,7 +55,9 @@ export function createAnthropicProvider(apiKey: string, options: ProviderOptions
     }
   }
 
-  const messagesOf = (request: PreparedRequest) => [{ role: 'user' as const, content: request.user }];
+  const messagesOf = (request: PreparedRequest) => [
+    { role: 'user' as const, content: request.user },
+  ];
 
   return {
     id: 'anthropic',

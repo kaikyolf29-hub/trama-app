@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { flowPrompt, promptPrompt } from '../prompts';
 import { createOpenAiProvider } from './openai';
-import { createFakeFetch, type FakeReply, type RecordedRequest } from './testing';
+import { at, createFakeFetch, type FakeReply, type RecordedRequest } from './testing';
 
 const KEY = 'sk-proj-chave-de-teste-1234';
 
@@ -58,16 +58,16 @@ describe('ChatGPT: organizar', () => {
     const request = requests[0]!;
     expect(request.url.pathname).toBe('/v1/responses');
     expect(request.headers.get('authorization')).toBe(`Bearer ${KEY}`);
-    const body = request.body as Record<string, any>;
-    expect(body.model).toBe('gpt-5');
-    expect(body.reasoning).toEqual({ effort: 'medium' });
-    expect(body.store).toBe(false);
-    expect(body.instructions).toBe(flowPrompt.system);
-    expect(body.input).toContain('<fala>');
-    expect(body.text.format.type).toBe('json_schema');
-    expect(body.text.format.strict).toBe(true);
-    expect(body.text.format.schema.type).toBe('object');
-    expect(JSON.stringify(body.text.format.schema)).not.toContain('oneOf');
+    const body = request.body;
+    expect(at(body, 'model')).toBe('gpt-5');
+    expect(at(body, 'reasoning')).toEqual({ effort: 'medium' });
+    expect(at(body, 'store')).toBe(false);
+    expect(at(body, 'instructions')).toBe(flowPrompt.system);
+    expect(at(body, 'input')).toContain('<fala>');
+    expect(at(body, 'text', 'format', 'type')).toBe('json_schema');
+    expect(at(body, 'text', 'format', 'strict')).toBe(true);
+    expect(at(body, 'text', 'format', 'schema', 'type')).toBe('object');
+    expect(JSON.stringify(at(body, 'text', 'format', 'schema'))).not.toContain('oneOf');
   });
 
   it.each([
@@ -77,7 +77,7 @@ describe('ChatGPT: organizar', () => {
   ] as const)('esforço %s vai como %s', async (effort, expected) => {
     const { provider, requests } = setup(() => response(JSON.stringify(flowPrompt.example.output)));
     await provider.organize({ ...params, effort });
-    expect((requests[0]!.body as any).reasoning.effort).toBe(expected);
+    expect(at(requests[0]!.body, 'reasoning', 'effort')).toBe(expected);
   });
 
   it('modelo sem raciocínio não recebe o parâmetro', async () => {
@@ -109,7 +109,10 @@ describe('ChatGPT: organizar', () => {
     await expect(refusal.provider.organize(params)).rejects.toMatchObject({ code: 'refused' });
 
     const cut = setup(() =>
-      response('{"title"', { status: 'incomplete', incomplete_details: { reason: 'max_output_tokens' } }),
+      response('{"title"', {
+        status: 'incomplete',
+        incomplete_details: { reason: 'max_output_tokens' },
+      }),
     );
     await expect(cut.provider.organize(params)).rejects.toMatchObject({ code: 'truncated' });
 

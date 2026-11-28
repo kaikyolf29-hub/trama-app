@@ -1,6 +1,6 @@
 import type { AiModel, AiProvider as AiProviderId } from '@trama/core';
 import { flowPrompt, promptPrompt } from '../prompts';
-import { AiError, messages } from './errors';
+import { messages, type AiError } from './errors';
 import type { AiProvider, Estimate, OrganizeParams, OrganizeResult } from './types';
 
 /**
@@ -16,15 +16,23 @@ export interface RecordedRequest {
   body: unknown;
 }
 
+/** Lê um campo do corpo de um pedido (JSON qualquer): `at(body, 'a', 'b', '0')`. */
+export function at(value: unknown, ...path: string[]): unknown {
+  let current = value;
+  for (const key of path) {
+    if (current === null || typeof current !== 'object') return undefined;
+    current = (current as Record<string, unknown>)[key];
+  }
+  return current;
+}
+
 export type FakeReply = { status?: number; json: unknown; headers?: Record<string, string> };
 
 /** Um `fetch` que responde pelo `handler` e guarda cada pedido em `requests`. */
 export function createFakeFetch(handler: (request: RecordedRequest) => FakeReply) {
   const requests: RecordedRequest[] = [];
   const fakeFetch: typeof fetch = (input, init) => {
-    const url = new URL(
-      typeof input === 'string' || input instanceof URL ? input : (input as Request).url,
-    );
+    const url = new URL(typeof input === 'string' || input instanceof URL ? input : input.url);
     const rawBody = init?.body;
     const request: RecordedRequest = {
       url,
@@ -55,7 +63,9 @@ export function createFakeProvider(
     fail?: AiError;
     estimate?: Estimate;
   } = {},
-): AiProvider & { calls: { organize: OrganizeParams[]; estimate: OrganizeParams[]; list: number } } {
+): AiProvider & {
+  calls: { organize: OrganizeParams[]; estimate: OrganizeParams[]; list: number };
+} {
   const id = options.id ?? 'anthropic';
   const calls = { organize: [] as OrganizeParams[], estimate: [] as OrganizeParams[], list: 0 };
   const usage = { inputTokens: 1200, outputTokens: 800 };
@@ -91,7 +101,9 @@ export function createFakeProvider(
     estimate(params) {
       calls.estimate.push(params);
       if (options.fail) return Promise.reject(options.fail);
-      return Promise.resolve(options.estimate ?? { inputTokens: 900, outputTokens: 1500, costUsd: 0.0123 });
+      return Promise.resolve(
+        options.estimate ?? { inputTokens: 900, outputTokens: 1500, costUsd: 0.0123 },
+      );
     },
   };
 }

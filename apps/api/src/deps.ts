@@ -1,3 +1,7 @@
+import { createProvider, type AiProvider } from '@trama/ai';
+import type { AiProvider as AiProviderId } from '@trama/core';
+import type { AiStore } from './ai/store';
+import { createSupabaseAiStore } from './ai/supabase-store';
 import { createSupabaseIdentity, type IdentityResolver } from './account/identity';
 import type { AccountStore } from './account/store';
 import { createSupabaseAccountStore } from './account/supabase-store';
@@ -20,6 +24,10 @@ export interface Deps {
   account(env: Env, token: string): AccountStore;
   drive(env: Env, token: string): DriveStore;
   welcome(env: Env, token: string): WelcomeStore;
+  /** As chaves cifradas e as preferências de IA da pessoa (etapa 3.1). */
+  ai(env: Env, token: string): AiStore;
+  /** O provedor de IA com a chave (já decifrada) da pessoa; um cliente novo por pedido. */
+  aiProvider(provider: AiProviderId, apiKey: string): AiProvider;
   identity(env: Env): IdentityResolver;
   /** null quando faltam GOOGLE_CLIENT_ID e GOOGLE_CLIENT_SECRET. */
   google(env: Env): Google | null;
@@ -56,6 +64,11 @@ export function defaultDeps(fetcher: typeof fetch = (...args) => fetch(...args))
       const { url, key } = supabaseOf(env);
       return createSupabaseWelcomeStore(url, key, token);
     },
+    ai(env, token) {
+      const { url, key } = supabaseOf(env);
+      return createSupabaseAiStore(url, key, token);
+    },
+    aiProvider: (provider, apiKey) => createProvider(provider, apiKey, { fetch: fetcher }),
     identity(env) {
       const { url, key } = supabaseOf(env);
       return createSupabaseIdentity(url, key, fetcher);
