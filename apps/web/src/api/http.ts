@@ -1,4 +1,4 @@
-import { apiErrorSchema } from '@trama/core';
+import { aiErrorBodySchema, type AiErrorCode } from '@trama/core';
 import type { z } from 'zod';
 
 /** Erro da API já em português, pronto para a tela. `status` 0 quer dizer sem conexão. */
@@ -6,6 +6,8 @@ export class ApiError extends Error {
   constructor(
     message: string,
     readonly status: number,
+    /** Motivo, quando a API diz (as rotas de IA dizem: chave recusada, sem chave...). */
+    readonly code?: AiErrorCode,
   ) {
     super(message);
     this.name = 'ApiError';
@@ -53,10 +55,11 @@ export function createCaller({
     }
     const body: unknown = await response.json().catch(() => undefined);
     if (!response.ok) {
-      const error = apiErrorSchema.safeParse(body);
+      const error = aiErrorBodySchema.safeParse(body);
       throw new ApiError(
         error.success ? error.data.error : 'Algo deu errado. Tente de novo em instantes.',
         response.status,
+        error.success ? error.data.code : undefined,
       );
     }
     const parsed = schema.safeParse(body);
