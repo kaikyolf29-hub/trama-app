@@ -210,6 +210,8 @@ Não apague: escreva uma linha nova dizendo o que substitui.
 
 - 2026-11-28 · **Os e-mails que a API manda têm limite contado no banco, em colunas de `profiles` que a pessoa não edita: a boas-vindas sai no máximo em 3 reservas (devolver não zera a conta) e o "Aviso do Drive", no máximo uma vez por dia (`claim_drive_notice`, que também exige 3 falhas seguidas). As duas migrations da 1.6 foram corrigidas antes de serem aplicadas em qualquer banco.** Motivo: com o token da própria pessoa, dava para chamar `release_welcome_email` ou zerar as falhas (até apagando e recriando a conexão) e mandar e-mails em laço; a cota grátis do Resend (100 por dia) é a mesma da recuperação de senha, de todo mundo.
 
+- 2026-11-28 · **Os arquivos de migration levam a versão em que foram aplicados no Supabase (`20261128021617_drive.sql`, `20261128021642_boas_vindas.sql`, `20261128022827_agenda_aulas.sql`), como já tinha sido feito na Fase 0.** Motivo: o `apply_migration` grava a hora da aplicação como versão; com o mesmo nome no repositório, `supabase db push` e o histórico do banco concordam.
+
 ## Etapa 1.9 — Testes de ponta a ponta e 500 blocos
 
 - 2026-11-27 · **Os testes de ponta a ponta usam Playwright (`@playwright/test` 1.63.0, a mesma versão do Chromium da máquina) em `apps/web/e2e`, contra o site construído (`vite build` + `vite preview`), em arquivos `*.e2e.ts`.** Motivo: testar o que vai para o ar, não o servidor de desenvolvimento; o sufixo `.e2e.ts` mantém o Vitest longe deles.
