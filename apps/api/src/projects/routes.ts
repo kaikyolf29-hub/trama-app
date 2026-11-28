@@ -1,8 +1,10 @@
 import {
   createEmptyFlow,
+  createEmptyScript,
   createProjectRequestSchema,
   flowContentSchema,
   saveProjectRequestSchema,
+  scriptContentSchema,
   updateProjectRequestSchema,
 } from '@trama/core';
 import { Hono, type Context } from 'hono';
@@ -42,12 +44,12 @@ export function projectRoutes() {
   routes.post('/', async (c) => {
     const parsed = createProjectRequestSchema.safeParse(await body(c));
     if (!parsed.success) return invalid(c, 'Dados do projeto inválidos.');
-    const { kind, title, content } = parsed.data;
-    const project = await c.var.store.create({
-      kind,
-      title,
-      content: content ?? createEmptyFlow(),
-    });
+    const request = parsed.data;
+    const project = await c.var.store.create(
+      request.kind === 'flow'
+        ? { kind: 'flow', title: request.title, content: request.content ?? createEmptyFlow() }
+        : { kind: 'script', title: request.title, content: request.content ?? createEmptyScript() },
+    );
     return c.json(project, 201);
   });
 
@@ -59,6 +61,14 @@ export function projectRoutes() {
     if (project.kind === 'flow') {
       const content = flowContentSchema.safeParse(project.content);
       // Nunca acontece pelo caminho normal (a API valida ao gravar); se acontecer, não piora.
+      if (!content.success) {
+        console.error('conteúdo inválido no banco', project.id, content.error.issues);
+        return c.json({ error: 'Este projeto tem um conteúdo que o Trama não entende.' }, 422);
+      }
+      return c.json({ ...project, content: content.data });
+    }
+    if (project.kind === 'script') {
+      const content = scriptContentSchema.safeParse(project.content);
       if (!content.success) {
         console.error('conteúdo inválido no banco', project.id, content.error.issues);
         return c.json({ error: 'Este projeto tem um conteúdo que o Trama não entende.' }, 422);
