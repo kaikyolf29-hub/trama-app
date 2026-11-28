@@ -26,3 +26,6 @@ permissions:
     build: false
   workerd:
     build: false
+  # Vem com o @google/genai; o script só confere a versão do Node, nada que o Worker precise.
+  protobufjs:
+    build: false
