@@ -5,8 +5,15 @@ export const OFFLINE_ERROR = 'Sem conexão com o servidor. Confira a internet e 
 export const RECOVERY_SEND_ERROR =
   'Não deu para enviar o e-mail agora. Tente de novo em alguns minutos.';
 
+/** O servidor aceitou o pedido de troca de e-mail, mas o envio do link falhou. */
+export const EMAIL_SEND_ERROR =
+  'Não deu para enviar o e-mail agora. Tente de novo em alguns minutos.';
+
+/** O que o login diz quando a senha não confere (a tela de senha troca por uma frase sua). */
+export const INVALID_CREDENTIALS = 'E-mail ou senha incorretos.';
+
 const MESSAGES: Record<string, string> = {
-  invalid_credentials: 'E-mail ou senha incorretos.',
+  invalid_credentials: INVALID_CREDENTIALS,
   email_not_confirmed:
     'Confirme o seu e-mail antes de entrar. O link está na sua caixa de entrada.',
   user_already_exists: 'Já existe uma conta com este e-mail. Entre ou recupere a senha.',
@@ -19,6 +26,7 @@ const MESSAGES: Record<string, string> = {
   over_request_rate_limit: 'Muitas tentativas seguidas. Espere um minuto e tente de novo.',
   otp_expired: 'Este link expirou ou já foi usado. Peça um link novo.',
   email_address_invalid: 'Este e-mail não é válido.',
+  email_address_not_authorized: 'Não dá para enviar e-mails para este endereço.',
   signup_disabled: 'Os cadastros estão fechados no momento.',
   session_not_found: 'Sua sessão terminou. Entre de novo.',
   user_banned: 'Esta conta está bloqueada.',

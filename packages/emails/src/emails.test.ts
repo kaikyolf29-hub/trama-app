@@ -2,7 +2,7 @@ import { readFile } from 'node:fs/promises';
 import { colors } from '@trama/ui/tokens';
 import { describe, expect, it } from 'vitest';
 import { renderDriveNoticeEmail, renderRecoveryEmail, renderWelcomeEmail } from './index';
-import { SUPABASE_TEMPLATES } from './supabase-templates';
+import { SUPABASE_TEMPLATES, type SupabaseTemplateName } from './supabase-templates';
 
 const siteUrl = 'https://trama.example';
 
@@ -73,10 +73,24 @@ describe('modelos do Supabase Auth', () => {
     expect(html).toContain('{{ if .Data.name }}Olá, {{ .Data.name }}.{{ else }}Olá.{{ end }}');
   });
 
-  it('o arquivo em supabase/templates/ está em dia com o componente', async () => {
-    const file = new URL('../../../supabase/templates/recovery.html', import.meta.url);
-    const committed = await readFile(file, 'utf8').catch(() => '');
-    const fresh = await SUPABASE_TEMPLATES['recovery.html']();
-    expect(committed, 'Rode: pnpm --filter @trama/emails templates:supabase').toBe(fresh);
+  it('o e-mail de troca de endereço leva ao link, ao logo e aos dois endereços', async () => {
+    const html = await SUPABASE_TEMPLATES['email_change.html']();
+    expect(html).toContain(
+      'href="{{ .SiteURL }}/confirmar-email?token_hash={{ .TokenHash }}&amp;type=email_change"',
+    );
+    expect(html).toContain('src="{{ .SiteURL }}/email/logo.png"');
+    expect(html).toContain('{{ .Email }}');
+    expect(html).toContain('{{ .NewEmail }}');
+    expect(html).toContain('{{ if .Data.name }}Olá, {{ .Data.name }}.{{ else }}Olá.{{ end }}');
   });
+
+  it.each(Object.keys(SUPABASE_TEMPLATES) as SupabaseTemplateName[])(
+    'o arquivo supabase/templates/%s está em dia com o componente',
+    async (name) => {
+      const file = new URL(`../../../supabase/templates/${name}`, import.meta.url);
+      const committed = await readFile(file, 'utf8').catch(() => '');
+      const fresh = await SUPABASE_TEMPLATES[name]();
+      expect(committed, 'Rode: pnpm --filter @trama/emails templates:supabase').toBe(fresh);
+    },
+  );
 });

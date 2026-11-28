@@ -1,4 +1,6 @@
 import { createSupabaseIdentity, type IdentityResolver } from './account/identity';
+import type { AccountStore } from './account/store';
+import { createSupabaseAccountStore } from './account/supabase-store';
 import { createSupabaseDriveStore, createSupabaseWelcomeStore } from './drive/supabase-store';
 import { createGoogle, type Google } from './drive/google';
 import type { DriveStore, WelcomeStore } from './drive/store';
@@ -14,6 +16,8 @@ import type { ProjectStore } from './projects/store';
  */
 export interface Deps {
   projects(env: Env, token: string): ProjectStore;
+  /** O perfil da pessoa (etapa 2.5). */
+  account(env: Env, token: string): AccountStore;
   drive(env: Env, token: string): DriveStore;
   welcome(env: Env, token: string): WelcomeStore;
   identity(env: Env): IdentityResolver;
@@ -39,6 +43,10 @@ export function defaultDeps(fetcher: typeof fetch = (...args) => fetch(...args))
     projects(env, token) {
       const { url, key } = supabaseOf(env);
       return createSupabaseStore(url, key, token);
+    },
+    account(env, token) {
+      const { url, key } = supabaseOf(env);
+      return createSupabaseAccountStore(url, key, token);
     },
     drive(env, token) {
       const { url, key } = supabaseOf(env);

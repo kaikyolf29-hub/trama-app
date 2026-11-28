@@ -1,6 +1,6 @@
 import type { User } from '@supabase/supabase-js';
 import type { Supabase } from '../supabase';
-import { authErrorMessage, isServerError, RECOVERY_SEND_ERROR } from './errors';
+import { authErrorMessage, EMAIL_SEND_ERROR, isServerError, RECOVERY_SEND_ERROR } from './errors';
 import type { AuthClient, AuthResult, AuthUser } from './types';
 
 function toUser(user: User): AuthUser {
@@ -76,6 +76,32 @@ export function createSupabaseAuthClient(supabase: Supabase, appUrl: string): Au
 
     async updatePassword(password) {
       const { error } = await auth.updateUser({ password });
+      return error ? { ok: false, error: authErrorMessage(error) } : ok;
+    },
+
+    async updateName(name) {
+      const { error } = await auth.updateUser({ data: { name } });
+      return error ? { ok: false, error: authErrorMessage(error) } : ok;
+    },
+
+    async updateEmail(email) {
+      const { error } = await auth.updateUser(
+        { email },
+        { emailRedirectTo: `${appUrl}/configuracoes` },
+      );
+      if (!error) return ok;
+      const code = (error as { code?: unknown }).code;
+      if (code === 'email_exists' || code === 'user_already_exists') {
+        return { ok: false, error: 'Já existe uma conta com este e-mail. Use outro endereço.' };
+      }
+      return {
+        ok: false,
+        error: isServerError(error) ? EMAIL_SEND_ERROR : authErrorMessage(error),
+      };
+    },
+
+    async verifyEmailChange(tokenHash) {
+      const { error } = await auth.verifyOtp({ token_hash: tokenHash, type: 'email_change' });
       return error ? { ok: false, error: authErrorMessage(error) } : ok;
     },
 

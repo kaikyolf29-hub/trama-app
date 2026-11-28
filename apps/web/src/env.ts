@@ -1,4 +1,5 @@
-import { createAccountApi, createDriveApi } from './api/drive-api';
+import { createAccountApi } from './api/account-api';
+import { createDriveApi } from './api/drive-api';
 import { createProjectsApi } from './api/projects-api';
 import { createSupabaseAuthClient } from './auth/supabase-client';
 import type { AuthClient } from './auth/types';

@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
-import { createAccountApi, createDriveApi } from './drive-api';
+import { createAccountApi } from './account-api';
+import { createDriveApi } from './drive-api';
 import { ApiError } from './http';
 
 const status = {

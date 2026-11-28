@@ -19,6 +19,9 @@ enable_signup = true
 # A pessoa cria a senha e já entra (decisão da etapa 0.5).
 enable_confirmations = false
 secure_password_change = false
+# Trocar o e-mail pede o link nos dois endereços (o atual e o novo): quem roubar uma sessão aberta
+# não consegue tomar a conta. Os dois e-mails usam o mesmo modelo.
+double_confirm_changes = true
 # Um e-mail de recuperação por minuto, por endereço; o link vale 1 hora.
 max_frequency = "1m0s"
 otp_expiry = 3600
@@ -27,6 +30,10 @@ otp_expiry = 3600
 [auth.email.template.recovery]
 subject = "Crie uma senha nova no Trama"
 content_path = "./supabase/templates/recovery.html"
+
+[auth.email.template.email_change]
+subject = "Confirme o novo e-mail do Trama"
+content_path = "./supabase/templates/email_change.html"
 
 # Envio pelo Resend. Sem domínio verificado, o Resend só entrega no e-mail do dono da conta.
 [auth.email.smtp]
