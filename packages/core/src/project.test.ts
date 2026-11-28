@@ -25,9 +25,20 @@ describe('projectSchema', () => {
     ).toBe(false);
   });
 
-  it('aceita roteiro e caderno com conteúdo livre até a V1', () => {
-    expect(projectSchema.safeParse({ ...base, kind: 'script', content: {} }).success).toBe(true);
-    expect(projectSchema.safeParse({ ...base, kind: 'notebook', content: {} }).success).toBe(true);
+  it('aceita roteiro e caderno com conteúdo vazio e preenche os padrões', () => {
+    const script = projectSchema.parse({ ...base, kind: 'script', content: {} });
+    const notebook = projectSchema.parse({ ...base, kind: 'notebook', content: {} });
+    expect(script.kind === 'script' && script.content.scenes).toEqual([]);
+    expect(notebook.kind === 'notebook' && notebook.content.reviewAfterDays).toBe(7);
+  });
+
+  it('valida o conteúdo de roteiro e de caderno', () => {
+    expect(
+      projectSchema.safeParse({ ...base, kind: 'script', content: { scenes: 'x' } }).success,
+    ).toBe(false);
+    expect(
+      projectSchema.safeParse({ ...base, kind: 'notebook', content: { color: '#fff' } }).success,
+    ).toBe(false);
   });
 
   it('recusa título vazio, id que não é uuid e data sem fuso', () => {
