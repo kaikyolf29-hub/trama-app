@@ -1,12 +1,14 @@
 import { describe, expect, it } from 'vitest';
-import { createProjectRequestSchema } from '../api';
+import { createAnyProjectRequestSchema, createProjectRequestSchema } from '../api';
 import { flowContentSchema } from '../flow';
 import { GRID_SIZE } from '../geometry';
 import {
   createProjectRequestFromTemplate,
+  createRequestFromProjectTemplate,
   flowTemplateIdSchema,
   flowTemplates,
   getFlowTemplate,
+  projectTemplates,
 } from './index';
 
 const onGrid = (value: number) => value % GRID_SIZE === 0;
@@ -160,5 +162,35 @@ describe('modelos de início', () => {
   it('getFlowTemplate recusa um modelo que não existe', () => {
     // @ts-expect-error id fora da lista, de propósito
     expect(() => getFlowTemplate('nada')).toThrow();
+  });
+});
+
+describe('modelos da tela Início (fluxo ou roteiro)', () => {
+  it('têm a ordem da tela 4 e só o "Roteiro de vídeo" cria um roteiro', () => {
+    expect(projectTemplates.map((item) => item.id)).toEqual(flowTemplates.map((item) => item.id));
+    expect(
+      projectTemplates.filter((item) => item.kind === 'script').map((item) => item.id),
+    ).toEqual(['script']);
+  });
+
+  it.each(projectTemplates.map((item) => [item.id, item] as const))(
+    '%s: vira um pedido de criação válido do tipo certo',
+    (_id, item) => {
+      const request = createAnyProjectRequestSchema.parse(createRequestFromProjectTemplate(item));
+      expect(request.kind).toBe(item.kind);
+      expect(request.title).toBe(item.projectTitle);
+    },
+  );
+
+  it('o roteiro de exemplo traz cenas com ids novos a cada chamada', () => {
+    const template = projectTemplates.find((item) => item.kind === 'script');
+    if (template?.kind !== 'script') throw new Error('sem modelo de roteiro');
+    const first = template.content();
+    const second = template.content();
+    expect(first.scenes.length).toBeGreaterThanOrEqual(3);
+    expect(first.scenes.every((scene) => scene.title !== '' && scene.cardId === undefined)).toBe(
+      true,
+    );
+    expect(first.scenes[0]?.id).not.toBe(second.scenes[0]?.id);
   });
 });

@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import type { CreateProjectRequest } from '../api';
+import type { CreateAnyProjectRequest, CreateProjectRequest } from '../api';
 import {
   createEmptyFlow,
   flowContentSchema,
@@ -7,9 +7,11 @@ import {
   type FlowContentInput,
 } from '../flow';
 import type { ProjectKind } from '../project';
+import type { ScriptContent } from '../script';
 import { lessonTemplateContent } from './lesson';
 import { planTemplateContent } from './plan';
 import { scriptTemplateContent } from './script';
+import { scriptDocTemplateContent } from './script-doc';
 import { videoTemplateContent } from './video';
 import { voiceTemplateContent } from './voice';
 
@@ -111,4 +113,45 @@ export function getFlowTemplate(id: FlowTemplateId): FlowTemplate {
 /** O pedido de criar projeto (`POST /projects`) que parte do modelo. */
 export function createProjectRequestFromTemplate(template: FlowTemplate): CreateProjectRequest {
   return { kind: template.kind, title: template.projectTitle, content: template.content() };
+}
+
+/** O "Roteiro de vídeo" da tela Início quando cria um roteiro em texto (etapa 2.3). */
+export interface ScriptTemplate {
+  id: 'script';
+  title: string;
+  description: string;
+  kind: 'script';
+  projectTitle: string;
+  /** Um roteiro novo (ids novos) a cada chamada. */
+  content: () => ScriptContent;
+}
+
+export const scriptTemplate: ScriptTemplate = {
+  id: 'script',
+  title: 'Roteiro de vídeo',
+  description: 'Cenas, falas e B-roll em sequência',
+  kind: 'script',
+  projectTitle: 'Roteiro de vídeo',
+  content: scriptDocTemplateContent,
+};
+
+/** Modelo da tela Início: cria um fluxo ou, no caso do roteiro, um projeto `script`. */
+export type ProjectTemplate = FlowTemplate | ScriptTemplate;
+
+/**
+ * Os modelos da tela Início, na ordem da tela 4. É a lista de `flowTemplates` com o "Roteiro de
+ * vídeo" criando um roteiro em texto (tela 3); a versão em quadro dele continua em
+ * `flowTemplates`.
+ */
+export const projectTemplates: readonly ProjectTemplate[] = flowTemplates.map(
+  (item): ProjectTemplate => (item.id === 'script' ? scriptTemplate : item),
+);
+
+/** O pedido de criar projeto (`POST /projects`) que parte de um modelo da tela Início. */
+export function createRequestFromProjectTemplate(
+  template: ProjectTemplate,
+): CreateAnyProjectRequest {
+  return template.kind === 'script'
+    ? { kind: 'script', title: template.projectTitle, content: template.content() }
+    : { kind: 'flow', title: template.projectTitle, content: template.content() };
 }
