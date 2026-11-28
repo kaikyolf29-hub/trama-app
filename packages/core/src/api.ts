@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { flowContentSchema } from './flow';
 import { projectKindSchema, projectTitleSchema } from './project';
+import { scriptContentSchema } from './script';
 import { dateTimeSchema, projectStatusSchema } from './status';
 
 /**
@@ -28,6 +29,22 @@ export const createProjectRequestSchema = z.object({
   content: flowContentSchema.optional(),
 });
 
+/** Criar roteiro (etapa 2.3): sem conteúdo, o roteiro começa sem cenas. */
+export const createScriptProjectRequestSchema = z.object({
+  kind: z.literal('script'),
+  title: projectTitleSchema.default('Sem título'),
+  content: scriptContentSchema.optional(),
+});
+
+/**
+ * Criar fluxo ou roteiro (`POST /projects`). O caderno de Estudos chega na etapa 2.4.
+ * `createProjectRequestSchema` continua sendo só o de fluxo.
+ */
+export const createAnyProjectRequestSchema = z.discriminatedUnion('kind', [
+  createProjectRequestSchema,
+  createScriptProjectRequestSchema,
+]);
+
 /**
  * Renomear ou mudar o status (`PATCH /projects/:id`) sem mexer no conteúdo nem na revisão:
  * serve à lista do Início, que não tem o conteúdo em mãos. Ao menos um dos campos é obrigatório.
@@ -48,6 +65,16 @@ export const updateProjectRequestSchema = z
  */
 export const saveProjectRequestSchema = z.object({
   content: flowContentSchema,
+  title: projectTitleSchema.optional(),
+  baseRevision: revisionSchema,
+});
+
+/**
+ * Salvar um roteiro (`PUT /projects/:id` de um projeto `script`). O corpo não diz o tipo: a API
+ * olha o tipo do projeto gravado e valida o conteúdo com o esquema certo.
+ */
+export const saveScriptRequestSchema = z.object({
+  content: scriptContentSchema,
   title: projectTitleSchema.optional(),
   baseRevision: revisionSchema,
 });
@@ -81,6 +108,9 @@ export const apiErrorSchema = z.object({ error: z.string().min(1) });
 
 export type ProjectSummary = z.infer<typeof projectSummarySchema>;
 export type CreateProjectRequest = z.input<typeof createProjectRequestSchema>;
+export type CreateScriptProjectRequest = z.input<typeof createScriptProjectRequestSchema>;
+export type CreateAnyProjectRequest = z.input<typeof createAnyProjectRequestSchema>;
+export type SaveScriptRequest = z.infer<typeof saveScriptRequestSchema>;
 export type UpdateProjectRequest = z.infer<typeof updateProjectRequestSchema>;
 export type SaveProjectRequest = z.infer<typeof saveProjectRequestSchema>;
 export type SaveProjectResponse = z.infer<typeof saveProjectResponseSchema>;

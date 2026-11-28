@@ -1,12 +1,16 @@
 import { describe, expect, it } from 'vitest';
 import {
+  createAnyProjectRequestSchema,
   createProjectRequestSchema,
+  createScriptProjectRequestSchema,
   projectSummarySchema,
   projectVersionSchema,
   saveProjectRequestSchema,
   saveProjectResponseSchema,
+  saveScriptRequestSchema,
   updateProjectRequestSchema,
 } from './api';
+import { createEmptyScript, createScene } from './script';
 import { videoFlowExample } from './fixtures';
 import { createEmptyFlow } from './flow';
 import { projectSchema } from './project';
@@ -28,8 +32,48 @@ describe('contrato da API de projetos', () => {
     expect(withContent.content?.blocks.length).toBeGreaterThan(0);
   });
 
-  it('ainda não cria roteiro nem caderno', () => {
+  it('createProjectRequestSchema é só de fluxo; roteiro tem o seu', () => {
     expect(createProjectRequestSchema.safeParse({ kind: 'script' }).success).toBe(false);
+    expect(createScriptProjectRequestSchema.parse({ kind: 'script' })).toEqual({
+      kind: 'script',
+      title: 'Sem título',
+    });
+    const scene = createScene({ title: 'Gancho' });
+    const request = createScriptProjectRequestSchema.parse({
+      kind: 'script',
+      title: ' Episódio 12 ',
+      content: { scenes: [scene] },
+    });
+    expect(request.title).toBe('Episódio 12');
+    expect(request.content?.scenes[0]?.title).toBe('Gancho');
+  });
+
+  it('criar fluxo ou roteiro: o tipo escolhe o conteúdo; caderno ainda não', () => {
+    expect(createAnyProjectRequestSchema.safeParse({ kind: 'flow' }).success).toBe(true);
+    expect(createAnyProjectRequestSchema.safeParse({ kind: 'script' }).success).toBe(true);
+    expect(createAnyProjectRequestSchema.safeParse({ kind: 'notebook' }).success).toBe(false);
+    // O conteúdo de um roteiro não passa como conteúdo de fluxo, e vice-versa.
+    expect(
+      createAnyProjectRequestSchema.safeParse({
+        kind: 'script',
+        content: { scenes: [{ id: 'a' }, { id: 'a' }] },
+      }).success,
+    ).toBe(false);
+    expect(
+      createAnyProjectRequestSchema.safeParse({ kind: 'flow', content: { blocks: 3 } }).success,
+    ).toBe(false);
+  });
+
+  it('salvar roteiro exige a revisão de base e cenas válidas', () => {
+    const content = createEmptyScript();
+    expect(saveScriptRequestSchema.safeParse({ content, baseRevision: 2 }).success).toBe(true);
+    expect(saveScriptRequestSchema.safeParse({ content }).success).toBe(false);
+    expect(
+      saveScriptRequestSchema.safeParse({
+        content: { scenes: [{ id: 'a' }, { id: 'a' }] },
+        baseRevision: 1,
+      }).success,
+    ).toBe(false);
   });
 
   it('salvar exige conteúdo válido e a revisão de base', () => {
