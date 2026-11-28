@@ -1,7 +1,9 @@
 import type { DriveStatus } from '@trama/core';
 import { vi } from 'vitest';
 import { ApiError, type ProjectsApi } from '../api/projects-api';
-import type { AccountApi, DriveApi } from '../api/drive-api';
+import type { AccountApi } from '../api/account-api';
+import type { DriveApi } from '../api/drive-api';
+import { createFakeAccount as createFakeProfileAccount } from './fake-account';
 
 export const disconnectedStatus: DriveStatus = {
   available: true,
@@ -87,6 +89,6 @@ export function createFakeAccount(options: { fail?: boolean } = {}) {
   const sendWelcome = vi.fn(() =>
     options.fail ? Promise.reject(new ApiError('boom', 502)) : Promise.resolve(),
   );
-  const api: AccountApi = { sendWelcome };
+  const api: AccountApi = { ...createFakeProfileAccount().api, sendWelcome };
   return { api, sendWelcome };
 }

@@ -17,6 +17,9 @@ export function createUnconfiguredAuthClient(): AuthClient {
     requestPasswordReset: notConfigured,
     verifyRecovery: notConfigured,
     updatePassword: notConfigured,
+    updateEmail: notConfigured,
+    updateName: notConfigured,
+    verifyEmailChange: notConfigured,
     signOut: () => Promise.resolve(),
   };
 }

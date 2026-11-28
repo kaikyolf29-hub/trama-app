@@ -7,6 +7,7 @@ import { WelcomeEmail, type WelcomeEmailProps } from './WelcomeEmail';
 export { EmailLayout } from './Layout';
 export { logoUrl } from './styles';
 export { DriveNoticeEmail, type DriveNoticeEmailProps } from './DriveNoticeEmail';
+export { EmailChangeEmail, type EmailChangeEmailProps } from './EmailChangeEmail';
 export { RecoveryEmail, type RecoveryEmailProps } from './RecoveryEmail';
 export { WelcomeEmail, type WelcomeEmailProps } from './WelcomeEmail';
 

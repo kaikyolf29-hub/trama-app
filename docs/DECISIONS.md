@@ -208,6 +208,8 @@ Não apague: escreva uma linha nova dizendo o que substitui.
 - 2026-11-27 · **O Início usa `DriveConnect` no lugar do `DriveStatus` provisório: conectado, desconectado, "Conectar de novo" (quando a cópia falha), "Abrir pasta no Drive", "Abrir do Drive" e "Desconectar" com confirmação. No quadro, "Salvo no Drive" fica ao lado do "Salvo" só para quem conectou o Drive.** Motivo: tela 4 e "Salvo no Drive" da tela 1.
 - 2026-11-27 · **O script do Google Picker só carrega no clique em "Abrir do Drive"; o `appId` vem do número no começo do ID do cliente OAuth.** Motivo: nada do Google carrega antes de a pessoa pedir; um valor a menos para configurar.
 
+- 2026-11-28 · **Os e-mails que a API manda têm limite contado no banco, em colunas de `profiles` que a pessoa não edita: a boas-vindas sai no máximo em 3 reservas (devolver não zera a conta) e o "Aviso do Drive", no máximo uma vez por dia (`claim_drive_notice`, que também exige 3 falhas seguidas). As duas migrations da 1.6 foram corrigidas antes de serem aplicadas em qualquer banco.** Motivo: com o token da própria pessoa, dava para chamar `release_welcome_email` ou zerar as falhas (até apagando e recriando a conexão) e mandar e-mails em laço; a cota grátis do Resend (100 por dia) é a mesma da recuperação de senha, de todo mundo.
+
 ## Etapa 1.9 — Testes de ponta a ponta e 500 blocos
 
 - 2026-11-27 · **Os testes de ponta a ponta usam Playwright (`@playwright/test` 1.63.0, a mesma versão do Chromium da máquina) em `apps/web/e2e`, contra o site construído (`vite build` + `vite preview`), em arquivos `*.e2e.ts`.** Motivo: testar o que vai para o ar, não o servidor de desenvolvimento; o sufixo `.e2e.ts` mantém o Vitest longe deles.
@@ -220,6 +222,19 @@ Não apague: escreva uma linha nova dizendo o que substitui.
 
 - 2026-11-27 · **Os portões das fases (uma semana de uso real na Fase 2, a fala de 2 minutos na Fase 3) não seguram mais o começo da fase seguinte: as fases andam em pacotes maiores, com agentes em paralelo, e os portões são conferidos no fim, na revisão e nos testes do Codex.** Motivo: pedido da pessoa dona do projeto ("pega tudo que falta… separou em coisas muito pequenas"). O plano não muda; só a ordem de conferir.
 - 2026-11-27 · **A etapa 4.2 (domínio, SPF e DKIM, Supabase Pro) fica para quando o projeto crescer, por decisão da pessoa dona: é paga.** Motivo: só planos grátis até lá.
+
+## Etapa 2.5 — Configurações
+
+- 2026-11-27 · **O perfil (`profileSchema`: nome, fuso, preferências de e-mail) e o pedido `PATCH /account/profile` (`updateProfileRequestSchema`) moram em `packages/core/src/profile.ts`. O e-mail e a senha ficam só no Supabase Auth.** Motivo: o perfil espelha a tabela `profiles`; e-mail e senha têm outro dono (o Auth), e duplicar o e-mail no perfil criaria dois lugares para ficar desatualizados.
+- 2026-11-27 · **O fuso é um nome IANA conhecido pelo `Intl` (deslocamentos como "+03:00" são recusados), e o nome conta de 1 a 80 letras como o `char_length` do Postgres (um emoji vale 1).** Motivo: "+03:00" não segue o horário de verão, e contar diferente do banco deixaria passar um nome que o banco recusa.
+- 2026-11-27 · **No `PATCH`, `emailPreferences` pode trazer só a chave que mudou (`applyProfileUpdate` junta com o que já existe); ao ler, chave que falta no banco vira o padrão (resumo ligado, lembrete desligado).** Motivo: ligar ou desligar uma preferência não pode apagar a outra, e o padrão do `profiles` já é esse.
+- 2026-11-27 · **A tela `/configuracoes` (só logado) tem Conta, E-mail, Senha, Fuso horário, E-mails do Trama e IA (desligada, "Em breve", até a etapa 3.1). Nome, fuso e preferências passam pela API (`GET` e `PATCH /account/profile`); e-mail e senha vão direto ao Supabase Auth.** Motivo: o Auth é o dono do e-mail e da senha; o perfil é o que a RLS de `profiles` já protege.
+- 2026-11-27 · **Fuso e chaves de e-mail salvam na hora que a pessoa muda (aparece "Salvo"); o nome tem botão.** Motivo: escolher numa lista ou ligar uma chave já é a decisão; o nome é texto e só vale quando a pessoa termina.
+- 2026-11-27 · **Trocar a senha pede a atual e a confere com um novo login (`signIn`) antes de gravar a nova, com as mesmas regras do cadastro (8 a 72 caracteres).** Motivo: quem pegou um computador com a sessão aberta não troca a senha sem saber a de agora.
+- 2026-11-27 · **Salvar o nome grava também em `user_metadata.name` do Supabase Auth.** Motivo: a saudação e a barra lateral leem o nome da conta, e ficariam diferentes do perfil.
+- 2026-11-27 · **Trocar o e-mail usa a confirmação dupla do Supabase (`double_confirm_changes = true`): os links vão ao endereço atual e ao novo, e o e-mail só muda depois dos dois. O link do e-mail leva a `/confirmar-email?token_hash=…`, conferida pela tela (`verifyOtp`, tipo `email_change`), como na recuperação de senha.** Motivo: quem roubar uma sessão aberta não toma a conta, e o link abre em qualquer aparelho sem gastar o código num robô de e-mail.
+- 2026-11-27 · **A API lê o id da pessoa do campo `sub` do token só para filtrar a linha do `profiles`; quem confere a assinatura é o banco (RLS).** Motivo: o Supabase recusa `UPDATE` sem `WHERE`, e chamar o Auth a cada pedido custaria uma volta a mais.
+- 2026-11-27 · **Sem migration nova: as colunas `name`, `timezone` e `email_preferences` e o `grant update` já existem em `profiles`.** Motivo: nada a mudar no banco.
 
 ## Etapas 2.1 e 2.2 — Roteiro, caderno, aulas e eventos da Agenda
 

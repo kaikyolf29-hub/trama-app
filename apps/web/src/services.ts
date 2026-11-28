@@ -1,8 +1,9 @@
 import { localMedia, type CanvasMedia } from '@trama/canvas';
 import { createContext, useContext } from 'react';
-import type { AccountApi, DriveApi } from './api/drive-api';
+import type { DriveApi } from './api/drive-api';
 import { DRIVE_COPY_INTERVAL } from './api/drive-copier';
 import { AUTOSAVE_DELAY } from './api/autosave';
+import type { AccountApi } from './api/account-api';
 import type { ProjectsApi } from './api/projects-api';
 import type { PickDriveFile } from './drive/picker';
 
@@ -12,7 +13,7 @@ export interface Services {
   projects: ProjectsApi | null;
   /** Google Drive (conectar, copiar, abrir); null quando o site não tem a API. */
   drive: DriveApi | null;
-  /** E-mail de boas-vindas; null quando o site não tem a API. */
+  /** Perfil (Configurações) e e-mail de boas-vindas; null quando o site não tem a API. */
   account: AccountApi | null;
   /** O seletor de arquivos do Google; null quando faltam a chave de API e o ID do cliente. */
   pickDriveFile: PickDriveFile | null;
