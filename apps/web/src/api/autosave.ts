@@ -7,8 +7,8 @@ export type SaveStatus =
   | { kind: 'saving' }
   | { kind: 'error'; message: string; retryInMs: number };
 
-type Save = (
-  content: FlowContent,
+type Save<Content> = (
+  content: Content,
   baseRevision: number,
   options: { keepalive: boolean },
 ) => Promise<SaveProjectResponse>;
@@ -22,8 +22,8 @@ const MAX_RETRY = 30_000;
  * mesmo tempo, tenta de novo com espera crescente quando falha e guarda a revisão que a API
  * devolve para a próxima gravação.
  */
-export class Autosaver {
-  private latest: FlowContent | null = null;
+export class Autosaver<Content = FlowContent> {
+  private latest: Content | null = null;
   private timer: ReturnType<typeof setTimeout> | undefined;
   private inFlight: Promise<void> | null = null;
   private failures = 0;
@@ -31,7 +31,7 @@ export class Autosaver {
   private disposed = false;
 
   constructor(
-    private readonly save: Save,
+    private readonly save: Save<Content>,
     options: { revision: number; onStatus: (status: SaveStatus) => void },
     private readonly delay = AUTOSAVE_DELAY,
   ) {
@@ -42,7 +42,7 @@ export class Autosaver {
   private readonly onStatus: (status: SaveStatus) => void;
 
   /** Uma mudança nova: recomeça a espera de 2 s. */
-  push(content: FlowContent): void {
+  push(content: Content): void {
     if (this.disposed) return;
     this.latest = content;
     this.failures = 0;

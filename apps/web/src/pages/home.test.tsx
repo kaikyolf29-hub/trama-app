@@ -1,5 +1,5 @@
 import { createMemoryHistory } from '@tanstack/react-router';
-import { createEmptyFlow, flowTemplates, type FlowProject } from '@trama/core';
+import { createEmptyFlow, projectTemplates, type FlowProject } from '@trama/core';
 import {
   cleanup,
   fireEvent,
@@ -81,7 +81,7 @@ describe('Início: modelos', () => {
     );
     const templates = within(screen.getByRole('region', { name: 'Começar algo novo' }));
     expect(templates.getAllByRole('button').map((button) => button.textContent)).toEqual(
-      flowTemplates.map((template) => `${template.title}${template.description}`),
+      projectTemplates.map((template) => `${template.title}${template.description}`),
     );
     expect(screen.getByRole('region', { name: /Google Drive/ })).toBeDefined();
   });
@@ -93,9 +93,19 @@ describe('Início: modelos', () => {
     expect(fake.projects.size).toBe(1);
     const [created] = [...fake.projects.values()];
     expect(created?.title).toBe('Aula por etapas');
-    expect(created?.content.frames).toHaveLength(4);
-    expect(created?.content.presentation).toHaveLength(4);
+    expect(created?.kind === 'flow' && created.content.frames).toHaveLength(4);
+    expect(created?.kind === 'flow' && created.content.presentation).toHaveLength(4);
     expect(await screen.findByRole('heading', { name: 'Aula por etapas' })).toBeDefined();
+  });
+
+  it('"Roteiro de vídeo" cria um roteiro em texto, com cenas de exemplo, e abre o editor', async () => {
+    const { fake, history } = renderHome();
+    fireEvent.click(await screen.findByRole('button', { name: /Roteiro de vídeo/ }));
+    await waitFor(() => expect(history.location.pathname).toMatch(/^\/p\//));
+    const [created] = [...fake.projects.values()];
+    expect(created).toMatchObject({ kind: 'script', title: 'Roteiro de vídeo' });
+    expect(created?.kind === 'script' && created.content.scenes.length).toBeGreaterThanOrEqual(3);
+    expect(await screen.findByRole('textbox', { name: 'Texto do roteiro' })).toBeDefined();
   });
 
   it('o fluxo em branco abre vazio, como "Sem título"', async () => {
@@ -113,8 +123,9 @@ describe('Início: modelos', () => {
     fireEvent.click(await screen.findByRole('button', { name: /Falar e organizar/ }));
     await waitFor(() => expect(history.location.pathname).toMatch(/^\/p\//));
     const [created] = [...fake.projects.values()];
-    expect(created?.content.blocks).toHaveLength(1);
-    expect(created?.content.blocks[0]).toMatchObject({ type: 'sticky' });
+    const blocks = created?.kind === 'flow' ? created.content.blocks : [];
+    expect(blocks).toHaveLength(1);
+    expect(blocks[0]).toMatchObject({ type: 'sticky' });
   });
 
   it('se criar falha, avisa, continua no Início e libera os modelos de novo', async () => {

@@ -1,6 +1,6 @@
 import { Link, useParams } from '@tanstack/react-router';
 import { FlowCanvas } from '@trama/canvas';
-import type { FlowProject } from '@trama/core';
+import type { FlowProject, Project } from '@trama/core';
 import { Alert, cn, Spinner } from '@trama/ui';
 import { useEffect, useRef, useState } from 'react';
 import { Autosaver, type SaveStatus } from '../api/autosave';
@@ -9,14 +9,19 @@ import type { ProjectsApi } from '../api/projects-api';
 import { useAuth } from '../auth/context';
 import { useServices } from '../services';
 import { BoardTitle, PresentButton } from './BoardChrome';
+import { SaveIndicator } from './SaveIndicator';
+import { ScriptScreen } from './script/ScriptScreen';
 import { textLinkClass } from './styles';
 
 type Loaded =
   | { state: 'loading'; id: string }
-  | { state: 'ready'; id: string; project: FlowProject }
+  | { state: 'ready'; id: string; project: Project }
   | { state: 'failed'; id: string; message: string };
 
-/** Um projeto aberto no quadro: carrega pela API e salva sozinho 2 s depois de cada mudança. */
+/**
+ * Um projeto aberto: o fluxo no quadro, o roteiro no editor de texto. Carrega pela API e salva
+ * sozinho 2 s depois de cada mudança.
+ */
 export function ProjectPage() {
   const { projectId } = useParams({ from: '/p/$projectId' });
   const { projects } = useServices();
@@ -61,7 +66,13 @@ export function ProjectPage() {
     );
   }
   if (loaded.state === 'failed') return <Message>{loaded.message}</Message>;
-  return <ProjectBoard key={loaded.project.id} project={loaded.project} api={projects} />;
+  const { project } = loaded;
+  if (project.kind === 'script')
+    return <ScriptScreen key={project.id} project={project} api={projects} />;
+  if (project.kind === 'notebook') {
+    return <Message>Os cadernos de Estudos abrem na próxima etapa.</Message>;
+  }
+  return <ProjectBoard key={project.id} project={project} api={projects} />;
 }
 
 function Message({ children }: { children: string }) {
@@ -191,43 +202,6 @@ function ProjectBoard({ project, api }: { project: FlowProject; api: ProjectsApi
         topRight={({ present }) => <PresentButton onPresent={present} />}
       />
     </div>
-  );
-}
-
-const SAVE_TEXT: Record<SaveStatus['kind'], string> = {
-  saved: 'Salvo',
-  pending: 'Alterações não salvas',
-  saving: 'Salvando…',
-  error: 'Não salvou',
-};
-
-/** O "● Salvo" da tela 1: verde quando está tudo guardado. */
-export function SaveIndicator({ status }: { status: SaveStatus }) {
-  const title =
-    status.kind === 'error'
-      ? `${status.message} Tentando de novo em ${Math.round(status.retryInMs / 1000)} s.`
-      : undefined;
-  return (
-    <span
-      role="status"
-      aria-live="polite"
-      title={title}
-      className={cn(
-        'ml-1 flex items-center gap-1.5 text-[13px]',
-        status.kind === 'error' ? 'text-text-strong' : 'text-text-muted',
-      )}
-    >
-      <span
-        aria-hidden
-        className={cn(
-          'size-1.5 rounded-full',
-          status.kind === 'saved' && 'bg-done',
-          (status.kind === 'pending' || status.kind === 'saving') && 'bg-text-muted',
-          status.kind === 'error' && 'border border-text-strong',
-        )}
-      />
-      {SAVE_TEXT[status.kind]}
-    </span>
   );
 }
 

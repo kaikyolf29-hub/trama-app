@@ -1,9 +1,9 @@
 import { useNavigate } from '@tanstack/react-router';
 import {
-  createProjectRequestFromTemplate,
-  flowTemplates,
-  type FlowTemplate,
+  createRequestFromProjectTemplate,
+  projectTemplates,
   type FlowTemplateId,
+  type ProjectTemplate,
 } from '@trama/core';
 import { Alert, cn } from '@trama/ui';
 import { useState } from 'react';
@@ -11,7 +11,8 @@ import { useServices } from '../services';
 
 /**
  * "Começar algo novo" (tela 4): um clique num modelo cria o projeto e já abre no quadro,
- * dentro do limite de 3 cliques para criar um fluxo.
+ * dentro do limite de 3 cliques para criar um fluxo. O "Roteiro de vídeo" cria um roteiro em texto
+ * (tela 3); os outros criam um fluxo.
  */
 export function TemplateGrid() {
   const { projects } = useServices();
@@ -19,15 +20,15 @@ export function TemplateGrid() {
   const [creating, setCreating] = useState<FlowTemplateId | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const start = async (template: FlowTemplate) => {
+  const start = async (template: ProjectTemplate) => {
     if (!projects || creating) return;
     setCreating(template.id);
     setError(null);
     try {
-      const project = await projects.create(createProjectRequestFromTemplate(template));
+      const project = await projects.create(createRequestFromProjectTemplate(template));
       await navigate({ to: '/p/$projectId', params: { projectId: project.id } });
     } catch (failure) {
-      setError(failure instanceof Error ? failure.message : 'Não deu para criar o fluxo.');
+      setError(failure instanceof Error ? failure.message : 'Não deu para criar o projeto.');
       setCreating(null);
     }
   };
@@ -39,7 +40,7 @@ export function TemplateGrid() {
       </h2>
       {error && <Alert tone="error">{error}</Alert>}
       <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {flowTemplates.map((template) => (
+        {projectTemplates.map((template) => (
           <li key={template.id} className="flex">
             <button
               type="button"

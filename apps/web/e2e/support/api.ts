@@ -1,14 +1,20 @@
 import {
+  createAnyProjectRequestSchema,
   createEmptyFlow,
+  createEmptyScript,
   createNoteRequestSchema,
-  createProjectRequestSchema,
   saveProjectRequestSchema,
+  saveScriptRequestSchema,
   updateProjectRequestSchema,
   type AgendaEvent,
   type FlowContent,
   type FlowProject,
+  type Project,
   type ProjectSummary,
   type SaveProjectRequest,
+  type SaveScriptRequest,
+  type ScriptContent,
+  type ScriptProject,
 } from '@trama/core';
 import type { Page, Route } from '@playwright/test';
 
@@ -32,6 +38,7 @@ export interface ApiCall {
 
 /** O que `FakeApi.seed` aceita: tudo o que faltar recebe um valor padrão. */
 export type ProjectSeed = Partial<Omit<FlowProject, 'content'>> & { content?: FlowContent };
+export type ScriptSeed = Partial<Omit<ScriptProject, 'content'>> & { content?: ScriptContent };
 
 /**
  * A API de projetos (apps/api) em memória, ligada a uma página por `page.route`: criar,
@@ -39,12 +46,12 @@ export type ProjectSeed = Partial<Omit<FlowProject, 'content'>> & { content?: Fl
  * corpos com os esquemas do `@trama/core`, como a API de verdade, e anota cada pedido.
  */
 export class FakeApi {
-  readonly projects = new Map<string, FlowProject>();
+  readonly projects = new Map<string, Project>();
   /** Eventos da Agenda (GET, POST e DELETE de `/events`). */
   readonly events = new Map<string, AgendaEvent>();
   readonly calls: ApiCall[] = [];
-  /** Cada PUT aceito, com o projeto e o pedido, na ordem. */
-  readonly saves: { id: string; request: SaveProjectRequest }[] = [];
+  /** Cada PUT aceito, com o projeto e o pedido, na ordem (fluxos e roteiros). */
+  readonly saves: { id: string; request: SaveProjectRequest | SaveScriptRequest }[] = [];
   private tick = 0;
   private failures = new Map<string, number>();
 
@@ -64,6 +71,25 @@ export class FakeApi {
       createdAt: at,
       updatedAt: at,
       content: createEmptyFlow(),
+      ...input,
+    };
+    this.projects.set(project.id, project);
+    return project;
+  }
+
+  /** Cria um roteiro já existente na "conta". */
+  seedScript(input: ScriptSeed = {}): ScriptProject {
+    const at = this.now();
+    const project: ScriptProject = {
+      id: crypto.randomUUID(),
+      kind: 'script',
+      title: 'Roteiro de teste',
+      status: 'draft',
+      driveFileId: null,
+      revision: 1,
+      createdAt: at,
+      updatedAt: at,
+      content: createEmptyScript(),
       ...input,
     };
     this.projects.set(project.id, project);
@@ -90,7 +116,28 @@ export class FakeApi {
 
   /** O PUT mais recente aceito para o projeto. */
   lastSave(id: string): SaveProjectRequest | undefined {
-    return this.saves.filter((save) => save.id === id).at(-1)?.request;
+    return this.saves.filter((save) => save.id === id).at(-1)?.request as
+      SaveProjectRequest | undefined;
+  }
+
+  /** O PUT mais recente aceito para um roteiro. */
+  lastScriptSave(id: string): SaveScriptRequest | undefined {
+    return this.saves.filter((save) => save.id === id).at(-1)?.request as
+      SaveScriptRequest | undefined;
+  }
+
+  /** O fluxo gravado de um projeto (o quadro), ou erro se o projeto não for um fluxo. */
+  flow(id: string): FlowProject {
+    const project = this.projects.get(id);
+    if (project?.kind !== 'flow') throw new Error(`o projeto ${id} não é um fluxo`);
+    return project;
+  }
+
+  /** O roteiro gravado de um projeto, ou erro se o projeto não for um roteiro. */
+  script(id: string): ScriptProject {
+    const project = this.projects.get(id);
+    if (project?.kind !== 'script') throw new Error(`o projeto ${id} não é um roteiro`);
+    return project;
   }
 
   /** Chamadas já feitas com o método e o caminho (aceita prefixo com `*` no fim). */
@@ -118,7 +165,7 @@ export class FakeApi {
     return new Date(Date.now() + this.tick++ * 1000).toISOString();
   }
 
-  private summary(project: FlowProject): ProjectSummary {
+  private summary(project: Project): ProjectSummary {
     const { id, kind, title, status, revision, updatedAt } = project;
     return { id, kind, title, status, revision, updatedAt };
   }
@@ -214,12 +261,16 @@ export class FakeApi {
         return this.json(route, 200, list);
       }
       if (method === 'POST') {
-        const parsed = createProjectRequestSchema.safeParse(body);
+        const parsed = createAnyProjectRequestSchema.safeParse(body);
         if (!parsed.success) return this.error(route, 400, 'Pedido inválido.');
-        const project = this.seed({
-          title: parsed.data.title,
-          content: parsed.data.content ?? createEmptyFlow(),
-        });
+        const request = parsed.data;
+        const project =
+          request.kind === 'script'
+            ? this.seedScript({
+                title: request.title,
+                content: request.content ?? createEmptyScript(),
+              })
+            : this.seed({ title: request.title, content: request.content ?? createEmptyFlow() });
         return this.json(route, 201, project);
       }
       return this.error(route, 405, 'Método não permitido.');
@@ -245,16 +296,20 @@ export class FakeApi {
     }
 
     if (method === 'PUT') {
-      const parsed = saveProjectRequestSchema.safeParse(body);
+      // Como a API: o conteúdo é validado pelo esquema do tipo do projeto gravado.
+      const parsed =
+        project.kind === 'script'
+          ? saveScriptRequestSchema.safeParse(body)
+          : saveProjectRequestSchema.safeParse(body);
       if (!parsed.success) return this.error(route, 400, 'Pedido inválido.');
       this.saves.push({ id, request: parsed.data });
-      const saved: FlowProject = {
+      const saved = {
         ...project,
         content: parsed.data.content,
         title: parsed.data.title ?? project.title,
         revision: project.revision + 1,
         updatedAt: this.now(),
-      };
+      } as Project;
       this.projects.set(id, saved);
       return this.json(route, 200, {
         revision: saved.revision,
