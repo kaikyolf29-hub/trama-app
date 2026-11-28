@@ -1,11 +1,12 @@
 import {
-  flowProjectSchema,
+  projectSchema,
   projectSummarySchema,
   saveProjectResponseSchema,
-  type CreateProjectRequest,
-  type FlowProject,
+  type CreateAnyProjectRequest,
+  type Project,
   type ProjectSummary,
   type SaveProjectRequest,
+  type SaveScriptRequest,
   type SaveProjectResponse,
   type UpdateProjectRequest,
 } from '@trama/core';
@@ -17,14 +18,16 @@ export { ApiError };
 /** O que as telas usam da API de projetos (apps/api). */
 export interface ProjectsApi {
   list(): Promise<ProjectSummary[]>;
-  create(input: CreateProjectRequest): Promise<FlowProject>;
-  get(id: string): Promise<FlowProject>;
+  /** Cria um fluxo ou um roteiro (o tipo vem em `kind`). */
+  create(input: CreateAnyProjectRequest): Promise<Project>;
+  /** Abre o projeto com o conteúdo do tipo dele (`kind` diz qual). */
+  get(id: string): Promise<Project>;
   /** Renomeia e/ou muda o status, sem mexer no conteúdo. */
   update(id: string, patch: UpdateProjectRequest): Promise<ProjectSummary>;
   remove(id: string): Promise<void>;
   save(
     id: string,
-    request: SaveProjectRequest,
+    request: SaveProjectRequest | SaveScriptRequest,
     options?: { keepalive?: boolean },
   ): Promise<SaveProjectResponse>;
 }
@@ -43,8 +46,8 @@ export function createProjectsApi(config: {
   return {
     list: () => call('/projects', z.array(projectSummarySchema)),
     create: (input) =>
-      call('/projects', flowProjectSchema, { method: 'POST', body: JSON.stringify(input) }),
-    get: (id) => call(`/projects/${encodeURIComponent(id)}`, flowProjectSchema),
+      call('/projects', projectSchema, { method: 'POST', body: JSON.stringify(input) }),
+    get: (id) => call(`/projects/${encodeURIComponent(id)}`, projectSchema),
     update: (id, patch) =>
       call(`/projects/${encodeURIComponent(id)}`, projectSummarySchema, {
         method: 'PATCH',

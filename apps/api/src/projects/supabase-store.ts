@@ -102,6 +102,17 @@ export function createSupabaseStore(
       return data ? toProject(data) : null;
     },
 
+    async kindOf(id) {
+      const { data, error, status } = await supabase
+        .from('projects')
+        .select('kind')
+        .eq('id', id)
+        .returns<{ kind: ProjectKind }[]>()
+        .maybeSingle();
+      check(error, status);
+      return data?.kind ?? null;
+    },
+
     async create({ kind, title, content }) {
       const { data, error, status } = await supabase
         .from('projects')

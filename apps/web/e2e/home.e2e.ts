@@ -1,4 +1,4 @@
-import { flowTemplates } from '@trama/core';
+import { projectTemplates } from '@trama/core';
 import { expect, test } from './support/fixtures';
 
 test.describe('tela Início: modelos', () => {
@@ -6,16 +6,16 @@ test.describe('tela Início: modelos', () => {
     await signIn();
     await page.goto('/');
     await expect(page.getByRole('heading', { level: 1 })).toContainText('Ana');
-    for (const template of flowTemplates) {
+    for (const template of projectTemplates) {
       await expect(page.getByRole('button', { name: new RegExp(template.title) })).toBeVisible();
     }
-    expect(flowTemplates).toHaveLength(6);
+    expect(projectTemplates).toHaveLength(6);
     await expect(page.getByText('Nenhum projeto ainda')).toBeVisible();
     expect(api.projects.size).toBe(0);
   });
 
   // "Falar e organizar" abre a tela de voz, não o quadro (veja voice.e2e.ts).
-  for (const template of flowTemplates.filter((item) => item.id !== 'voice')) {
+  for (const template of projectTemplates.filter((item) => item.id !== 'voice')) {
     test(`"${template.title}" cria o projeto e abre no quadro`, async ({ page, api, signIn }) => {
       await signIn();
       await page.goto('/');
@@ -26,6 +26,19 @@ test.describe('tela Início: modelos', () => {
       const [project] = [...api.projects.values()];
       expect(project?.title).toBe(template.projectTitle);
       await expect(page).toHaveURL(`/p/${project?.id}`);
+
+      if (template.kind === 'script') {
+        // O roteiro abre no editor de texto, com as cenas do modelo.
+        expect(project?.kind).toBe('script');
+        await expect(page.getByRole('textbox', { name: 'Título do roteiro' })).toHaveValue(
+          template.projectTitle,
+        );
+        await expect(page.getByRole('textbox', { name: 'Texto do roteiro' })).toContainText(
+          template.content().scenes[0]?.title ?? '',
+        );
+        await expect(page.getByRole('status').filter({ hasText: 'Salvo' })).toBeVisible();
+        return;
+      }
 
       // O quadro abre com o que o modelo traz, no título e nos blocos.
       await expect(page.getByTestId('quadro')).toBeVisible();

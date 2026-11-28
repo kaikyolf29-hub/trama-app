@@ -4,8 +4,10 @@ import type {
   ProjectStatus,
   ProjectSummary,
   ProjectVersion,
+  ScriptContent,
   SaveProjectRequest,
   SaveProjectResponse,
+  SaveScriptRequest,
   UpdateProjectRequest,
 } from '@trama/core';
 
@@ -30,10 +32,19 @@ export interface StoredProject {
 export interface ProjectStore {
   list(): Promise<ProjectSummary[]>;
   get(id: string): Promise<StoredProject | null>;
-  create(input: { kind: 'flow'; title: string; content: FlowContent }): Promise<StoredProject>;
+  create(
+    input:
+      | { kind: 'flow'; title: string; content: FlowContent }
+      | { kind: 'script'; title: string; content: ScriptContent },
+  ): Promise<StoredProject>;
+  /** Só o tipo do projeto (o `PUT` precisa dele para validar o conteúdo sem ler o conteúdo). */
+  kindOf(id: string): Promise<ProjectKind | null>;
   /** Renomeia e/ou muda o status; o conteúdo e a revisão ficam como estão. */
   update(id: string, patch: UpdateProjectRequest): Promise<ProjectSummary | null>;
-  save(id: string, request: SaveProjectRequest): Promise<SaveProjectResponse | null>;
+  save(
+    id: string,
+    request: SaveProjectRequest | SaveScriptRequest,
+  ): Promise<SaveProjectResponse | null>;
   /** Guarda o id do `projeto.trama` no Drive (não conta como mudança no projeto). */
   setDriveFileId(id: string, driveFileId: string): Promise<void>;
   remove(id: string): Promise<boolean>;

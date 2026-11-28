@@ -1,0 +1,169 @@
+/*
+ * O texto do roteiro (tela 3). As cores vêm dos tokens, pelas classes do Tailwind (`@apply`); aqui
+ * só ficam as regras que o Tailwind não escreve bem (irmãos vizinhos, rótulos e o texto de espera).
+ */
+@reference '../../styles.css';
+
+.script-editor {
+  @apply text-text;
+
+  outline: none;
+  font-size: 16px;
+  line-height: 1.6;
+}
+
+/* Cada cena começa num título, com respiro em cima (menos a primeira). */
+.script-editor .scene-head {
+  @apply text-text-strong;
+
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0 8px;
+  margin-top: 48px;
+  margin-bottom: 16px;
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+/* O Tiptap põe cada título dentro de um `.react-renderer`: o primeiro não leva respiro em cima. */
+.script-editor > .react-renderer:first-child > .scene-head {
+  margin-top: 0;
+}
+
+.script-editor .scene-title {
+  margin: 0;
+  min-width: 8px;
+  font: inherit;
+  outline: none;
+}
+
+.script-editor .scene-dot {
+  @apply text-text-muted;
+}
+
+.script-editor .scene-time {
+  width: 14ch;
+  min-width: 0;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+}
+
+.script-editor .scene-time::placeholder {
+  @apply text-text-muted;
+
+  font-weight: 400;
+}
+
+.script-editor .scene-time:focus-visible {
+  @apply outline-2 outline-offset-2 outline-selection;
+}
+
+/* Texto de espera: o Tiptap marca o bloco vazio com `is-empty` e `data-placeholder`. */
+.script-editor .is-empty::before {
+  @apply text-text-muted;
+
+  content: attr(data-placeholder);
+  font-weight: 400;
+  pointer-events: none;
+}
+
+/* O texto de espera não empurra nada: fica por cima do bloco vazio, numa linha só. */
+.script-editor .scene-block.is-empty {
+  position: relative;
+}
+
+.script-editor .scene-block.is-empty::before {
+  position: absolute;
+  top: var(--block-top, 0);
+  right: 0;
+  left: var(--block-left, 0);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.script-editor .scene-head.is-empty::before {
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+.script-editor .scene-head.is-empty .scene-title {
+  min-width: 11ch;
+}
+
+/* Blocos embaixo do título. */
+.script-editor .scene-block {
+  margin: 0 0 8px;
+  outline: none;
+}
+
+.script-editor .scene-notes {
+  min-height: 1.6em;
+}
+
+/* Fala: caixa com o rótulo "FALA"; várias linhas seguidas formam uma caixa só. */
+.script-editor .scene-narration {
+  @apply bg-field text-text-strong;
+
+  position: relative;
+  padding: 16px 16px 16px 80px;
+  border-radius: 8px;
+  --block-top: 16px;
+  --block-left: 80px;
+}
+
+.script-editor .scene-narration::after {
+  @apply text-text-muted;
+
+  content: 'FALA';
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.script-editor .scene-narration + .scene-narration {
+  margin-top: -8px;
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+}
+
+.script-editor .scene-narration + .scene-narration::after {
+  content: none;
+}
+
+.script-editor .scene-narration:has(+ .scene-narration) {
+  margin-bottom: 0;
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+/* Plano / B-roll: uma linha com o marcador. */
+.script-editor .scene-broll {
+  position: relative;
+  padding-left: 24px;
+  --block-left: 24px;
+}
+
+.script-editor .scene-broll::after {
+  content: '';
+  position: absolute;
+  top: 0.7em;
+  left: 4px;
+  border-top: 4px solid transparent;
+  border-bottom: 4px solid transparent;
+  border-left: 6px solid currentcolor;
+}
+
+.script-editor .ProseMirror-selectednode {
+  @apply outline-2 outline-selection;
+}
