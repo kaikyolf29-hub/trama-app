@@ -20,6 +20,11 @@ export interface DriveStore {
   setRootFolder(folderId: string): Promise<void>;
   /** Anota o resultado de uma cópia e devolve quantas falhas seguidas já são. */
   recordCopy(ok: boolean, error?: string): Promise<{ consecutiveFailures: number }>;
+  /**
+   * Reserva o "Aviso do Drive": true só com 3 falhas seguidas e se o último aviso tem mais de
+   * um dia (`claim_drive_notice`). Assim ninguém gasta a cota de e-mails em laço.
+   */
+  claimNotice(): Promise<boolean>;
   disconnect(): Promise<void>;
 }
 

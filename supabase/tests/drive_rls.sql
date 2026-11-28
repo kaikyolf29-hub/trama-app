@@ -69,6 +69,34 @@ begin
   if not public.claim_welcome_email() then
     raise exception 'depois de devolver, a reserva deveria valer de novo';
   end if;
+  -- Devolver e reservar em laço para na terceira reserva.
+  perform public.release_welcome_email();
+  if not public.claim_welcome_email() then
+    raise exception 'a terceira reserva ainda deveria valer';
+  end if;
+  perform public.release_welcome_email();
+  if public.claim_welcome_email() then
+    raise exception 'depois de 3 reservas, a boas-vindas não deveria sair de novo';
+  end if;
+
+  -- Aviso do Drive: só com 3 falhas seguidas, e um por dia.
+  if public.claim_drive_notice() then
+    raise exception 'sem 3 falhas, o aviso não deveria sair';
+  end if;
+  perform public.drive_record_copy(false, 'x');
+  perform public.drive_record_copy(false, 'x');
+  perform public.drive_record_copy(false, 'x');
+  if not public.claim_drive_notice() then
+    raise exception 'na 3ª falha, o aviso deveria sair';
+  end if;
+  -- Zerar e falhar de novo (ou reconectar) no mesmo dia não reabre o aviso.
+  perform public.drive_record_copy(true);
+  perform public.drive_record_copy(false, 'x');
+  perform public.drive_record_copy(false, 'x');
+  perform public.drive_record_copy(false, 'x');
+  if public.claim_drive_notice() then
+    raise exception 'o segundo aviso no mesmo dia não deveria sair';
+  end if;
 end $$;
 
 -- Como Bia: não vê nem mexe na conexão da Ana.
@@ -109,6 +137,20 @@ begin
     raise exception 'deveria recusar editar welcome_email_sent_at';
   exception when insufficient_privilege then null;
   end;
+  begin
+    update public.profiles set welcome_email_attempts = 0 where id = '22222222-2222-4222-8222-222222222222';
+    raise exception 'deveria recusar editar welcome_email_attempts';
+  exception when insufficient_privilege then null;
+  end;
+  begin
+    update public.profiles set drive_notice_sent_at = null where id = '22222222-2222-4222-8222-222222222222';
+    raise exception 'deveria recusar editar drive_notice_sent_at';
+  exception when insufficient_privilege then null;
+  end;
+  -- Sem conexão, a Bia não reserva aviso nenhum.
+  if public.claim_drive_notice() then
+    raise exception 'sem conexão, o aviso não deveria sair';
+  end if;
 end $$;
 
 -- Sem login, nada.

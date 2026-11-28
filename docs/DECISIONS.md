@@ -208,6 +208,8 @@ Não apague: escreva uma linha nova dizendo o que substitui.
 - 2026-11-27 · **O Início usa `DriveConnect` no lugar do `DriveStatus` provisório: conectado, desconectado, "Conectar de novo" (quando a cópia falha), "Abrir pasta no Drive", "Abrir do Drive" e "Desconectar" com confirmação. No quadro, "Salvo no Drive" fica ao lado do "Salvo" só para quem conectou o Drive.** Motivo: tela 4 e "Salvo no Drive" da tela 1.
 - 2026-11-27 · **O script do Google Picker só carrega no clique em "Abrir do Drive"; o `appId` vem do número no começo do ID do cliente OAuth.** Motivo: nada do Google carrega antes de a pessoa pedir; um valor a menos para configurar.
 
+- 2026-11-28 · **Os e-mails que a API manda têm limite contado no banco, em colunas de `profiles` que a pessoa não edita: a boas-vindas sai no máximo em 3 reservas (devolver não zera a conta) e o "Aviso do Drive", no máximo uma vez por dia (`claim_drive_notice`, que também exige 3 falhas seguidas). As duas migrations da 1.6 foram corrigidas antes de serem aplicadas em qualquer banco.** Motivo: com o token da própria pessoa, dava para chamar `release_welcome_email` ou zerar as falhas (até apagando e recriando a conexão) e mandar e-mails em laço; a cota grátis do Resend (100 por dia) é a mesma da recuperação de senha, de todo mundo.
+
 ## Etapa 1.9 — Testes de ponta a ponta e 500 blocos
 
 - 2026-11-27 · **Os testes de ponta a ponta usam Playwright (`@playwright/test` 1.63.0, a mesma versão do Chromium da máquina) em `apps/web/e2e`, contra o site construído (`vite build` + `vite preview`), em arquivos `*.e2e.ts`.** Motivo: testar o que vai para o ar, não o servidor de desenvolvimento; o sufixo `.e2e.ts` mantém o Vitest longe deles.
