@@ -3,7 +3,13 @@ import { canDeleteEvent, localTime, type AgendaEvent } from '@trama/core';
 import { Button, cn } from '@trama/ui';
 import { TrashIcon } from '@trama/ui/icons';
 import { useState } from 'react';
-import { eventHeadline, eventStyles, eventSubline, openableProjectId } from './event-style';
+import {
+  eventHeadline,
+  eventStyles,
+  eventSubline,
+  openableNotebookId,
+  openableProjectId,
+} from './event-style';
 
 const iconButton =
   'inline-flex size-8 shrink-0 items-center justify-center rounded-control text-text-muted transition-colors hover:bg-hover hover:text-text-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-selection disabled:cursor-not-allowed disabled:opacity-60';
@@ -50,6 +56,7 @@ export function DayEvents({
           const style = eventStyles[event.type];
           const Icon = style.icon;
           const projectId = openableProjectId(event);
+          const notebookId = openableNotebookId(event);
           const subline = eventSubline(event);
           const body = (
             <>
@@ -78,6 +85,14 @@ export function DayEvents({
                 <Link
                   to="/p/$projectId"
                   params={{ projectId }}
+                  className="flex min-w-0 flex-1 rounded-tag hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-selection"
+                >
+                  {body}
+                </Link>
+              ) : notebookId ? (
+                <Link
+                  to="/estudos/$notebookId"
+                  params={{ notebookId }}
                   className="flex min-w-0 flex-1 rounded-tag hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-selection"
                 >
                   {body}

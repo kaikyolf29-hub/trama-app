@@ -10,6 +10,8 @@ import { createCaller } from './http';
 
 /** O que a tela Estudos usa da API (rotas `/notebooks/:id/lessons`). */
 export interface LessonsApi {
+  /** As aulas de todos os cadernos (a aba "Todas as aulas" e os números dos cartões). */
+  listAll(): Promise<Lesson[]>;
   list(notebookId: string): Promise<Lesson[]>;
   create(notebookId: string, input: CreateLessonRequest): Promise<Lesson>;
   /** Só o que mudou; `null` limpa uma data. Estudar e revisar entram na Agenda sozinhos. */
@@ -24,6 +26,7 @@ export function createLessonsApi(config: Parameters<typeof createCaller>[0]): Le
   const call = createCaller(config);
 
   return {
+    listAll: () => call('/lessons', lessonListSchema),
     list: (notebookId) => call(base(notebookId), lessonListSchema),
     create: (notebookId, input) =>
       call(base(notebookId), lessonSchema, { method: 'POST', body: JSON.stringify(input) }),

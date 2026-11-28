@@ -15,6 +15,7 @@ import type { AgendaApi } from '../../api/agenda-api';
 import { useAuth } from '../../auth/context';
 import { useServices } from '../../services';
 import { AppSidebar } from '../AppSidebar';
+import { useProfile } from '../use-profile';
 import { DayEvents } from './DayEvents';
 import { longDate, panelDate, shiftFocus, type AgendaView } from './dates';
 import { MonthCalendar } from './MonthCalendar';
@@ -38,13 +39,22 @@ const arrowButton =
 export function AgendaPage() {
   const { user, client } = useAuth();
   const { agenda } = useServices();
+  // As datas da Agenda seguem o fuso do perfil; a tela espera o perfil para não pedir duas vezes.
+  const { timeZone, loading } = useProfile();
 
   return (
     <div className="min-h-dvh bg-page md:flex">
       <AppSidebar current="agenda" email={user?.email} onSignOut={() => void client.signOut()} />
       <main className="mx-auto flex min-w-0 max-w-[1184px] flex-1 flex-col gap-8 px-4 py-10 sm:px-8 md:px-12 md:py-14">
-        {agenda ? (
-          <AgendaContent api={agenda} />
+        {agenda && loading ? (
+          <>
+            <Heading />
+            <p role="status" className="text-sm text-text-muted">
+              Carregando…
+            </p>
+          </>
+        ) : agenda ? (
+          <AgendaContent api={agenda} timeZone={timeZone} />
         ) : (
           <>
             <Heading />
@@ -69,8 +79,8 @@ function Heading() {
   );
 }
 
-function AgendaContent({ api }: { api: AgendaApi }) {
-  const { timeZone, now } = useServices();
+function AgendaContent({ api, timeZone }: { api: AgendaApi; timeZone: string }) {
+  const { now } = useServices();
   const today = todayKey(now(), timeZone);
   const [view, setView] = useState<AgendaView>('month');
   const [focus, setFocus] = useState<DateKey>(today);

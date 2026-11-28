@@ -9,6 +9,9 @@ import {
   type ProjectKind,
 } from '@trama/core';
 import { check, iso } from '../projects/supabase-store';
+
+/** A API devolve no máximo isto de uma vez (cabe com folga na tabela de uma pessoa). */
+const MAX_LESSONS_PER_QUERY = 5000;
 import type { OrganizationStore } from './store';
 
 interface EventRow {
@@ -186,6 +189,20 @@ export function createSupabaseOrganizationStore(
     },
 
     lessons: {
+      async listAll() {
+        const { data, error, status } = await supabase
+          .from('lessons')
+          .select(LESSON_COLUMNS)
+          .order('notebook_id', { ascending: true })
+          .order('position', { ascending: true })
+          .order('created_at', { ascending: true })
+          .order('id', { ascending: true })
+          .limit(MAX_LESSONS_PER_QUERY)
+          .returns<LessonRow[]>();
+        check(error, status);
+        return (data ?? []).map(toLesson);
+      },
+
       async list(notebookId) {
         if (!(await notebookExists(notebookId))) return null;
         const { data, error, status } = await supabase

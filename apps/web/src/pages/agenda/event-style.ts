@@ -71,9 +71,15 @@ export function eventSubline(event: AgendaEvent): string {
 }
 
 /**
- * Para onde o clique no evento leva. Só os fluxos têm tela hoje (`/p/<id>`); roteiros e cadernos
- * ganham a deles nas etapas 2.3 e 2.4, e uma anotação sem projeto não leva a lugar nenhum.
+ * Para onde o clique no evento leva. Os fluxos abrem no quadro (`/p/<id>`) e os cadernos, e as
+ * aulas deles, em Estudos (`/estudos/<id>`); os roteiros ganham a tela deles na etapa 2.3, e uma
+ * anotação sem projeto não leva a lugar nenhum.
  */
 export function openableProjectId(event: AgendaEvent): string | null {
   return event.projectId !== null && event.projectKind === 'flow' ? event.projectId : null;
+}
+
+/** O caderno que o evento abre (aula estudada ou revisada, caderno criado), se ainda existe. */
+export function openableNotebookId(event: AgendaEvent): string | null {
+  return event.projectId !== null && event.projectKind === 'notebook' ? event.projectId : null;
 }

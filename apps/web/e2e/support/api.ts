@@ -1,12 +1,26 @@
 import {
+  applyNotebookUpdate,
+  applyProfileUpdate,
   createEmptyFlow,
+  createLessonRequestSchema,
   createNoteRequestSchema,
+  createNotebookRequestSchema,
   createProjectRequestSchema,
+  DEFAULT_EMAIL_PREFERENCES,
+  DEFAULT_TIME_ZONE,
+  notebookContentSchema,
   saveProjectRequestSchema,
+  sortLessons,
+  updateLessonRequestSchema,
+  updateNotebookRequestSchema,
+  updateProfileRequestSchema,
   updateProjectRequestSchema,
   type AgendaEvent,
   type FlowContent,
   type FlowProject,
+  type Lesson,
+  type NotebookProject,
+  type Profile,
   type ProjectSummary,
   type SaveProjectRequest,
 } from '@trama/core';
@@ -42,6 +56,15 @@ export class FakeApi {
   readonly projects = new Map<string, FlowProject>();
   /** Eventos da Agenda (GET, POST e DELETE de `/events`). */
   readonly events = new Map<string, AgendaEvent>();
+  /** Cadernos de Estudos (`/notebooks`) e as aulas deles (`/notebooks/:id/lessons`, `/lessons`). */
+  readonly notebooks = new Map<string, NotebookProject>();
+  readonly lessons = new Map<string, Lesson>();
+  /** O perfil (`/account/profile`): fuso e preferências de e-mail. */
+  profile: Profile = {
+    name: 'Ana Souza',
+    timezone: DEFAULT_TIME_ZONE,
+    emailPreferences: { ...DEFAULT_EMAIL_PREFERENCES },
+  };
   readonly calls: ApiCall[] = [];
   /** Cada PUT aceito, com o projeto e o pedido, na ordem. */
   readonly saves: { id: string; request: SaveProjectRequest }[] = [];
@@ -86,6 +109,52 @@ export class FakeApi {
     };
     this.events.set(event.id, event);
     return event;
+  }
+
+  /** Cria um caderno de Estudos já existente na "conta". */
+  seedNotebook(
+    input: Partial<Omit<NotebookProject, 'content'>> & {
+      content?: Partial<NotebookProject['content']>;
+    } = {},
+  ): NotebookProject {
+    const at = this.now();
+    const { content, ...rest } = input;
+    const notebook: NotebookProject = {
+      id: crypto.randomUUID(),
+      kind: 'notebook',
+      title: 'Caderno de teste',
+      status: 'draft',
+      driveFileId: null,
+      revision: 1,
+      createdAt: at,
+      updatedAt: at,
+      ...rest,
+      content: notebookContentSchema.parse(content ?? {}),
+    };
+    this.notebooks.set(notebook.id, notebook);
+    return notebook;
+  }
+
+  /** Põe uma aula num caderno. */
+  seedLesson(notebookId: string, input: Partial<Lesson> = {}): Lesson {
+    const at = this.now();
+    const siblings = [...this.lessons.values()].filter((l) => l.notebookId === notebookId);
+    const lesson: Lesson = {
+      id: crypto.randomUUID(),
+      notebookId,
+      title: 'Aula de teste',
+      notes: '',
+      status: 'studying',
+      studiedAt: null,
+      reviewedAt: null,
+      reviewOn: null,
+      position: siblings.length,
+      createdAt: at,
+      updatedAt: at,
+      ...input,
+    };
+    this.lessons.set(lesson.id, lesson);
+    return lesson;
   }
 
   /** O PUT mais recente aceito para o projeto. */
@@ -169,6 +238,134 @@ export class FakeApi {
     return this.error(route, 404, 'Rota não encontrada.');
   }
 
+  /** O que o banco faz sozinho: aula estudada ou revisada vira evento da Agenda. */
+  private logLesson(before: Lesson | undefined, lesson: Lesson) {
+    const notebook = this.notebooks.get(lesson.notebookId);
+    for (const [type, at, previous] of [
+      ['studied', lesson.studiedAt, before?.studiedAt],
+      ['reviewed', lesson.reviewedAt, before?.reviewedAt],
+    ] as const) {
+      if (at && at !== previous) {
+        this.seedEvent({
+          type,
+          occurredAt: at,
+          title: lesson.title,
+          detail: notebook?.title ?? null,
+          projectId: lesson.notebookId,
+          projectKind: 'notebook',
+          lessonId: lesson.id,
+        });
+      }
+    }
+  }
+
+  private handleLessons(
+    route: Route,
+    method: string,
+    notebookId: string,
+    lessonId: string | undefined,
+    body: unknown,
+  ) {
+    if (!this.notebooks.has(notebookId)) return this.error(route, 404, 'Caderno não encontrado.');
+    if (lessonId === undefined) {
+      if (method === 'GET') {
+        const own = [...this.lessons.values()].filter((l) => l.notebookId === notebookId);
+        return this.json(route, 200, sortLessons(own));
+      }
+      if (method === 'POST') {
+        const parsed = createLessonRequestSchema.safeParse(body);
+        if (!parsed.success) return this.error(route, 400, 'Dados da aula inválidos.');
+        const { studiedAt, reviewedAt, reviewOn, ...rest } = parsed.data;
+        const lesson = this.seedLesson(notebookId, {
+          ...rest,
+          ...(studiedAt === undefined ? {} : { studiedAt }),
+          ...(reviewedAt === undefined ? {} : { reviewedAt }),
+          ...(reviewOn === undefined ? {} : { reviewOn }),
+        });
+        this.logLesson(undefined, lesson);
+        return this.json(route, 201, lesson);
+      }
+      return this.error(route, 405, 'Método não permitido.');
+    }
+    const lesson = this.lessons.get(lessonId);
+    if (!lesson || lesson.notebookId !== notebookId) {
+      return this.error(route, 404, 'Aula não encontrada.');
+    }
+    if (method === 'DELETE') {
+      this.lessons.delete(lessonId);
+      return route.fulfill({ status: 204, headers: CORS });
+    }
+    if (method === 'PATCH') {
+      const parsed = updateLessonRequestSchema.safeParse(body);
+      if (!parsed.success) return this.error(route, 400, 'Dados da aula inválidos.');
+      const changes = Object.fromEntries(
+        Object.entries(parsed.data).filter(([, value]) => value !== undefined),
+      );
+      const updated: Lesson = { ...lesson, ...changes, updatedAt: this.now() };
+      this.lessons.set(lessonId, updated);
+      this.logLesson(lesson, updated);
+      return this.json(route, 200, updated);
+    }
+    return this.error(route, 405, 'Método não permitido.');
+  }
+
+  private handleNotebooks(route: Route, method: string, path: string, body: unknown) {
+    const match = /^\/notebooks(?:\/([^/]+)(?:\/lessons(?:\/([^/]+))?)?)?$/.exec(path);
+    if (!match) return this.error(route, 404, 'Rota não encontrada.');
+    const [, id, lessonId] = match;
+    if (id === undefined) {
+      if (method === 'GET') return this.json(route, 200, [...this.notebooks.values()]);
+      if (method === 'POST') {
+        const parsed = createNotebookRequestSchema.safeParse(body);
+        if (!parsed.success) return this.error(route, 400, 'Dados do caderno inválidos.');
+        const notebook = this.seedNotebook({
+          title: parsed.data.title,
+          content: parsed.data.content ?? {},
+        });
+        this.seedEvent({
+          type: 'created',
+          occurredAt: notebook.createdAt,
+          title: notebook.title,
+          projectId: notebook.id,
+          projectKind: 'notebook',
+        });
+        return this.json(route, 201, notebook);
+      }
+      return this.error(route, 405, 'Método não permitido.');
+    }
+    if (path.includes('/lessons')) return this.handleLessons(route, method, id, lessonId, body);
+    const notebook = this.notebooks.get(id);
+    if (!notebook) return this.error(route, 404, 'Caderno não encontrado.');
+    if (method === 'GET') return this.json(route, 200, notebook);
+    if (method === 'PATCH') {
+      const parsed = updateNotebookRequestSchema.safeParse(body);
+      if (!parsed.success) return this.error(route, 400, 'Pedido inválido.');
+      const { title, ...patch } = parsed.data;
+      const contentChanges = Object.values(patch).some((value) => value !== undefined);
+      const updated: NotebookProject = {
+        ...notebook,
+        title: title ?? notebook.title,
+        content: applyNotebookUpdate(notebook.content, patch),
+        revision: contentChanges ? notebook.revision + 1 : notebook.revision,
+        updatedAt: this.now(),
+      };
+      this.notebooks.set(id, updated);
+      return this.json(route, 200, updated);
+    }
+    return this.error(route, 405, 'Método não permitido.');
+  }
+
+  private handleAccount(route: Route, method: string, body: unknown) {
+    if (method === 'GET') return this.json(route, 200, this.profile);
+    if (method === 'PATCH') {
+      const parsed = updateProfileRequestSchema.safeParse(body);
+      if (!parsed.success) return this.error(route, 400, 'Pedido inválido.');
+      this.profile = applyProfileUpdate(this.profile, parsed.data);
+      return this.json(route, 200, this.profile);
+    }
+    return this.error(route, 405, 'Método não permitido.');
+  }
+
   private async handle(route: Route) {
     const request = route.request();
     const method = request.method();
@@ -202,9 +399,25 @@ export class FakeApi {
       return this.handleEvents(route, method, url, path, body);
     }
 
+    if (path === '/notebooks' || path.startsWith('/notebooks/')) {
+      return this.handleNotebooks(route, method, path, body);
+    }
+    if (path === '/lessons' && method === 'GET') {
+      return this.json(route, 200, [...this.lessons.values()]);
+    }
+    if (path === '/account/profile') return this.handleAccount(route, method, body);
+
     const match = /^\/projects(?:\/([^/]+))?$/.exec(path);
     if (!match) return this.error(route, 404, 'Rota não encontrada.');
     const id = match[1];
+    // Apagar um caderno é apagar o projeto (e as aulas vão junto).
+    if (id !== undefined && this.notebooks.has(id) && method === 'DELETE') {
+      this.notebooks.delete(id);
+      for (const lesson of this.lessons.values()) {
+        if (lesson.notebookId === id) this.lessons.delete(lesson.id);
+      }
+      return route.fulfill({ status: 204, headers: CORS });
+    }
 
     if (id === undefined) {
       if (method === 'GET') {

@@ -1,5 +1,6 @@
 import type {
   FlowContent,
+  NotebookContent,
   ProjectKind,
   ProjectStatus,
   ProjectSummary,
@@ -30,10 +31,21 @@ export interface StoredProject {
 export interface ProjectStore {
   list(): Promise<ProjectSummary[]>;
   get(id: string): Promise<StoredProject | null>;
-  create(input: { kind: 'flow'; title: string; content: FlowContent }): Promise<StoredProject>;
+  /** Os cadernos de Estudos entram por `POST /notebooks`; o fluxo, por `POST /projects`. */
+  create(
+    input:
+      | { kind: 'flow'; title: string; content: FlowContent }
+      | { kind: 'notebook'; title: string; content: NotebookContent },
+  ): Promise<StoredProject>;
+  /** Todos os projetos de um tipo, com o conteúdo (a lista de cadernos do Estudos). */
+  listByKind(kind: ProjectKind): Promise<StoredProject[]>;
   /** Renomeia e/ou muda o status; o conteúdo e a revisão ficam como estão. */
   update(id: string, patch: UpdateProjectRequest): Promise<ProjectSummary | null>;
-  save(id: string, request: SaveProjectRequest): Promise<SaveProjectResponse | null>;
+  /** O conteúdo já foi validado pela rota para o tipo do projeto (fluxo ou caderno). */
+  save(
+    id: string,
+    request: Omit<SaveProjectRequest, 'content'> & { content: unknown },
+  ): Promise<SaveProjectResponse | null>;
   /** Guarda o id do `projeto.trama` no Drive (não conta como mudança no projeto). */
   setDriveFileId(id: string, driveFileId: string): Promise<void>;
   remove(id: string): Promise<boolean>;

@@ -3,7 +3,7 @@ import { monthGrid, parseDateKey, type AgendaEvent, type DateKey } from '@trama/
 import { cn } from '@trama/ui';
 import { ChevronLeftIcon, ChevronRightIcon } from '@trama/ui/icons';
 import { longDate, monthTitle, WEEKDAYS_SHORT } from './dates';
-import { eventHeadline, eventStyles, openableProjectId } from './event-style';
+import { eventHeadline, eventStyles, openableNotebookId, openableProjectId } from './event-style';
 
 /** Quantas etiquetas cabem num dia antes do "+N". */
 const MAX_CHIPS = 3;
@@ -172,6 +172,24 @@ function Chip({ event }: { event: AgendaEvent }) {
   );
   const label = `${eventHeadline(event)}: ${text}`;
   const projectId = openableProjectId(event);
+  const notebookId = openableNotebookId(event);
+  const linkClass = cn(
+    className,
+    'hover:underline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-selection',
+  );
+  if (notebookId) {
+    return (
+      <Link
+        to="/estudos/$notebookId"
+        params={{ notebookId }}
+        title={label}
+        onClick={(click) => click.stopPropagation()}
+        className={linkClass}
+      >
+        {content}
+      </Link>
+    );
+  }
   if (!projectId) {
     return (
       <span className={className} title={label}>

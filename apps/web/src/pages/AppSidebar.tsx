@@ -4,7 +4,15 @@ import { Button, cn, LogoMark } from '@trama/ui';
 const item =
   'flex h-10 shrink-0 items-center rounded-control px-3 text-[15px] transition-colors focus-visible:outline-2 focus-visible:outline-selection';
 
-export type SidebarPage = 'home' | 'agenda' | 'settings';
+export type SidebarPage = 'home' | 'agenda' | 'studies' | 'settings';
+
+/** Um caderno na lista "Cadernos" da barra (tela 6). */
+export interface SidebarNotebook {
+  id: string;
+  title: string;
+  /** O caderno aberto agora. */
+  active?: boolean;
+}
 
 /**
  * Barra lateral do app (telas 4 e 7). Em tela estreita vira uma faixa no alto: o espaço de
@@ -12,10 +20,13 @@ export type SidebarPage = 'home' | 'agenda' | 'settings';
  */
 export function AppSidebar({
   current,
+  notebooks,
   email,
   onSignOut,
 }: {
   current: SidebarPage;
+  /** Os cadernos da pessoa, listados abaixo da navegação (só nas telas de Estudos). */
+  notebooks?: SidebarNotebook[] | undefined;
   email?: string | undefined;
   onSignOut: () => void;
 }) {
@@ -33,10 +44,33 @@ export function AppSidebar({
         <SoonItem label="Buscar" />
         <NavLink to="/" label="Início" active={current === 'home'} />
         <NavLink to="/agenda" label="Agenda" active={current === 'agenda'} />
-        <SoonItem label="Estudos" />
+        <NavLink to="/estudos" label="Estudos" active={current === 'studies'} />
         <SoonItem label="Templates" />
         <NavLink to="/configuracoes" label="Configurações" active={current === 'settings'} />
       </nav>
+
+      {notebooks && notebooks.length > 0 && (
+        <nav aria-label="Cadernos" className="hidden flex-col gap-1 md:flex">
+          <p className="px-3 text-[13px] text-text-muted">Cadernos</p>
+          {notebooks.map((notebook) => (
+            <Link
+              key={notebook.id}
+              to="/estudos/$notebookId"
+              params={{ notebookId: notebook.id }}
+              aria-current={notebook.active ? 'page' : undefined}
+              className={cn(
+                item,
+                'truncate',
+                notebook.active
+                  ? 'bg-hover text-text-strong'
+                  : 'text-text-muted hover:bg-hover hover:text-text-strong',
+              )}
+            >
+              <span className="truncate">{notebook.title}</span>
+            </Link>
+          ))}
+        </nav>
+      )}
 
       <div className="flex min-w-0 items-center gap-3 md:mt-auto md:flex-col md:items-stretch md:gap-2 md:px-2">
         {email && <span className="truncate text-[13px] text-text-muted">{email}</span>}
@@ -53,7 +87,7 @@ function NavLink({
   label,
   active,
 }: {
-  to: '/' | '/agenda' | '/configuracoes';
+  to: '/' | '/agenda' | '/estudos' | '/configuracoes';
   label: string;
   active: boolean;
 }) {

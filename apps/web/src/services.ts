@@ -8,6 +8,7 @@ import type { AccountApi } from './api/account-api';
 import type { AgendaApi } from './api/agenda-api';
 import type { AiApi } from './api/ai-api';
 import type { LessonsApi } from './api/lessons-api';
+import type { NotebooksApi } from './api/notebooks-api';
 import type { ProjectsApi } from './api/projects-api';
 import type { PickDriveFile } from './drive/picker';
 import type { VoiceServices } from './voice/services';
@@ -20,6 +21,8 @@ export interface Services {
   agenda: AgendaApi | null;
   /** Aulas dos cadernos de Estudos (null sem API configurada). */
   lessons: LessonsApi | null;
+  /** Cadernos de Estudos (null sem API configurada). */
+  notebooks: NotebooksApi | null;
   /** Google Drive (conectar, copiar, abrir); null quando o site não tem a API. */
   drive: DriveApi | null;
   /** Perfil (Configurações) e e-mail de boas-vindas; null quando o site não tem a API. */
@@ -39,8 +42,8 @@ export interface Services {
   /** Leva o navegador a outro site (a tela de consentimento do Google); os testes trocam. */
   redirectTo: (url: string) => void;
   /**
-   * Fuso horário da pessoa (a Agenda agrupa por dia nele). Enquanto as Configurações não leem o
-   * fuso do perfil (etapa 2.5), vale o padrão America/Sao_Paulo.
+   * Fuso horário de reserva: vale quando o perfil não chega (sem API ou com erro). Com a API, as
+   * telas usam o fuso do perfil (`useProfile`).
    */
   timeZone: string;
   /** O relógio das telas; os testes fixam. */
@@ -51,6 +54,7 @@ export const defaultServices: Services = {
   projects: null,
   agenda: null,
   lessons: null,
+  notebooks: null,
   drive: null,
   account: null,
   ai: null,

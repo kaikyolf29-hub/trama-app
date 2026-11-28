@@ -6,6 +6,7 @@ import { accountRoutes } from './account/routes';
 import { defaultDeps, type Deps } from './deps';
 import { driveRoutes } from './drive/routes';
 import type { Env } from './env';
+import { allLessonsRoutes, notebookRoutes } from './organization/notebooks';
 import { eventRoutes, lessonRoutes } from './organization/routes';
 import type { OrganizationStore } from './organization/store';
 import { isAllowedOrigin } from './origin';
@@ -62,7 +63,7 @@ export function createApp(storeFor?: StoreFactory, overrides: Partial<Deps> = {}
     }),
   );
   // Agenda e aulas só recebem textos curtos (as notas de uma aula chegam a 20.000 letras).
-  for (const prefix of ['/events/*', '/notebooks/*']) {
+  for (const prefix of ['/events/*', '/notebooks/*', '/lessons/*']) {
     app.use(
       prefix,
       bodyLimit({
@@ -99,6 +100,7 @@ export function createApp(storeFor?: StoreFactory, overrides: Partial<Deps> = {}
       path.startsWith('/projects') ||
       path.startsWith('/events') ||
       path.startsWith('/notebooks') ||
+      path.startsWith('/lessons') ||
       path.startsWith('/account') ||
       path.startsWith('/ai') ||
       (path.startsWith('/drive') && path !== '/drive/callback');
@@ -107,8 +109,14 @@ export function createApp(storeFor?: StoreFactory, overrides: Partial<Deps> = {}
     const token = /^Bearer (\S+)$/.exec(c.req.header('Authorization') ?? '')?.[1];
     if (!token) return c.json({ error: 'Entre na sua conta para continuar.' }, 401);
     c.set('token', token);
-    if (path.startsWith('/projects')) c.set('store', deps.projects(c.env ?? {}, token));
-    if (path.startsWith('/events') || path.startsWith('/notebooks')) {
+    if (path.startsWith('/projects') || path.startsWith('/notebooks')) {
+      c.set('store', deps.projects(c.env ?? {}, token));
+    }
+    if (
+      path.startsWith('/events') ||
+      path.startsWith('/notebooks') ||
+      path.startsWith('/lessons')
+    ) {
       c.set('organization', deps.organization(c.env ?? {}, token));
     }
     await next();
@@ -117,6 +125,8 @@ export function createApp(storeFor?: StoreFactory, overrides: Partial<Deps> = {}
   app.route('/projects', projectRoutes());
   app.route('/events', eventRoutes());
   app.route('/notebooks', lessonRoutes());
+  app.route('/notebooks', notebookRoutes());
+  app.route('/lessons', allLessonsRoutes());
   app.route('/drive', driveRoutes());
   app.route('/account', accountRoutes());
   app.route('/ai', aiRoutes());
