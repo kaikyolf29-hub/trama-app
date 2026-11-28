@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { timeZoneSchema } from './calendar';
 
 /**
  * Perfil da pessoa (etapa 2.5, docs/PLAN.md, "Tabelas principais"): espelha a tabela `profiles`
@@ -7,7 +8,6 @@ import { z } from 'zod';
  */
 
 export const PROFILE_NAME_MAX = 80;
-export const DEFAULT_TIME_ZONE = 'America/Sao_Paulo';
 
 /** O banco conta letras como o Postgres (`char_length`): um emoji é 1, não 2. */
 const withinNameLimit = (name: string) => Array.from(name).length <= PROFILE_NAME_MAX;
@@ -22,24 +22,6 @@ export const profileNameSchema = z
 
 /** Ao ler, o nome pode estar vazio (o gatilho do cadastro deixa '' quando não há nome). */
 const storedNameSchema = z.string().refine(withinNameLimit, nameTooLong);
-
-/** Se o motor do JavaScript conhece o fuso (nome IANA, como "America/Sao_Paulo"). */
-export function isValidTimeZone(value: string): boolean {
-  // Só nomes IANA: o Intl também aceita deslocamentos ("+03:00"), que não seguem o horário de verão.
-  if (!/^[A-Za-z][A-Za-z0-9_+-]*(\/[A-Za-z0-9_+-]+)*$/.test(value)) return false;
-  try {
-    new Intl.DateTimeFormat('en-US', { timeZone: value });
-    return true;
-  } catch {
-    return false;
-  }
-}
-
-/** Fuso horário IANA válido. */
-export const timeZoneSchema = z
-  .string()
-  .max(64)
-  .refine(isValidTimeZone, 'Escolha um fuso horário da lista.');
 
 const emailPreferenceKeys = {
   /** Resumo dos estudos da semana (etapa 2.6). */
