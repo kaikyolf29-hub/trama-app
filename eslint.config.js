@@ -7,7 +7,14 @@ import tseslint from 'typescript-eslint';
 import { TOKEN_FILE, UI_FILES, noEmoji, noHexColors } from './tooling/style-rules.js';
 
 export default defineConfig([
-  globalIgnores(['**/dist/', '**/coverage/', '**/.turbo/', '**/.wrangler/']),
+  globalIgnores([
+    '**/dist/',
+    '**/coverage/',
+    '**/.turbo/',
+    '**/.wrangler/',
+    // Worktrees dos agentes do Claude Code: cada um roda o próprio lint.
+    '.claude/worktrees/',
+  ]),
 
   {
     files: ['**/*.{js,mjs,cjs}'],
