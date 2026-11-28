@@ -5,6 +5,11 @@ export function logoUrl(siteUrl: string): string {
   return `${siteUrl.replace(/\/$/, '')}/email/logo.png`;
 }
 
+/** A tela Estudos, para onde os e-mails de resumo e lembrete levam. */
+export function studiesUrl(siteUrl: string): string {
+  return `${siteUrl.replace(/\/$/, '')}/estudos`;
+}
+
 /** Estilos compartilhados pelo conteúdo dos e-mails. */
 export const emailText = {
   heading: {

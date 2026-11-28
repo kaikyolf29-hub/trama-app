@@ -3,6 +3,8 @@ export interface MailMessage {
   subject: string;
   html: string;
   text: string;
+  /** Cabeçalhos extras (os e-mails de resumo mandam `List-Unsubscribe`). */
+  headers?: Record<string, string>;
 }
 
 /** Envio de e-mail. `configured` é falso quando faltam RESEND_API_KEY ou EMAIL_FROM no Worker. */
@@ -19,12 +21,19 @@ export function createResendMailer(
   const { RESEND_API_KEY: apiKey, EMAIL_FROM: from } = env;
   return {
     configured: Boolean(apiKey && from),
-    async send({ to, subject, html, text }) {
+    async send({ to, subject, html, text, headers }) {
       if (!apiKey || !from) throw new Error('Faltam RESEND_API_KEY e EMAIL_FROM no Worker.');
       const response = await fetcher('https://api.resend.com/emails', {
         method: 'POST',
         headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ from, to: [to], subject, html, text }),
+        body: JSON.stringify({
+          from,
+          to: [to],
+          subject,
+          html,
+          text,
+          ...(headers ? { headers } : {}),
+        }),
       });
       if (!response.ok) {
         // O corpo do erro do Resend não traz segredo, mas também não precisa ir para o log inteiro.

@@ -14,6 +14,7 @@
     "@trama/ai": "workspace:*",
     "@trama/core": "workspace:*",
     "@trama/emails": "workspace:*",
+    "@trama/ui": "workspace:*",
     "hono": "^4.13.0",
     "zod": "catalog:"
   },
