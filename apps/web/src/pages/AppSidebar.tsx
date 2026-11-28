@@ -4,7 +4,7 @@ import { Button, cn, LogoMark } from '@trama/ui';
 const item =
   'flex h-10 shrink-0 items-center rounded-control px-3 text-[15px] transition-colors focus-visible:outline-2 focus-visible:outline-selection';
 
-export type SidebarPage = 'home' | 'agenda';
+export type SidebarPage = 'home' | 'agenda' | 'settings';
 
 /**
  * Barra lateral do app (telas 4 e 7). Em tela estreita vira uma faixa no alto: o espaço de
@@ -31,26 +31,11 @@ export function AppSidebar({
         className="order-last flex w-full gap-1 overflow-x-auto md:order-none md:w-auto md:flex-col"
       >
         <SoonItem label="Buscar" />
-        <Link
-          to="/"
-          {...(current === 'home' ? { 'aria-current': 'page' as const } : {})}
-          className={cn(item, current === 'home' ? 'bg-hover text-text-strong' : 'text-text-muted')}
-        >
-          Início
-        </Link>
-        <Link
-          to="/agenda"
-          {...(current === 'agenda' ? { 'aria-current': 'page' as const } : {})}
-          className={cn(
-            item,
-            current === 'agenda' ? 'bg-hover text-text-strong' : 'text-text-muted',
-          )}
-        >
-          Agenda
-        </Link>
+        <NavLink to="/" label="Início" active={current === 'home'} />
+        <NavLink to="/agenda" label="Agenda" active={current === 'agenda'} />
         <SoonItem label="Estudos" />
         <SoonItem label="Templates" />
-        <SoonItem label="Configurações" />
+        <NavLink to="/configuracoes" label="Configurações" active={current === 'settings'} />
       </nav>
 
       <div className="flex min-w-0 items-center gap-3 md:mt-auto md:flex-col md:items-stretch md:gap-2 md:px-2">
@@ -60,6 +45,31 @@ export function AppSidebar({
         </Button>
       </div>
     </aside>
+  );
+}
+
+function NavLink({
+  to,
+  label,
+  active,
+}: {
+  to: '/' | '/agenda' | '/configuracoes';
+  label: string;
+  active: boolean;
+}) {
+  return (
+    <Link
+      to={to}
+      aria-current={active ? 'page' : undefined}
+      className={cn(
+        item,
+        active
+          ? 'bg-hover text-text-strong'
+          : 'text-text-muted hover:bg-hover hover:text-text-strong',
+      )}
+    >
+      {label}
+    </Link>
   );
 }
 

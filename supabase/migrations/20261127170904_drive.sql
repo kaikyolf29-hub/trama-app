@@ -64,3 +64,41 @@ $$;
 
 revoke execute on function public.drive_record_copy(boolean, text) from public, anon;
 grant execute on function public.drive_record_copy(boolean, text) to authenticated;
+
+/*
+ * "Aviso do Drive" por e-mail: no máximo um por dia por pessoa. A hora do último aviso fica em
+ * `profiles`, que a pessoa não edita nem apaga (só o nome, o fuso e as preferências), então
+ * desconectar e conectar de novo, ou zerar as falhas, não reabre o envio. Os e-mails dividem a
+ * cota grátis do Resend com a recuperação de senha: ninguém pode gastá-la sozinho.
+ */
+alter table public.profiles add column drive_notice_sent_at timestamptz;
+
+/*
+ * Reserva o aviso: true só quando a conexão da pessoa já tem 3 falhas seguidas (o mesmo
+ * FAILURES_BEFORE_EMAIL da API) e o último aviso tem mais de um dia.
+ * `security definer` porque a pessoa não pode editar esta coluna; só mexe na própria linha.
+ */
+create function public.claim_drive_notice()
+returns boolean
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  claimed integer;
+begin
+  update public.profiles p
+  set drive_notice_sent_at = now()
+  where p.id = (select auth.uid())
+    and (p.drive_notice_sent_at is null or p.drive_notice_sent_at < now() - interval '1 day')
+    and exists (
+      select 1 from public.drive_connections c
+      where c.owner_id = p.id and c.consecutive_failures >= 3
+    );
+  get diagnostics claimed = row_count;
+  return claimed > 0;
+end;
+$$;
+
+revoke execute on function public.claim_drive_notice() from public, anon;
+grant execute on function public.claim_drive_notice() to authenticated;

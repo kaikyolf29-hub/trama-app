@@ -1,5 +1,6 @@
+import { createAccountApi } from './api/account-api';
 import { createAgendaApi } from './api/agenda-api';
-import { createAccountApi, createDriveApi } from './api/drive-api';
+import { createDriveApi } from './api/drive-api';
 import { createLessonsApi } from './api/lessons-api';
 import { createProjectsApi } from './api/projects-api';
 import { createSupabaseAuthClient } from './auth/supabase-client';

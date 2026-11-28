@@ -19,3 +19,4 @@ export * from './api';
 export * from './api-organization';
 export * from './drive';
 export * from './templates';
+export * from './profile';
