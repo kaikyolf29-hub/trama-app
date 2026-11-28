@@ -1,6 +1,6 @@
-import type { Page } from '@playwright/test';
 import { getFlowTemplate } from '@trama/core';
 import { expect, test } from './support/fixtures';
+import { installFakeWhisper } from './support/voice';
 
 /**
  * Tela "Falar e organizar" (etapa 3.2, tela 5). O microfone é o de mentira do Chromium
@@ -14,42 +14,6 @@ test.use({
   },
   permissions: ['microphone', 'clipboard-read', 'clipboard-write'],
 });
-
-declare global {
-  interface Window {
-    /** Libera o `load` do transcritor falso (o download do modelo). */
-    __finishModelLoad?: () => void;
-    __heard?: number[];
-  }
-}
-
-/** Instala o transcritor falso: o download fica parado em 45% até o teste liberar. */
-async function installFakeWhisper(page: Page, texts: string[]) {
-  await page.addInitScript((spoken) => {
-    window.__heard = [];
-    let release: () => void = () => undefined;
-    const loaded = new Promise<void>((resolve) => {
-      release = resolve;
-    });
-    window.__finishModelLoad = release;
-    window.__TRAMA_VOICE_TEST__ = {
-      device: 'wasm',
-      transcriber: {
-        load: async ({ onProgress }) => {
-          onProgress(45);
-          await loaded;
-          return { device: 'wasm' };
-        },
-        transcribe: (audio) => {
-          const heard = window.__heard ?? [];
-          heard.push(audio.length);
-          return Promise.resolve(spoken[heard.length - 1] ?? `texto ${heard.length}`);
-        },
-        dispose: () => undefined,
-      },
-    };
-  }, texts);
-}
 
 test.describe('Falar e organizar', () => {
   test('o modelo "Falar e organizar" do Início cria o projeto e abre a tela de voz', async ({
@@ -85,7 +49,7 @@ test.describe('Falar e organizar', () => {
     await page.goto(`/p/${project.id}/falar`);
 
     await expect(page.getByRole('link', { name: 'Ideia do jogo' })).toBeVisible();
-    await expect(page.getByRole('combobox', { name: /^Organizar com/ })).toBeDisabled();
+    await expect(page.getByRole('link', { name: 'Claude · claude-haiku-5-5' })).toBeVisible();
     await expect(page.getByRole('button', { name: 'Inserir no quadro' })).toBeDisabled();
     await expect(page.getByRole('button', { name: 'Copiar texto' })).toBeDisabled();
 

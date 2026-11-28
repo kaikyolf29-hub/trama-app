@@ -34,6 +34,8 @@ export interface Services {
   autosaveDelay: number;
   /** Intervalo da cópia para o Drive; os testes encurtam. */
   driveCopyInterval: number;
+  /** Espera, em ms, antes de pedir a estimativa de custo da IA; os testes encurtam. */
+  aiEstimateDelay?: number;
   /** Microfone e Whisper da tela "Falar e organizar"; sem isto, usa os de verdade. */
   voice?: VoiceServices;
   /** Leva o navegador a outro site (a tela de consentimento do Google); os testes trocam. */

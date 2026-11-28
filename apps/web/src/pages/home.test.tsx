@@ -168,6 +168,18 @@ describe('Início: recentes', () => {
     ).toHaveProperty('value', 'done');
   });
 
+  it('roteiro criado pela IA aparece na lista, mas ainda não abre (o editor vem depois)', async () => {
+    const script = project(2, { title: 'O gato sem memória' });
+    renderHome([
+      project(1, { title: 'Aula de edição' }, 5),
+      { ...script, kind: 'script' } as unknown as FlowProject,
+    ]);
+    expect(await screen.findByText('O gato sem memória')).toBeDefined();
+    expect(within(rowOf('O gato sem memória')).getByText('Roteiro')).toBeDefined();
+    expect(within(rowOf('O gato sem memória')).queryByRole('link')).toBeNull();
+    expect(within(rowOf('Aula de edição')).getByRole('link')).toBeDefined();
+  });
+
   it('abre o projeto pelo nome', async () => {
     const { history } = renderHome([project(1, { title: 'Aula de edição' })]);
     fireEvent.click(await screen.findByRole('link', { name: 'Aula de edição' }));

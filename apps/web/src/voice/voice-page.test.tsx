@@ -64,21 +64,24 @@ describe('tela Falar e organizar', () => {
       'Whisper local · grátis',
       'Whisper local · mais preciso',
     ]);
-    expect(screen.getByLabelText<HTMLSelectElement>('Organizar com').disabled).toBe(true);
+    expect(screen.getByText('Organizar com')).toBeDefined();
   });
 
-  it('o formato e a organização ficam na tela, desligados, e dizem que chegam na próxima etapa', async () => {
+  it('sem a API ligada, "Organizar" fica desligado e o lado direito explica', async () => {
     renderVoice();
     await record();
-    const formats = ['Fluxo', 'Roteiro', 'Plano com tarefas', 'Prompt organizado'];
-    for (const name of formats) {
-      expect(screen.getByRole<HTMLButtonElement>('button', { name }).disabled).toBe(true);
-    }
+    expect(screen.getByRole<HTMLButtonElement>('button', { name: 'Organizar' }).disabled).toBe(
+      true,
+    );
     expect(
       screen.getByRole<HTMLButtonElement>('button', { name: 'Inserir no quadro' }).disabled,
     ).toBe(true);
     expect(screen.getByRole<HTMLButtonElement>('button', { name: 'Refazer' }).disabled).toBe(true);
-    expect(screen.getByText('A organização pela IA chega na próxima etapa')).toBeDefined();
+    expect(screen.getByText('A IA ainda não está ligada neste ambiente')).toBeDefined();
+    // Os quatro formatos estão na tela, com Fluxo escolhido.
+    const formats = ['Fluxo', 'Roteiro', 'Plano com tarefas', 'Prompt organizado'];
+    for (const name of formats) screen.getByRole('button', { name });
+    expect(screen.getByRole('button', { name: 'Fluxo' }).getAttribute('aria-pressed')).toBe('true');
   });
 
   it('grava, mostra o tempo, para e o texto aparece e pode ser corrigido', async () => {

@@ -1,8 +1,11 @@
 import {
   createEmptyFlow,
   flowContentSchema,
+  scriptContentSchema,
   type CreateFlowProjectRequest,
+  type CreateScriptProjectRequest,
   type FlowProject,
+  type ScriptProject,
   type SaveProjectRequest,
   type UpdateProjectRequest,
 } from '@trama/core';
@@ -15,6 +18,8 @@ type Operation = 'list' | 'create' | 'update' | 'remove' | 'save';
 export function createFakeProjects(initial: FlowProject[] = []) {
   const projects = new Map(initial.map((project) => [project.id, project]));
   const saves: { id: string; request: SaveProjectRequest }[] = [];
+  /** Roteiros criados (a lista do Início só mostra fluxos neste fake). */
+  const scripts: ScriptProject[] = [];
   const failures = new Map<Operation, string>();
   let counter = 0;
   // Sempre a partir de agora, para o que for editado aqui ficar mais recente que os projetos de teste.
@@ -84,6 +89,24 @@ export function createFakeProjects(initial: FlowProject[] = []) {
       projects.set(project.id, project);
       return Promise.resolve(project);
     }),
+    createScript: vi.fn(({ title = 'Sem título', content }: CreateScriptProjectRequest) => {
+      const error = failure('create');
+      if (error) return Promise.reject(error);
+      const at = now();
+      const project: ScriptProject = {
+        id: crypto.randomUUID(),
+        kind: 'script',
+        title,
+        status: 'draft',
+        revision: 1,
+        driveFileId: null,
+        createdAt: at,
+        updatedAt: at,
+        content: scriptContentSchema.parse(content ?? {}),
+      };
+      scripts.push(project);
+      return Promise.resolve(project);
+    }),
     get: vi.fn((id: string) => {
       const project = projects.get(id);
       return project
@@ -101,6 +124,7 @@ export function createFakeProjects(initial: FlowProject[] = []) {
       const saved = {
         ...project,
         content: request.content,
+        title: request.title ?? project.title,
         revision: project.revision + 1,
         updatedAt: now(),
       };
@@ -118,6 +142,7 @@ export function createFakeProjects(initial: FlowProject[] = []) {
     update,
     remove,
     projects,
+    scripts,
     saves,
     /** A próxima chamada da operação falha com esta mensagem (só uma vez). */
     failNext(operation: Operation, message: string) {

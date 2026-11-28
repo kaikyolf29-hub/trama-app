@@ -286,7 +286,8 @@ function ProjectRow({
       <td className="px-3 py-1.5">
         {renaming ? (
           <RenameField initial={project.title} onDone={onRename} onCancel={onCancelRename} />
-        ) : (
+        ) : // Só o fluxo abre no quadro; o editor de roteiros e o de cadernos vêm depois.
+        project.kind === 'flow' ? (
           <Link
             to="/p/$projectId"
             params={{ projectId: project.id }}
@@ -295,6 +296,13 @@ function ProjectRow({
           >
             {project.title}
           </Link>
+        ) : (
+          <span
+            title={`${project.title} · o editor de ${projectKindLabels[project.kind].toLowerCase()}s chega numa próxima etapa`}
+            className="block truncate py-1.5 text-text-strong"
+          >
+            {project.title}
+          </span>
         )}
         {!renaming && (
           <span className="block text-xs text-text-muted sm:hidden">
