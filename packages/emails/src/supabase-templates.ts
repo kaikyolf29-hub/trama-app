@@ -1,5 +1,6 @@
 import { render } from '@react-email/render';
 import { createElement } from 'react';
+import { EmailChangeEmail } from './EmailChangeEmail';
 import { RecoveryEmail } from './RecoveryEmail';
 
 /**
@@ -23,6 +24,18 @@ export const SUPABASE_TEMPLATES = {
         greeting: '{{ if .Data.name }}Olá, {{ .Data.name }}.{{ else }}Olá.{{ end }}',
       }),
     ),
+  'email_change.html': () =>
+    render(
+      createElement(EmailChangeEmail, {
+        // Mesmo caminho do link de recuperação: a tela /confirmar-email confere o token_hash
+        // (verifyOtp), então o link abre em qualquer aparelho e robôs não gastam o token.
+        confirmUrl: '{{ .SiteURL }}/confirmar-email?token_hash={{ .TokenHash }}&type=email_change',
+        siteUrl: '{{ .SiteURL }}',
+        currentEmail: '{{ .Email }}',
+        newEmail: '{{ .NewEmail }}',
+        greeting: '{{ if .Data.name }}Olá, {{ .Data.name }}.{{ else }}Olá.{{ end }}',
+      }),
+    ),
 } as const;
 
 export type SupabaseTemplateName = keyof typeof SUPABASE_TEMPLATES;
@@ -30,4 +43,5 @@ export type SupabaseTemplateName = keyof typeof SUPABASE_TEMPLATES;
 /** Assuntos, para o config.toml e o painel do Supabase. */
 export const SUPABASE_SUBJECTS: Record<SupabaseTemplateName, string> = {
   'recovery.html': 'Crie uma senha nova no Trama',
+  'email_change.html': 'Confirme o novo e-mail do Trama',
 };

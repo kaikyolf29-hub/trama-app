@@ -11,7 +11,10 @@ export const DEFAULT_TIME_ZONE = 'America/Sao_Paulo';
 export const dateKeySchema = z.iso.date();
 export type DateKey = string;
 
+/** Se o motor do JavaScript conhece o fuso (nome IANA, como "America/Sao_Paulo"). */
 export function isValidTimeZone(timeZone: string): boolean {
+  // Só nomes IANA: o Intl também aceita deslocamentos ("+03:00"), que não seguem o horário de verão.
+  if (!/^[A-Za-z][A-Za-z0-9_+-]*(\/[A-Za-z0-9_+-]+)*$/.test(timeZone)) return false;
   try {
     new Intl.DateTimeFormat('en-US', { timeZone });
     return true;
@@ -23,9 +26,8 @@ export function isValidTimeZone(timeZone: string): boolean {
 /** Nome de fuso da IANA (ex.: America/Sao_Paulo). */
 export const timeZoneSchema = z
   .string()
-  .min(1)
   .max(64)
-  .refine(isValidTimeZone, { message: 'fuso horário inválido' });
+  .refine(isValidTimeZone, 'Escolha um fuso horário da lista.');
 
 export interface LocalParts {
   year: number;

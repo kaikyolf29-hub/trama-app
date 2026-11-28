@@ -485,6 +485,32 @@ describe('falhas na cópia e o Aviso do Drive', () => {
     expect(s.google.emails).toHaveLength(1);
   });
 
+  it('no máximo um aviso por dia, mesmo zerando as falhas ou reconectando', async () => {
+    const s = setup();
+    await connect(s);
+    const project = await newProject(s);
+    const failThreeTimes = async () => {
+      s.google.state.driveDown = true;
+      for (let i = 0; i < 3; i++) await s.post(`/drive/projects/${project.id}/copy`);
+    };
+    await failThreeTimes();
+    expect(s.google.emails).toHaveLength(1);
+
+    // Sucesso, reconexão e mais três falhas no mesmo dia: nenhum e-mail novo.
+    s.google.state.driveDown = false;
+    await s.post(`/drive/projects/${project.id}/copy`);
+    await connect(s);
+    await failThreeTimes();
+    expect(s.google.emails).toHaveLength(1);
+
+    // No dia seguinte, o aviso volta a valer.
+    s.clock.now = new Date(s.clock.now.getTime() + 25 * 60 * 60 * 1000);
+    s.google.state.driveDown = false;
+    await s.post(`/drive/projects/${project.id}/copy`);
+    await failThreeTimes();
+    expect(s.google.emails).toHaveLength(2);
+  });
+
   it('acesso revogado no Google conta como falha e pede para conectar de novo', async () => {
     const s = setup();
     await connect(s);
@@ -655,6 +681,15 @@ describe('e-mail de boas-vindas', () => {
     expect(s.welcome.sent).toBe(false);
     s.google.state.resendDown = false;
     expect(await (await s.post('/account/welcome')).json()).toEqual({ sent: true });
+  });
+
+  it('falhas seguidas no envio param na terceira tentativa (a cota de e-mails é de todos)', async () => {
+    const s = setup();
+    s.google.state.resendDown = true;
+    for (let i = 0; i < 3; i++) expect((await s.post('/account/welcome')).status).toBe(502);
+    s.google.state.resendDown = false;
+    expect(await (await s.post('/account/welcome')).json()).toEqual({ sent: false });
+    expect(s.welcome.attempts).toBe(3);
   });
 
   it('sem Resend configurado não gasta a reserva', async () => {

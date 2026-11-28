@@ -26,6 +26,20 @@ export const signInSchema = z.object({
   password: z.string().min(1, 'Digite a sua senha.'),
 });
 
+export const changeEmailSchema = z.object({ email });
+
+/** Trocar a senha: pede a atual e cria a nova com as mesmas regras do cadastro. */
+export const changePasswordSchema = z
+  .object({
+    current: z.string().min(1, 'Digite a sua senha atual.'),
+    password: newPassword,
+    confirm: z.string().min(1, 'Repita a senha nova.'),
+  })
+  .refine((data) => data.password === data.confirm, {
+    message: 'As senhas não são iguais.',
+    path: ['confirm'],
+  });
+
 export const forgotPasswordSchema = z.object({ email });
 
 export const newPasswordSchema = z
