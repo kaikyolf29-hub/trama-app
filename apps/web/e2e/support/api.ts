@@ -1,8 +1,10 @@
 import {
   createEmptyFlow,
+  createNoteRequestSchema,
   createProjectRequestSchema,
   saveProjectRequestSchema,
   updateProjectRequestSchema,
+  type AgendaEvent,
   type FlowContent,
   type FlowProject,
   type ProjectSummary,
@@ -38,6 +40,8 @@ export type ProjectSeed = Partial<Omit<FlowProject, 'content'>> & { content?: Fl
  */
 export class FakeApi {
   readonly projects = new Map<string, FlowProject>();
+  /** Eventos da Agenda (GET, POST e DELETE de `/events`). */
+  readonly events = new Map<string, AgendaEvent>();
   readonly calls: ApiCall[] = [];
   /** Cada PUT aceito, com o projeto e o pedido, na ordem. */
   readonly saves: { id: string; request: SaveProjectRequest }[] = [];
@@ -64,6 +68,24 @@ export class FakeApi {
     };
     this.projects.set(project.id, project);
     return project;
+  }
+
+  /** Põe um evento na Agenda da "conta". Sem projeto, é uma anotação feita à mão. */
+  seedEvent(
+    input: Pick<AgendaEvent, 'type' | 'occurredAt' | 'title'> & Partial<AgendaEvent>,
+  ): AgendaEvent {
+    const event: AgendaEvent = {
+      id: crypto.randomUUID(),
+      projectId: null,
+      projectKind: null,
+      lessonId: null,
+      detail: null,
+      source: input.type === 'note' ? 'manual' : 'auto',
+      createdAt: input.occurredAt,
+      ...input,
+    };
+    this.events.set(event.id, event);
+    return event;
   }
 
   /** O PUT mais recente aceito para o projeto. */
@@ -113,6 +135,40 @@ export class FakeApi {
     return this.json(route, status, { error: message });
   }
 
+  private handleEvents(route: Route, method: string, url: URL, path: string, body: unknown) {
+    if (path === '/events' && method === 'GET') {
+      const from = url.searchParams.get('from') ?? '';
+      const to = url.searchParams.get('to') ?? '';
+      const list = [...this.events.values()]
+        .filter((event) => event.occurredAt >= from && event.occurredAt < to)
+        .sort((a, b) => a.occurredAt.localeCompare(b.occurredAt));
+      return this.json(route, 200, list);
+    }
+    if (path === '/events' && method === 'POST') {
+      const parsed = createNoteRequestSchema.safeParse(body);
+      if (!parsed.success) return this.error(route, 400, 'Dados da anotação inválidos.');
+      const at = new Date(parsed.data.occurredAt ?? Date.now()).toISOString();
+      const event = this.seedEvent({
+        type: 'note',
+        occurredAt: at,
+        title: parsed.data.title,
+        detail: parsed.data.detail ?? null,
+      });
+      return this.json(route, 201, event);
+    }
+    const id = /^\/events\/([^/]+)$/.exec(path)?.[1];
+    if (id !== undefined && method === 'DELETE') {
+      const event = this.events.get(id);
+      if (!event) return this.error(route, 404, 'Evento não encontrado.');
+      if (event.source !== 'manual') {
+        return this.error(route, 403, 'Só anotações feitas à mão podem ser apagadas.');
+      }
+      this.events.delete(id);
+      return route.fulfill({ status: 204, headers: CORS });
+    }
+    return this.error(route, 404, 'Rota não encontrada.');
+  }
+
   private async handle(route: Route) {
     const request = route.request();
     const method = request.method();
@@ -140,6 +196,10 @@ export class FakeApi {
 
     if (!request.headers()['authorization']?.startsWith('Bearer ')) {
       return this.error(route, 401, 'Entre na sua conta para continuar.');
+    }
+
+    if (path === '/events' || path.startsWith('/events/')) {
+      return this.handleEvents(route, method, url, path, body);
     }
 
     const match = /^\/projects(?:\/([^/]+))?$/.exec(path);

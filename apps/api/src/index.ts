@@ -6,6 +6,8 @@ import { accountRoutes } from './account/routes';
 import { defaultDeps, type Deps } from './deps';
 import { driveRoutes } from './drive/routes';
 import type { Env } from './env';
+import { eventRoutes, lessonRoutes } from './organization/routes';
+import type { OrganizationStore } from './organization/store';
 import { isAllowedOrigin } from './origin';
 import { projectRoutes } from './projects/routes';
 import { SessionError, type ProjectStore } from './projects/store';
@@ -18,7 +20,12 @@ const MAX_BODY = 5 * 1024 * 1024;
 
 type StoreFactory = (env: Env, token: string) => ProjectStore;
 
-type Variables = { store: ProjectStore; token: string; deps: Deps };
+type Variables = {
+  store: ProjectStore;
+  organization: OrganizationStore;
+  token: string;
+  deps: Deps;
+};
 
 /**
  * A API do Trama: a única porta para o banco, o Drive, os e-mails e as IAs
@@ -54,6 +61,16 @@ export function createApp(storeFor?: StoreFactory, overrides: Partial<Deps> = {}
       onError: (c) => c.json({ error: 'O projeto passou de 5 MB.' }, 413),
     }),
   );
+  // Agenda e aulas só recebem textos curtos (as notas de uma aula chegam a 20.000 letras).
+  for (const prefix of ['/events/*', '/notebooks/*']) {
+    app.use(
+      prefix,
+      bodyLimit({
+        maxSize: 256 * 1024,
+        onError: (c) => c.json({ error: 'O pedido passou de 256 KB.' }, 413),
+      }),
+    );
+  }
   // Drive e conta só trocam pedidos pequenos (ids, bilhete); o conteúdo grande vem do Google.
   for (const prefix of ['/drive/*', '/account/*']) {
     app.use(
@@ -80,6 +97,8 @@ export function createApp(storeFor?: StoreFactory, overrides: Partial<Deps> = {}
     const path = new URL(c.req.url).pathname;
     const needsLogin =
       path.startsWith('/projects') ||
+      path.startsWith('/events') ||
+      path.startsWith('/notebooks') ||
       path.startsWith('/account') ||
       path.startsWith('/ai') ||
       (path.startsWith('/drive') && path !== '/drive/callback');
@@ -89,10 +108,15 @@ export function createApp(storeFor?: StoreFactory, overrides: Partial<Deps> = {}
     if (!token) return c.json({ error: 'Entre na sua conta para continuar.' }, 401);
     c.set('token', token);
     if (path.startsWith('/projects')) c.set('store', deps.projects(c.env ?? {}, token));
+    if (path.startsWith('/events') || path.startsWith('/notebooks')) {
+      c.set('organization', deps.organization(c.env ?? {}, token));
+    }
     await next();
   });
 
   app.route('/projects', projectRoutes());
+  app.route('/events', eventRoutes());
+  app.route('/notebooks', lessonRoutes());
   app.route('/drive', driveRoutes());
   app.route('/account', accountRoutes());
   app.route('/ai', aiRoutes());

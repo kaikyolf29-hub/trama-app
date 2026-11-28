@@ -6,7 +6,7 @@ import type { AiApi } from '../api/ai-api';
 import { useAuth } from '../auth/context';
 import { GENERIC_ERROR } from '../auth/errors';
 import { useServices } from '../services';
-import { HomeSidebar } from './HomeSidebar';
+import { AppSidebar } from './AppSidebar';
 import { AiSection } from './settings/AiSection';
 import {
   AccountSection,
@@ -26,7 +26,7 @@ export function SettingsPage() {
 
   return (
     <div className="min-h-dvh bg-page md:flex">
-      <HomeSidebar email={user?.email} onSignOut={() => void client.signOut()} current="settings" />
+      <AppSidebar email={user?.email} onSignOut={() => void client.signOut()} current="settings" />
       <main className="mx-auto flex min-w-0 max-w-[720px] flex-1 flex-col gap-6 px-4 py-10 sm:px-8 md:px-12 md:py-16">
         <h1 className="text-4xl font-bold text-text-strong">Configurações</h1>
         {account ? (
