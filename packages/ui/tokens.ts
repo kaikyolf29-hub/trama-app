@@ -50,6 +50,8 @@ export const colors = {
   done: '#4DAB9A',
   doneText: '#7DD3BE',
   doneSurface: 'rgba(77, 171, 154, 0.16)',
+  /** Gravando: o quadrado do botão de parar da tela "Falar e organizar" (tela 5). */
+  recording: '#E5484D',
   /** Logo e o botão principal (claro sobre o escuro). */
   brandPaper: '#F2F2F2',
   brandInk: '#111111',
