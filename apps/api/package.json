@@ -10,9 +10,10 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "hono": "^4.13.0",
     "@supabase/supabase-js": "^2.119.2",
     "@trama/core": "workspace:*",
+    "@trama/emails": "workspace:*",
+    "hono": "^4.13.0",
     "zod": "catalog:"
   },
   "devDependencies": {

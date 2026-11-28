@@ -2,7 +2,9 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     // Workers usam as APIs web padrão (fetch, Request, Response), sem document/window.
-    "lib": ["ES2023", "WebWorker"]
+    "lib": ["ES2023", "WebWorker"],
+    // O Worker importa os modelos de e-mail (TSX) de @trama/emails.
+    "jsx": "react-jsx"
   },
   "include": ["src"]
 }
