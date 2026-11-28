@@ -32,7 +32,9 @@ export class StreamResampler {
     buffer.set(this.pending);
     buffer.set(input, this.pending.length);
 
-    const out = new Float32Array(Math.max(0, Math.floor((buffer.length - this.offset) / this.ratio)));
+    const out = new Float32Array(
+      Math.max(0, Math.floor((buffer.length - this.offset) / this.ratio)),
+    );
     let written = 0;
     let start = this.offset;
     while (written < out.length) {

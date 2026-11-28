@@ -5,6 +5,7 @@ import { DRIVE_COPY_INTERVAL } from './api/drive-copier';
 import { AUTOSAVE_DELAY } from './api/autosave';
 import type { ProjectsApi } from './api/projects-api';
 import type { PickDriveFile } from './drive/picker';
+import type { VoiceServices } from './voice/services';
 
 /** O que as telas usam fora do login: a API de projetos e onde guardar imagens. */
 export interface Services {
@@ -22,6 +23,8 @@ export interface Services {
   autosaveDelay: number;
   /** Intervalo da cópia para o Drive; os testes encurtam. */
   driveCopyInterval: number;
+  /** Microfone e Whisper da tela "Falar e organizar"; sem isto, usa os de verdade. */
+  voice?: VoiceServices;
   /** Leva o navegador a outro site (a tela de consentimento do Google); os testes trocam. */
   redirectTo: (url: string) => void;
 }

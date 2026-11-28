@@ -2,6 +2,7 @@ import {
   createRootRouteWithContext,
   createRoute,
   createRouter,
+  lazyRouteComponent,
   Outlet,
   redirect,
   type RouterHistory,
@@ -55,6 +56,17 @@ const projectRoute = createRoute({
   path: '/p/$projectId',
   beforeLoad: signedInOnly,
   component: ProjectPage,
+});
+
+/**
+ * "Falar e organizar" de um projeto (etapa 3.2, tela 5). A tela vem de um import dinâmico:
+ * o microfone e o Worker do Whisper não pesam no carregamento do site.
+ */
+const voiceRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/p/$projectId/falar',
+  beforeLoad: signedInOnly,
+  component: lazyRouteComponent(() => import('./pages/VoicePage'), 'VoicePage'),
 });
 
 /** Para onde o Google devolve a pessoa depois de conectar o Drive (etapa 1.6). */
@@ -123,6 +135,7 @@ const designRoute = createRoute({
 const routeTree = rootRoute.addChildren([
   homeRoute,
   projectRoute,
+  voiceRoute,
   driveReturnRoute,
   signInRoute,
   signUpRoute,
