@@ -1,8 +1,11 @@
 import {
+  createAnyProjectRequestSchema,
   createEmptyFlow,
-  createProjectRequestSchema,
+  createEmptyScript,
   flowContentSchema,
   saveProjectRequestSchema,
+  saveScriptRequestSchema,
+  scriptContentSchema,
   updateProjectRequestSchema,
 } from '@trama/core';
 import { Hono, type Context } from 'hono';
@@ -40,14 +43,14 @@ export function projectRoutes() {
   routes.get('/', async (c) => c.json(await c.var.store.list()));
 
   routes.post('/', async (c) => {
-    const parsed = createProjectRequestSchema.safeParse(await body(c));
+    const parsed = createAnyProjectRequestSchema.safeParse(await body(c));
     if (!parsed.success) return invalid(c, 'Dados do projeto inválidos.');
-    const { kind, title, content } = parsed.data;
-    const project = await c.var.store.create({
-      kind,
-      title,
-      content: content ?? createEmptyFlow(),
-    });
+    const request = parsed.data;
+    const project = await c.var.store.create(
+      request.kind === 'script'
+        ? { kind: 'script', title: request.title, content: request.content ?? createEmptyScript() }
+        : { kind: 'flow', title: request.title, content: request.content ?? createEmptyFlow() },
+    );
     return c.json(project, 201);
   });
 
@@ -56,8 +59,9 @@ export function projectRoutes() {
     if (!id.success) return c.json({ error: NOT_FOUND }, 404);
     const project = await c.var.store.get(id.data);
     if (!project) return c.json({ error: NOT_FOUND }, 404);
-    if (project.kind === 'flow') {
-      const content = flowContentSchema.safeParse(project.content);
+    if (project.kind === 'flow' || project.kind === 'script') {
+      const schema = project.kind === 'flow' ? flowContentSchema : scriptContentSchema;
+      const content = schema.safeParse(project.content);
       // Nunca acontece pelo caminho normal (a API valida ao gravar); se acontecer, não piora.
       if (!content.success) {
         console.error('conteúdo inválido no banco', project.id, content.error.issues);
@@ -71,8 +75,20 @@ export function projectRoutes() {
   routes.put('/:id', async (c) => {
     const id = idSchema.safeParse(c.req.param('id'));
     if (!id.success) return c.json({ error: NOT_FOUND }, 404);
-    const parsed = saveProjectRequestSchema.safeParse(await body(c));
-    if (!parsed.success) return invalid(c, 'O fluxo enviado não é válido.');
+    // O corpo não diz o tipo: o conteúdo é validado pelo esquema do tipo do projeto gravado.
+    const kind = await c.var.store.kindOf(id.data);
+    if (!kind) return c.json({ error: NOT_FOUND }, 404);
+    if (kind === 'notebook') return invalid(c, 'Os cadernos ainda não são salvos por aqui.');
+    const parsed =
+      kind === 'script'
+        ? saveScriptRequestSchema.safeParse(await body(c))
+        : saveProjectRequestSchema.safeParse(await body(c));
+    if (!parsed.success) {
+      return invalid(
+        c,
+        kind === 'script' ? 'O roteiro enviado não é válido.' : 'O fluxo enviado não é válido.',
+      );
+    }
     const saved = await c.var.store.save(id.data, parsed.data);
     return saved ? c.json(saved) : c.json({ error: NOT_FOUND }, 404);
   });

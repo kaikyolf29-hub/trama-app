@@ -40,6 +40,7 @@ export function createMemoryStore(clock: () => Date = () => new Date()): Project
           })),
       ),
     get: (id) => Promise.resolve(projects.get(id) ?? null),
+    kindOf: (id) => Promise.resolve(projects.get(id)?.kind ?? null),
     create: ({ kind, title, content }) => {
       const at = now();
       const project: StoredProject = {

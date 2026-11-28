@@ -1,9 +1,12 @@
 import {
   createEmptyFlow,
+  createEmptyScript,
+  createScene,
   flowContentSchema,
   projectSummarySchema,
   projectVersionSchema,
   saveProjectResponseSchema,
+  scriptContentSchema,
 } from '@trama/core';
 import { videoFlowExample } from '@trama/core/fixtures';
 import { describe, expect, it } from 'vitest';
@@ -94,9 +97,79 @@ describe('API de projetos', () => {
     expect(store.projects.get(id)?.revision).toBe(1);
     expect((await call('/projects', { method: 'POST', body: '{não é json' })).status).toBe(400);
     expect(
-      (await call('/projects', { method: 'POST', body: JSON.stringify({ kind: 'script' }) }))
+      (await call('/projects', { method: 'POST', body: JSON.stringify({ kind: 'notebook' }) }))
         .status,
     ).toBe(400);
+  });
+
+  it('cria, abre, salva e valida um roteiro', async () => {
+    const store = createMemoryStore();
+    const { call, json } = setup(store);
+    const created = await call('/projects', {
+      method: 'POST',
+      body: JSON.stringify({ kind: 'script', title: ' Episódio 12 ' }),
+    });
+    expect(created.status).toBe(201);
+    const project = await json<{ id: string; kind: string; content: unknown }>(created);
+    expect(project).toMatchObject({ kind: 'script', content: createEmptyScript() });
+
+    const content = {
+      ...createEmptyScript(),
+      targetDuration: '8–10 min',
+      scenes: [createScene({ title: 'Gancho', narration: 'Oi', broll: ['Plano aberto'] })],
+    };
+    const saved = await call(`/projects/${project.id}`, {
+      method: 'PUT',
+      body: JSON.stringify({ content, baseRevision: 1 }),
+    });
+    expect(saveProjectResponseSchema.parse(await saved.json())).toMatchObject({ revision: 2 });
+    const opened = await json<{ kind: string; content: unknown }>(
+      await call(`/projects/${project.id}`),
+    );
+    expect(opened.kind).toBe('script');
+    expect(scriptContentSchema.parse(opened.content)).toEqual(content);
+
+    // Cena repetida e cartão ligado a duas cenas não passam.
+    const card = { cardId: 'cartao-1' };
+    for (const broken of [
+      { ...content, scenes: [content.scenes[0], content.scenes[0]] },
+      {
+        ...content,
+        scenes: [createScene({ title: 'A', ...card }), createScene({ title: 'B', ...card })],
+      },
+    ]) {
+      const response = await call(`/projects/${project.id}`, {
+        method: 'PUT',
+        body: JSON.stringify({ content: broken, baseRevision: 2 }),
+      });
+      expect(response.status).toBe(400);
+      expect(await response.json()).toEqual({ error: 'O roteiro enviado não é válido.' });
+    }
+    expect(store.projects.get(project.id)?.revision).toBe(2);
+  });
+
+  it('um fluxo não aceita o conteúdo de um roteiro', async () => {
+    const { call, json } = setup();
+    const flow = await json<{ id: string }>(
+      await call('/projects', { method: 'POST', body: JSON.stringify({ kind: 'flow' }) }),
+    );
+    const response = await call(`/projects/${flow.id}`, {
+      method: 'PUT',
+      body: JSON.stringify({
+        content: { scenes: [createScene({ title: 'A' })] },
+        baseRevision: 1,
+      }),
+    });
+    expect(response.status).toBe(400);
+  });
+
+  it('salvar um projeto que não existe é 404, mesmo com corpo inválido', async () => {
+    const { call } = setup();
+    const response = await call(`/projects/${crypto.randomUUID()}`, {
+      method: 'PUT',
+      body: '{}',
+    });
+    expect(response.status).toBe(404);
   });
 
   it('gravação com revisão velha vale, avisa e guarda a substituída no histórico', async () => {
