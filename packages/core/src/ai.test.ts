@@ -256,6 +256,18 @@ describe('IA: resposta de organizar', () => {
 });
 
 describe('IA: da saída para o fluxo', () => {
+  it('devolve o id de cada bloco e grupo pelo nome que a saída deu', () => {
+    const refIds = new Map<string, string>();
+    const output = sample();
+    const flow = aiOutputToFlow(output, { newId: counter(), refIds });
+    for (const block of output.blocks) {
+      expect(flow.blocks.some((item) => item.id === refIds.get(block.ref))).toBe(true);
+    }
+    for (const group of output.groups) {
+      expect(flow.frames.some((item) => item.id === refIds.get(group.ref))).toBe(true);
+    }
+  });
+
   it('vira um fluxo válido, com blocos, molduras e setas', () => {
     const flow = aiOutputToFlow(sample(), { newId: counter() });
     expect(flowContentSchema.safeParse(flow).success).toBe(true);

@@ -16,6 +16,8 @@ import type { Arrow } from './arrow';
 export interface AiFlowOptions {
   /** Gera o id de cada bloco, moldura, seta e etapa. Os testes trocam por um contador. */
   newId?: () => string;
+  /** Se passado, recebe o id de cada bloco e grupo da saída, pelo nome (`ref`) que ela deu. */
+  refIds?: Map<string, string>;
 }
 
 /** Espaço entre blocos, margem dentro da moldura e altura do título dela (múltiplos de 8). */
@@ -259,6 +261,8 @@ export function aiOutputToFlow(output: AiFlowOutput, options: AiFlowOptions = {}
       ...(label ? { label: clipText(label, 200) } : {}),
     });
   }
+
+  if (options.refIds) for (const [ref, id] of nodeIds) options.refIds.set(ref, id);
 
   return flowContentSchema.parse({
     schemaVersion: FLOW_SCHEMA_VERSION,

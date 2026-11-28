@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  createAnyProjectRequestSchema,
   createProjectRequestSchema,
   projectSummarySchema,
   projectVersionSchema,
@@ -30,6 +31,25 @@ describe('contrato da API de projetos', () => {
 
   it('ainda não cria roteiro nem caderno', () => {
     expect(createProjectRequestSchema.safeParse({ kind: 'script' }).success).toBe(false);
+  });
+
+  it('o conector MCP cria os três tipos; sem conteúdo, roteiro e caderno nascem vazios', () => {
+    expect(createAnyProjectRequestSchema.parse({ kind: 'flow' }).title).toBe('Sem título');
+    const script = createAnyProjectRequestSchema.parse({
+      kind: 'script',
+      title: 'Roteiro',
+      content: { scenes: [{ id: 's1', title: 'Gancho' }] },
+    });
+    expect(script.kind === 'script' && script.content?.scenes[0]?.title).toBe('Gancho');
+    const notebook = createAnyProjectRequestSchema.parse({ kind: 'notebook', title: 'Inglês' });
+    expect(notebook.kind === 'notebook' && notebook.content).toBeUndefined();
+    expect(createAnyProjectRequestSchema.safeParse({ kind: 'planilha' }).success).toBe(false);
+    expect(
+      createAnyProjectRequestSchema.safeParse({
+        kind: 'script',
+        content: { scenes: [{ id: 'a' }, { id: 'a' }] },
+      }).success,
+    ).toBe(false);
   });
 
   it('salvar exige conteúdo válido e a revisão de base', () => {

@@ -22,3 +22,5 @@ export * from './templates';
 export * from './profile';
 export * from './ai';
 export * from './ai-flow';
+export * from './mcp';
+export * from './mcp-tools';
