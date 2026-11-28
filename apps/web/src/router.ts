@@ -9,6 +9,7 @@ import {
 } from '@tanstack/react-router';
 import { safeReturnPath } from './auth/return-path';
 import type { AuthClient } from './auth/types';
+import { ConnectPage } from './pages/ConnectPage';
 import { ConfirmEmailPage } from './pages/ConfirmEmailPage';
 import { DesignPreview } from './DesignPreview';
 import { AgendaPage } from './pages/agenda/AgendaPage';
@@ -78,6 +79,14 @@ const voiceRoute = createRoute({
   path: '/p/$projectId/falar',
   beforeLoad: signedInOnly,
   component: lazyRouteComponent(() => import('./pages/VoicePage'), 'VoicePage'),
+});
+
+/** Consentimento de um cliente MCP, aberto pelo `/authorize` do conector (etapa 3.4). */
+const connectRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/conectar',
+  beforeLoad: signedInOnly,
+  component: ConnectPage,
 });
 
 /** Configurações (etapa 2.5). */
@@ -168,6 +177,7 @@ const routeTree = rootRoute.addChildren([
   projectRoute,
   voiceRoute,
   settingsRoute,
+  connectRoute,
   driveReturnRoute,
   signInRoute,
   signUpRoute,

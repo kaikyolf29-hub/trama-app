@@ -23,6 +23,8 @@ jobs:
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
       CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
       WORKERS_SUBDOMAIN: ${{ vars.CLOUDFLARE_WORKERS_SUBDOMAIN }}
+      # Conector MCP: id do namespace KV da biblioteca de OAuth (docs/DEPLOY.md, "Conector MCP").
+      MCP_KV_NAMESPACE_ID: ${{ vars.MCP_KV_NAMESPACE_ID }}
       # Google Drive: valores públicos (variáveis do GitHub, não segredos); o site os embute no build.
       VITE_GOOGLE_CLIENT_ID: ${{ vars.VITE_GOOGLE_CLIENT_ID }}
       VITE_GOOGLE_API_KEY: ${{ vars.VITE_GOOGLE_API_KEY }}
@@ -61,6 +63,8 @@ jobs:
           # O site chama a API publicada na mesma conta (trama-api.<subdomínio>.workers.dev).
           if [ -n "$WORKERS_SUBDOMAIN" ]; then
             export VITE_API_URL="https://trama-api.$WORKERS_SUBDOMAIN.workers.dev"
+            # A tela de consentimento e Configurações → Conectores falam com o conector MCP.
+            export VITE_MCP_URL="https://trama-mcp.$WORKERS_SUBDOMAIN.workers.dev"
           fi
           pnpm --filter @trama/web build
 
@@ -70,6 +74,26 @@ jobs:
           pnpm --filter @trama/web exec wrangler deploy
           # A API aceita pedidos do site e dos previews deste subdomínio (CORS).
           pnpm --filter @trama/api exec wrangler deploy --var "WORKERS_SUBDOMAIN:$WORKERS_SUBDOMAIN"
+
+      # Depois da API: o conector chama a API por service binding, que precisa existir.
+      # Sem o namespace KV (variável MCP_KV_NAMESPACE_ID) ou sem o subdomínio, é pulado sem erro.
+      - name: Publicar o conector MCP (produção)
+        if: steps.gate.outputs.ok == 'true' && github.event_name == 'push'
+        run: |
+          if [ -z "$MCP_KV_NAMESPACE_ID" ] || [ -z "$WORKERS_SUBDOMAIN" ]; then
+            echo "::notice title=Conector MCP pulado::Faltam as variáveis MCP_KV_NAMESPACE_ID e CLOUDFLARE_WORKERS_SUBDOMAIN (docs/DEPLOY.md)."
+            exit 0
+          fi
+          if ! printf '%s' "$MCP_KV_NAMESPACE_ID" | grep -Eq '^[0-9a-f]{32}$'; then
+            echo "::error title=MCP_KV_NAMESPACE_ID inválido::O id do namespace KV tem 32 letras e números (wrangler kv namespace list)."
+            exit 1
+          fi
+          # O id do wrangler.jsonc é de exemplo; o verdadeiro vem da variável do GitHub.
+          sed -i "s/00000000000000000000000000000000/$MCP_KV_NAMESPACE_ID/" apps/mcp/wrangler.jsonc
+          pnpm --filter @trama/mcp exec wrangler deploy \
+            --var "APP_URL:https://trama.$WORKERS_SUBDOMAIN.workers.dev" \
+            --var "MCP_URL:https://trama-mcp.$WORKERS_SUBDOMAIN.workers.dev" \
+            --var "WORKERS_SUBDOMAIN:$WORKERS_SUBDOMAIN"
 
       - name: Publicar o preview do PR
         id: preview

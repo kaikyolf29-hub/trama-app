@@ -22,6 +22,9 @@ catalog:
 # - skills: instruções para agentes de IA vindas de fora do repositório. Negadas: as regras
 #   dos agentes estão no AGENTS.md.
 permissions:
+  # Traz instruções para agentes de IA de fora do repositório; as regras estão no AGENTS.md.
+  '@cloudflare/workers-oauth-provider':
+    skills: false
   '@tanstack/react-router':
     skills: false
   esbuild:

@@ -5,9 +5,22 @@
   "description": "Worker do conector MCP do Trama (OAuth + ferramentas).",
   "type": "module",
   "scripts": {
-    "typecheck": "tsc --noEmit"
+    "dev": "wrangler dev --port 8788",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
   },
   "devDependencies": {
-    "typescript": "catalog:"
+    "@cloudflare/workers-types": "^5.20261127.1",
+    "@modelcontextprotocol/client": "2.4.0",
+    "typescript": "catalog:",
+    "vitest": "catalog:",
+    "wrangler": "^4.168.0"
+  },
+  "dependencies": {
+    "@cloudflare/workers-oauth-provider": "1.4.0",
+    "@modelcontextprotocol/server": "2.4.0",
+    "@trama/core": "workspace:*",
+    "hono": "^4.13.22",
+    "zod": "catalog:"
   }
 }

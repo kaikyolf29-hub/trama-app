@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { Supabase } from '../supabase';
 import { EMAIL_SEND_ERROR, OFFLINE_ERROR, RECOVERY_SEND_ERROR } from './errors';
 import { createSupabaseAuthClient } from './supabase-client';
@@ -84,5 +84,78 @@ describe('troca de e-mail e de nome', () => {
       [{ token_hash: 'hash', type: 'email_change' }],
       [{ data: { name: 'Ana' } }],
     ]);
+  });
+});
+
+describe('sessão separada para o conector MCP', () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  const site = {
+    auth: {
+      getSession: () =>
+        Promise.resolve({ data: { session: { user: { email: 'ana@exemplo.com' } } } }),
+    },
+  } as unknown as Supabase;
+  const config = { url: 'https://projeto.supabase.co', publishableKey: 'sb_publishable_x' };
+
+  it('entra de novo com a senha num cliente à parte, sem guardar nada no navegador', async () => {
+    const requests: { url: string; body: unknown }[] = [];
+    vi.stubGlobal(
+      'fetch',
+      vi.fn((input: RequestInfo | URL, init?: RequestInit) => {
+        requests.push({
+          url: input instanceof Request ? input.url : input.toString(),
+          body: typeof init?.body === 'string' ? JSON.parse(init.body) : undefined,
+        });
+        return Promise.resolve(
+          Response.json({
+            access_token: 'acesso-novo',
+            refresh_token: 'refresh-novo',
+            token_type: 'bearer',
+            expires_in: 3600,
+            user: { id: 'u1', email: 'ana@exemplo.com', aud: 'authenticated' },
+          }),
+        );
+      }),
+    );
+    const client = createSupabaseAuthClient(site, 'https://trama.exemplo', config);
+    const result = await client.openConnectorSession('senha-segura-1');
+    expect(result).toEqual({
+      ok: true,
+      value: { accessToken: 'acesso-novo', refreshToken: 'refresh-novo' },
+    });
+    expect(requests[0]?.url).toContain('/auth/v1/token?grant_type=password');
+    expect(requests[0]?.body).toMatchObject({
+      email: 'ana@exemplo.com',
+      password: 'senha-segura-1',
+    });
+    expect(Object.keys(localStorage)).toEqual([]);
+  });
+
+  it('senha errada vira frase em português', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(() =>
+        Promise.resolve(
+          Response.json(
+            {
+              error: 'invalid_grant',
+              error_code: 'invalid_credentials',
+              msg: 'Invalid login credentials',
+            },
+            { status: 400 },
+          ),
+        ),
+      ),
+    );
+    const client = createSupabaseAuthClient(site, 'https://trama.exemplo', config);
+    const result = await client.openConnectorSession('errada');
+    expect(result.ok).toBe(false);
+    expect(result.ok === false && result.error).toBe('E-mail ou senha incorretos.');
+  });
+
+  it('sem a configuração do Supabase, não abre sessão', async () => {
+    const client = createSupabaseAuthClient(site, 'https://trama.exemplo');
+    expect((await client.openConnectorSession('x')).ok).toBe(false);
   });
 });

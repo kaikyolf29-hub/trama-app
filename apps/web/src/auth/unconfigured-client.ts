@@ -20,6 +20,7 @@ export function createUnconfiguredAuthClient(): AuthClient {
     updateEmail: notConfigured,
     updateName: notConfigured,
     verifyEmailChange: notConfigured,
+    openConnectorSession: notConfigured,
     signOut: () => Promise.resolve(),
   };
 }
