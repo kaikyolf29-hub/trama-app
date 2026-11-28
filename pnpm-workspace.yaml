@@ -16,7 +16,9 @@ catalog:
 # O que as dependências podem fazer. O pnpm 12 recusa instalar enquanto houver pedido sem
 # decisão (`pnpm approve` para decidir).
 # - build: scripts de instalação. O esbuild (do tsx) e o workerd (do wrangler) não precisam
-#   dos seus: o binário já vem no pacote da plataforma.
+#   dos seus: o binário já vem no pacote da plataforma. O onnxruntime-node e o protobufjs
+#   (do Transformers.js) também ficam sem: o site só usa a versão de navegador do runtime. O
+#   protobufjs também vem com o @google/genai, e o script dele só confere a versão do Node.
 # - skills: instruções para agentes de IA vindas de fora do repositório. Negadas: as regras
 #   dos agentes estão no AGENTS.md.
 permissions:
@@ -27,8 +29,9 @@ permissions:
     skills: false
   esbuild:
     build: false
-  workerd:
+  onnxruntime-node:
     build: false
-  # Vem com o @google/genai; o script só confere a versão do Node, nada que o Worker precise.
   protobufjs:
+    build: false
+  workerd:
     build: false
