@@ -18,7 +18,7 @@ const NOTE: Record<NoteColor, string> = {
 };
 
 /** Abaixo disto a miniatura fica pequena demais para ler; a área passa a rolar de lado. */
-const MIN_SCALE = 0.5;
+const MIN_SCALE = 0.35;
 
 export function FlowPreview({ flow }: { flow: FlowContent }) {
   const box = useRef<HTMLDivElement>(null);

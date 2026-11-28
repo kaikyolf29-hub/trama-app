@@ -299,8 +299,9 @@ function ResultView({
 
       <Corrections corrections={response.output.corrections} />
       <p className="text-xs text-text-muted">
-        {providerShortName[response.provider]} · {response.model} · {response.usage.inputTokens}{' '}
-        tokens enviados e {response.usage.outputTokens} de resposta.
+        {providerShortName[response.provider]} · {response.model} ·{' '}
+        {response.usage.inputTokens.toLocaleString('pt-BR')} tokens enviados e{' '}
+        {response.usage.outputTokens.toLocaleString('pt-BR')} de resposta.
       </p>
     </>
   );

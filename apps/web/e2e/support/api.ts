@@ -1,16 +1,24 @@
 import {
+  aiOrganizeRequestSchema,
   createEmptyFlow,
+  createEmptyScript,
   createNoteRequestSchema,
   createProjectRequestSchema,
   saveProjectRequestSchema,
   updateProjectRequestSchema,
   type AgendaEvent,
+  type AiKeySummary,
+  type AiOrganizeRequest,
+  type AiOrganizeResponse,
+  type AiSettings,
   type FlowContent,
   type FlowProject,
   type ProjectSummary,
   type SaveProjectRequest,
+  type ScriptProject,
 } from '@trama/core';
 import type { Page, Route } from '@playwright/test';
+import { sampleEstimate, sampleResponses } from '../../src/test/ai-samples';
 
 /** Endereço da API que o site usa no `vite build` (VITE_API_URL do apps/web/.env). */
 export const API_URL = 'http://localhost:8787';
@@ -43,6 +51,21 @@ export class FakeApi {
   /** Eventos da Agenda (GET, POST e DELETE de `/events`). */
   readonly events = new Map<string, AgendaEvent>();
   readonly calls: ApiCall[] = [];
+  /** Roteiros criados (POST /projects com `kind: 'script'`). */
+  readonly scripts: ScriptProject[] = [];
+  /** IA: o que a pessoa escolheu em Configurações e as chaves guardadas. */
+  aiSettings: AiSettings | null = {
+    provider: 'anthropic',
+    model: 'claude-haiku-5-5',
+    effort: 'balanced',
+  };
+  aiKeys: AiKeySummary[] = [
+    { provider: 'anthropic', last4: '1234', savedAt: '2026-11-27T12:00:00.000Z' },
+  ];
+  /** A resposta de organizar por formato (a rede de verdade nunca é chamada). */
+  aiResponses: Record<AiOrganizeRequest['format'], AiOrganizeResponse> = { ...sampleResponses };
+  /** Erros das próximas chamadas de organizar, um por chamada. */
+  aiFailures: { status: number; message: string; code: string }[] = [];
   /** Cada PUT aceito, com o projeto e o pedido, na ordem. */
   readonly saves: { id: string; request: SaveProjectRequest }[] = [];
   private tick = 0;
@@ -135,6 +158,29 @@ export class FakeApi {
     return this.json(route, status, { error: message });
   }
 
+  private handleAi(route: Route, method: string, path: string, body: unknown) {
+    if (path === '/ai/settings' && method === 'GET') {
+      return this.json(route, 200, { settings: this.aiSettings });
+    }
+    if (path === '/ai/keys' && method === 'GET')
+      return this.json(route, 200, { keys: this.aiKeys });
+    if (path === '/ai/estimate' && method === 'POST') {
+      const parsed = aiOrganizeRequestSchema.safeParse(body);
+      if (!parsed.success) return this.error(route, 400, 'Pedido inválido.');
+      return this.json(route, 200, sampleEstimate);
+    }
+    if (path === '/ai/organize' && method === 'POST') {
+      const parsed = aiOrganizeRequestSchema.safeParse(body);
+      if (!parsed.success) return this.error(route, 400, 'Pedido inválido.');
+      const failure = this.aiFailures.shift();
+      if (failure) {
+        return this.json(route, failure.status, { error: failure.message, code: failure.code });
+      }
+      return this.json(route, 200, this.aiResponses[parsed.data.format]);
+    }
+    return this.error(route, 404, 'Rota não encontrada.');
+  }
+
   private handleEvents(route: Route, method: string, url: URL, path: string, body: unknown) {
     if (path === '/events' && method === 'GET') {
       const from = url.searchParams.get('from') ?? '';
@@ -198,6 +244,8 @@ export class FakeApi {
       return this.error(route, 401, 'Entre na sua conta para continuar.');
     }
 
+    if (path.startsWith('/ai/')) return this.handleAi(route, method, path, body);
+
     if (path === '/events' || path.startsWith('/events/')) {
       return this.handleEvents(route, method, url, path, body);
     }
@@ -215,8 +263,22 @@ export class FakeApi {
       }
       if (method === 'POST') {
         const parsed = createProjectRequestSchema.safeParse(body);
-        if (!parsed.success || parsed.data.kind !== 'flow') {
-          return this.error(route, 400, 'Pedido inválido.');
+        if (!parsed.success) return this.error(route, 400, 'Pedido inválido.');
+        if (parsed.data.kind === 'script') {
+          const at = this.now();
+          const script: ScriptProject = {
+            id: crypto.randomUUID(),
+            kind: 'script',
+            title: parsed.data.title,
+            status: 'draft',
+            driveFileId: null,
+            revision: 1,
+            createdAt: at,
+            updatedAt: at,
+            content: parsed.data.content ?? createEmptyScript(),
+          };
+          this.scripts.push(script);
+          return this.json(route, 201, script);
         }
         const project = this.seed({
           title: parsed.data.title,
