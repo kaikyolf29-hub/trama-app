@@ -1,6 +1,8 @@
 import { z } from 'zod';
 import { flowContentSchema } from './flow';
+import { notebookContentSchema } from './notebook';
 import { projectKindSchema, projectTitleSchema } from './project';
+import { scriptContentSchema } from './script';
 import { dateTimeSchema, projectStatusSchema } from './status';
 
 /**
@@ -20,13 +22,37 @@ export const projectSummarySchema = z.object({
   updatedAt: dateTimeSchema,
 });
 
-/** Criar projeto. Por enquanto só fluxo; roteiros e cadernos chegam na V1. */
+/** Criar fluxo (o que o site faz). Roteiros e cadernos: `createAnyProjectRequestSchema`. */
 export const createProjectRequestSchema = z.object({
   kind: z.literal('flow'),
   title: projectTitleSchema.default('Sem título'),
   /** Conteúdo inicial (um modelo de início); sem ele, o fluxo começa vazio. */
   content: flowContentSchema.optional(),
 });
+
+/** Criar um roteiro (só o conector MCP usa por enquanto). Sem conteúdo, nasce vazio. */
+export const createScriptRequestSchema = z.object({
+  kind: z.literal('script'),
+  title: projectTitleSchema.default('Sem título'),
+  content: scriptContentSchema.optional(),
+});
+
+/** Criar um caderno de Estudos (só o conector MCP usa por enquanto). Sem conteúdo, nasce vazio. */
+export const createNotebookRequestSchema = z.object({
+  kind: z.literal('notebook'),
+  title: projectTitleSchema.default('Sem título'),
+  content: notebookContentSchema.optional(),
+});
+
+/**
+ * `POST /projects` aceita os três tipos. O site continua criando só fluxos (`createProjectRequestSchema`,
+ * acima); roteiros e cadernos chegam pelo conector MCP (etapa 3.4) e pelos editores da V1.
+ */
+export const createAnyProjectRequestSchema = z.discriminatedUnion('kind', [
+  createProjectRequestSchema,
+  createScriptRequestSchema,
+  createNotebookRequestSchema,
+]);
 
 /**
  * Renomear ou mudar o status (`PATCH /projects/:id`) sem mexer no conteúdo nem na revisão:
@@ -81,6 +107,7 @@ export const apiErrorSchema = z.object({ error: z.string().min(1) });
 
 export type ProjectSummary = z.infer<typeof projectSummarySchema>;
 export type CreateProjectRequest = z.input<typeof createProjectRequestSchema>;
+export type CreateAnyProjectRequest = z.input<typeof createAnyProjectRequestSchema>;
 export type UpdateProjectRequest = z.infer<typeof updateProjectRequestSchema>;
 export type SaveProjectRequest = z.infer<typeof saveProjectRequestSchema>;
 export type SaveProjectResponse = z.infer<typeof saveProjectResponseSchema>;
