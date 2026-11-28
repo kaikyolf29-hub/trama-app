@@ -1,4 +1,5 @@
 import { localMedia, type CanvasMedia } from '@trama/canvas';
+import { DEFAULT_TIME_ZONE } from '@trama/core';
 import { createContext, useContext } from 'react';
 import { AUTOSAVE_DELAY } from './api/autosave';
 import type { AgendaApi } from './api/agenda-api';
@@ -17,6 +18,13 @@ export interface Services {
   mediaFor: (userId: string) => CanvasMedia;
   /** Espera antes de salvar sozinho; os testes encurtam. */
   autosaveDelay: number;
+  /**
+   * Fuso horário da pessoa (a Agenda agrupa por dia nele). Enquanto as Configurações não leem o
+   * fuso do perfil (etapa 2.5), vale o padrão America/Sao_Paulo.
+   */
+  timeZone: string;
+  /** O relógio das telas; os testes fixam. */
+  now: () => Date;
 }
 
 export const defaultServices: Services = {
@@ -25,6 +33,8 @@ export const defaultServices: Services = {
   lessons: null,
   mediaFor: () => localMedia,
   autosaveDelay: AUTOSAVE_DELAY,
+  timeZone: DEFAULT_TIME_ZONE,
+  now: () => new Date(),
 };
 
 export const ServicesContext = createContext<Services>(defaultServices);

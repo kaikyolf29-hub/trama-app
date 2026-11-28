@@ -2,8 +2,9 @@ import { Alert } from '@trama/ui';
 import { useAuth } from '../auth/context';
 import { useServices } from '../services';
 import { DriveStatus } from './DriveStatus';
+import { AppSidebar } from './AppSidebar';
 import { greetingFor } from './greeting';
-import { HomeSidebar } from './HomeSidebar';
+
 import { RecentProjects } from './RecentProjects';
 import { TemplateGrid } from './TemplateGrid';
 
@@ -18,7 +19,7 @@ export function HomePage() {
 
   return (
     <div className="min-h-dvh bg-page md:flex">
-      <HomeSidebar email={user?.email} onSignOut={() => void client.signOut()} />
+      <AppSidebar current="home" email={user?.email} onSignOut={() => void client.signOut()} />
       <main className="mx-auto flex min-w-0 max-w-[1104px] flex-1 flex-col gap-10 px-4 py-10 sm:px-8 md:px-12 md:py-16">
         <h1 className="text-4xl font-bold text-text-strong">
           {greetingFor(new Date())}

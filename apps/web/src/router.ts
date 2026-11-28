@@ -9,6 +9,7 @@ import {
 import { safeReturnPath } from './auth/return-path';
 import type { AuthClient } from './auth/types';
 import { DesignPreview } from './DesignPreview';
+import { AgendaPage } from './pages/agenda/AgendaPage';
 import { ExampleBoardPage } from './pages/ExampleBoardPage';
 import { ForgotPasswordPage } from './pages/ForgotPasswordPage';
 import { HomePage } from './pages/HomePage';
@@ -46,6 +47,14 @@ const homeRoute = createRoute({
   path: '/',
   beforeLoad: signedInOnly,
   component: HomePage,
+});
+
+/** A Agenda: o que a pessoa criou, terminou ou estudou, por dia (etapa 2.2). */
+const agendaRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/agenda',
+  beforeLoad: signedInOnly,
+  component: AgendaPage,
 });
 
 /** Um projeto aberto no quadro (etapa 1.5). */
@@ -109,6 +118,7 @@ const designRoute = createRoute({
 
 const routeTree = rootRoute.addChildren([
   homeRoute,
+  agendaRoute,
   projectRoute,
   signInRoute,
   signUpRoute,
