@@ -16,13 +16,18 @@ catalog:
 # O que as dependências podem fazer. O pnpm 12 recusa instalar enquanto houver pedido sem
 # decisão (`pnpm approve` para decidir).
 # - build: scripts de instalação. O esbuild (do tsx) e o workerd (do wrangler) não precisam
-#   dos seus: o binário já vem no pacote da plataforma.
+#   dos seus: o binário já vem no pacote da plataforma. O onnxruntime-node e o protobufjs
+#   (do Transformers.js) também ficam sem: o site só usa a versão de navegador do runtime.
 # - skills: instruções para agentes de IA vindas de fora do repositório. Negadas: as regras
 #   dos agentes estão no AGENTS.md.
 permissions:
   '@tanstack/react-router':
     skills: false
   esbuild:
+    build: false
+  onnxruntime-node:
+    build: false
+  protobufjs:
     build: false
   workerd:
     build: false
