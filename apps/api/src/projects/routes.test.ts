@@ -125,7 +125,7 @@ describe('API de projetos', () => {
     expect(store.projects.get(id)?.revision).toBe(1);
     expect((await call('/projects', { method: 'POST', body: '{não é json' })).status).toBe(400);
     expect(
-      (await call('/projects', { method: 'POST', body: JSON.stringify({ kind: 'script' }) }))
+      (await call('/projects', { method: 'POST', body: JSON.stringify({ kind: 'notebook' }) }))
         .status,
     ).toBe(400);
   });
