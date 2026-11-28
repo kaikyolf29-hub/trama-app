@@ -4,7 +4,6 @@ import {
   driveImportResponseSchema,
   drivePickerTokenSchema,
   driveStatusSchema,
-  welcomeResponseSchema,
   type DriveCopyResponse,
   type DriveImportResponse,
   type DrivePickerToken,
@@ -24,12 +23,6 @@ export interface DriveApi {
   copyProject(id: string, options?: { keepalive?: boolean }): Promise<DriveCopyResponse>;
   pickerToken(): Promise<DrivePickerToken>;
   importFile(fileId: string): Promise<DriveImportResponse>;
-}
-
-/** O que as telas usam da conta: hoje, só o e-mail de boas-vindas. */
-export interface AccountApi {
-  /** Pede o e-mail de boas-vindas; a API só manda na primeira vez de cada pessoa. */
-  sendWelcome(): Promise<void>;
 }
 
 interface Config {
@@ -55,14 +48,5 @@ export function createDriveApi(config: Config): DriveApi {
       }),
     pickerToken: () => call('/drive/picker-token', drivePickerTokenSchema, { method: 'POST' }),
     importFile: (fileId) => call('/drive/import', driveImportResponseSchema, post({ fileId })),
-  };
-}
-
-export function createAccountApi(config: Config): AccountApi {
-  const call = createCaller(config);
-  return {
-    async sendWelcome() {
-      await call('/account/welcome', welcomeResponseSchema, { method: 'POST' });
-    },
   };
 }

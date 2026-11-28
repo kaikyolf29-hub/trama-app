@@ -14,13 +14,13 @@ interface ProjectRow {
   content?: unknown;
 }
 
-interface PostgrestError {
+export interface PostgrestError {
   code?: string;
   message: string;
 }
 
 /** O Postgres manda microssegundos e "+00:00"; a API devolve ISO em UTC. */
-function iso(value: string): string {
+export function iso(value: string): string {
   return new Date(value).toISOString();
 }
 
@@ -39,7 +39,7 @@ function toProject(row: ProjectRow): StoredProject {
 }
 
 /** Token vencido ou falso vira SessionError (401); "não achou" vira null; o resto é erro. */
-function check(error: PostgrestError | null, status?: number): void {
+export function check(error: PostgrestError | null, status?: number): void {
   if (!error) return;
   if (status === 401 || error.code === 'PGRST301' || error.code === 'PGRST303') {
     throw new SessionError();

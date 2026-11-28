@@ -1,4 +1,7 @@
-import { createAccountApi, createDriveApi } from './api/drive-api';
+import { createAccountApi } from './api/account-api';
+import { createAgendaApi } from './api/agenda-api';
+import { createDriveApi } from './api/drive-api';
+import { createLessonsApi } from './api/lessons-api';
 import { createProjectsApi } from './api/projects-api';
 import { createSupabaseAuthClient } from './auth/supabase-client';
 import type { AuthClient } from './auth/types';
@@ -38,6 +41,8 @@ export function createBackendFromEnv(): Backend {
     services: {
       ...defaultServices,
       projects: api ? createProjectsApi(api) : null,
+      agenda: api ? createAgendaApi(api) : null,
+      lessons: api ? createLessonsApi(api) : null,
       drive: api ? createDriveApi(api) : null,
       account: api ? createAccountApi(api) : null,
       pickDriveFile:

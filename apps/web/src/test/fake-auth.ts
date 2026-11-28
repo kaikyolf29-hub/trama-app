@@ -13,7 +13,13 @@ export function createFakeAuth(options: { requireConfirmation?: boolean } = {}) 
   const listeners = new Set<(user: AuthUser | null) => void>();
   let current: AuthUser | null = null;
   const validTokens = new Map<string, string>();
-  const calls = { verifyRecovery: [] as string[], requestPasswordReset: [] as string[] };
+  const calls = {
+    verifyRecovery: [] as string[],
+    requestPasswordReset: [] as string[],
+    updateEmail: [] as string[],
+    updateName: [] as string[],
+    verifyEmailChange: [] as string[],
+  };
 
   const setCurrent = (user: AuthUser | null) => {
     current = user;
@@ -74,6 +80,33 @@ export function createFakeAuth(options: { requireConfirmation?: boolean } = {}) 
         return Promise.resolve({ ok: false, error: 'Sua sessão terminou. Entre de novo.' });
       account.password = password;
       return Promise.resolve(ok);
+    },
+    updateName(name) {
+      calls.updateName.push(name);
+      if (!current)
+        return Promise.resolve({ ok: false, error: 'Sua sessão terminou. Entre de novo.' });
+      const account = accounts.get(current.email);
+      if (account) account.user = { ...account.user, name };
+      setCurrent({ ...current, name });
+      return Promise.resolve(ok);
+    },
+    updateEmail(email) {
+      calls.updateEmail.push(email);
+      if (accounts.has(email)) {
+        return Promise.resolve({
+          ok: false,
+          error: 'Já existe uma conta com este e-mail. Use outro endereço.',
+        });
+      }
+      return Promise.resolve(ok);
+    },
+    verifyEmailChange(tokenHash) {
+      calls.verifyEmailChange.push(tokenHash);
+      return Promise.resolve(
+        tokenHash === 'bom'
+          ? ok
+          : { ok: false, error: 'Este link expirou ou já foi usado. Peça um link novo.' },
+      );
     },
     signOut() {
       setCurrent(null);

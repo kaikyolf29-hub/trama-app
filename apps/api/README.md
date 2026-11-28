@@ -10,5 +10,5 @@ A única porta para o banco, o Drive, os e-mails e as IAs. Hono em Cloudflare Wo
 
 Usa a lógica de `@trama/core`; nunca duplica regras de lá.
 
-Por enquanto só tem `GET /health`. Roda com `pnpm dev` em http://localhost:8787 e vai para o ar
+Rotas: `GET /health`, `/projects` (etapa 1.5) e `GET` e `PATCH /account/profile` (etapa 2.5: nome, fuso e preferências de e-mail, com o token da pessoa e a RLS). Roda com `pnpm dev` em http://localhost:8787 e vai para o ar
 com o site (`docs/DEPLOY.md`).
