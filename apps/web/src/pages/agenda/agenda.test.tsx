@@ -121,8 +121,8 @@ describe('Agenda: o dia', () => {
     ]);
     const link = within(items[0]!).getByRole('link');
     expect(link.getAttribute('href')).toBe(`/p/${FLOW}`);
-    // A aula é de um caderno, que ainda não tem tela: não é um link.
-    expect(within(items[1]!).queryByRole('link')).toBeNull();
+    // A aula é de um caderno: o link abre o caderno em Estudos.
+    expect(within(items[1]!).getByRole('link').getAttribute('href')).toBe(`/estudos/${FLOW}`);
   });
 
   it('dia sem nada diz que não há nada registrado', async () => {

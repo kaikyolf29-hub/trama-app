@@ -8,7 +8,9 @@ const TOKEN = 'token-da-ana';
 const MISSING = '99999999-9999-4999-8999-999999999999';
 
 function setup() {
-  const projects = createMemoryStore();
+  // Relógio que anda 1 s a cada leitura: dois cadernos nunca nascem no mesmo instante.
+  let tick = 0;
+  const projects = createMemoryStore(() => new Date(Date.UTC(2026, 10, 12, 12, 0, tick++)));
   const organization = createMemoryOrganizationStore();
   const app = createApp(() => projects, { organization: () => organization });
   const call = (path: string, init: RequestInit = {}) =>

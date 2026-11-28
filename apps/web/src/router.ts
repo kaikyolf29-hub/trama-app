@@ -12,6 +12,8 @@ import { ConfirmEmailPage } from './pages/ConfirmEmailPage';
 import { DesignPreview } from './DesignPreview';
 import { AgendaPage } from './pages/agenda/AgendaPage';
 import { DriveReturnPage } from './pages/DriveReturnPage';
+import { NotebookPage } from './pages/estudos/NotebookPage';
+import { StudiesPage } from './pages/estudos/StudiesPage';
 import { ExampleBoardPage } from './pages/ExampleBoardPage';
 import { ForgotPasswordPage } from './pages/ForgotPasswordPage';
 import { HomePage } from './pages/HomePage';
@@ -58,6 +60,22 @@ const agendaRoute = createRoute({
   path: '/agenda',
   beforeLoad: signedInOnly,
   component: AgendaPage,
+});
+
+/** Estudos: os cadernos, as aulas e as revisões (etapa 2.4). */
+const studiesRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/estudos',
+  beforeLoad: signedInOnly,
+  component: StudiesPage,
+});
+
+/** Um caderno aberto, com as aulas dele. */
+const notebookRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/estudos/$notebookId',
+  beforeLoad: signedInOnly,
+  component: NotebookPage,
 });
 
 /** Um projeto aberto no quadro (etapa 1.5). */
@@ -153,6 +171,8 @@ const designRoute = createRoute({
 const routeTree = rootRoute.addChildren([
   homeRoute,
   agendaRoute,
+  studiesRoute,
+  notebookRoute,
   projectRoute,
   settingsRoute,
   driveReturnRoute,

@@ -286,6 +286,15 @@ function ProjectRow({
       <td className="px-3 py-1.5">
         {renaming ? (
           <RenameField initial={project.title} onDone={onRename} onCancel={onCancelRename} />
+        ) : project.kind === 'notebook' ? (
+          <Link
+            to="/estudos/$notebookId"
+            params={{ notebookId: project.id }}
+            title={project.title}
+            className="block truncate rounded-tag py-1.5 text-text-strong hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-selection"
+          >
+            {project.title}
+          </Link>
         ) : (
           <Link
             to="/p/$projectId"

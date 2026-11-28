@@ -32,6 +32,7 @@ export function createNotebooksApi(config: Parameters<typeof createCaller>[0]): 
     update: (id, patch) =>
       call(path(id), notebookProjectSchema, { method: 'PATCH', body: JSON.stringify(patch) }),
     // Um caderno é um projeto: apagar é a mesma rota, e a API responde 204.
-    remove: (id) => call(`/projects/${encodeURIComponent(id)}`, z.undefined(), { method: 'DELETE' }),
+    remove: (id) =>
+      call(`/projects/${encodeURIComponent(id)}`, z.undefined(), { method: 'DELETE' }),
   };
 }
