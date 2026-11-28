@@ -220,3 +220,9 @@ Não apague: escreva uma linha nova dizendo o que substitui.
 
 - 2026-11-27 · **Os portões das fases (uma semana de uso real na Fase 2, a fala de 2 minutos na Fase 3) não seguram mais o começo da fase seguinte: as fases andam em pacotes maiores, com agentes em paralelo, e os portões são conferidos no fim, na revisão e nos testes do Codex.** Motivo: pedido da pessoa dona do projeto ("pega tudo que falta… separou em coisas muito pequenas"). O plano não muda; só a ordem de conferir.
 - 2026-11-27 · **A etapa 4.2 (domínio, SPF e DKIM, Supabase Pro) fica para quando o projeto crescer, por decisão da pessoa dona: é paga.** Motivo: só planos grátis até lá.
+
+## Etapa 2.5 — Configurações
+
+- 2026-11-27 · **O perfil (`profileSchema`: nome, fuso, preferências de e-mail) e o pedido `PATCH /account/profile` (`updateProfileRequestSchema`) moram em `packages/core/src/profile.ts`. O e-mail e a senha ficam só no Supabase Auth.** Motivo: o perfil espelha a tabela `profiles`; e-mail e senha têm outro dono (o Auth), e duplicar o e-mail no perfil criaria dois lugares para ficar desatualizados.
+- 2026-11-27 · **O fuso é um nome IANA conhecido pelo `Intl` (deslocamentos como "+03:00" são recusados), e o nome conta de 1 a 80 letras como o `char_length` do Postgres (um emoji vale 1).** Motivo: "+03:00" não segue o horário de verão, e contar diferente do banco deixaria passar um nome que o banco recusa.
+- 2026-11-27 · **No `PATCH`, `emailPreferences` pode trazer só a chave que mudou (`applyProfileUpdate` junta com o que já existe); ao ler, chave que falta no banco vira o padrão (resumo ligado, lembrete desligado).** Motivo: ligar ou desligar uma preferência não pode apagar a outra, e o padrão do `profiles` já é esse.
