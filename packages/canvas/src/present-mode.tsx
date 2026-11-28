@@ -2,7 +2,13 @@ import type { FlowContent } from '@trama/core';
 import { cn } from '@trama/ui';
 import { NextIcon, PreviousIcon } from '@trama/ui/icons';
 import { colors } from '@trama/ui/tokens';
-import { MarkerType, ReactFlow, ReactFlowProvider, useReactFlow } from '@xyflow/react';
+import {
+  ConnectionMode,
+  MarkerType,
+  ReactFlow,
+  ReactFlowProvider,
+  useReactFlow,
+} from '@xyflow/react';
 import {
   useCallback,
   useEffect,
@@ -27,6 +33,7 @@ import {
   presentStates,
   stepBounds,
   stepName,
+  stepTagHolders,
   type CameraOptions,
 } from './present';
 import {
@@ -229,15 +236,17 @@ function Stage({
   const reactFlow = useReactFlow<PresentNode, CanvasEdge>();
   const stepCount = flow.presentation.length;
   const states = useMemo(() => presentStates(flow, step), [flow, step]);
+  const tagHolders = useMemo(() => stepTagHolders(flow), [flow]);
 
   const { nodes, edges } = useMemo(() => {
     const base = toReactFlow(flow);
     const nodes = base.nodes.map((node): PresentNode => {
       const state = states.get(node.id) ?? { kind: 'free' as const };
+      const tag = tagHolders.has(node.id);
       const data: PresentNodeData =
         node.data.kind === 'frame'
-          ? { frame: node.data.frame, state }
-          : { block: node.data.block, state };
+          ? { frame: node.data.frame, state, tag }
+          : { block: node.data.block, state, tag };
       return {
         id: node.id,
         type: node.type === 'frame' ? 'pframe' : 'pblock',
@@ -267,7 +276,7 @@ function Stage({
       };
     });
     return { nodes, edges };
-  }, [flow, states]);
+  }, [flow, states, tagHolders]);
 
   /** A câmera que enquadra o passo (ou o quadro todo, sem passos) numa tela deste tamanho. */
   const cameraOf = useCallback(
@@ -311,6 +320,8 @@ function Stage({
         edges={edges}
         nodeTypes={presentNodeTypes}
         edgeTypes={edgeTypes}
+        // Como no editor: todos os pontos são "source", e a seta liga dois deles.
+        connectionMode={ConnectionMode.Loose}
         {...(initial ? { defaultViewport: initial } : {})}
         // Só leitura. O clique vazio no nó deixa o ponteiro passar (vídeo toca aqui mesmo).
         onNodeClick={noop}

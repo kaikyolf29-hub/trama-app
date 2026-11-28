@@ -181,6 +181,7 @@ Não apague: escreva uma linha nova dizendo o que substitui.
 - 2026-11-27 · **"Ordem da apresentação" é um painel do quadro (botão na barra de ferramentas, abaixo de Moldura) com os passos numerados, nome (título ou nome dos blocos), reordenar (arrastar ou subir e descer), renomear, apagar e "Adicionar a seleção como passo". Tudo passa pelo `commit` do quadro, então entra no desfazer.** Motivo: um caminho só de gravação (decisão da etapa 1.4); apagar o passo não apaga os blocos.
 - 2026-11-27 · **O botão "Apresentar" recebe `present` por uma função em `topRight`, que o quadro chama com `CanvasControls`.** Motivo: o botão fica na barra do app (ele escolhe o visual), mas só o quadro sabe o fluxo de agora.
 - 2026-11-27 · **O "Ajustar" e o ajuste ao abrir o quadro nunca passam de 100% de zoom (`FIT_VIEW.maxZoom`, em `packages/canvas/src/fit.ts`). O modo aula também para em 100%.** Motivo: com um bloco só o React Flow chegava a 400% e o quadro abria gigante; no modo aula, 100% mantém o texto na proporção do editor.
+- 2026-11-27 · **Na apresentação, o passo de agora tem a etiqueta "Passo N · agora" e os que já passaram, "Passo N", só no nó mais alto de cada passo (na moldura, depois do nome); as setas aparecem, com o mesmo `ConnectionMode.Loose` do editor.** Motivo: igual à tela 2; sem o modo solto o React Flow não achava o ponto de chegada (todos são "source") e não desenhava nenhuma seta.
 
 ## Etapa 1.8 — Modelos de início e a tela Início
 
@@ -214,6 +215,11 @@ Não apague: escreva uma linha nova dizendo o que substitui.
 - 2026-11-27 · **O teste de 500 blocos abre um projeto de 500 blocos (6 tipos, 25 molduras, 250 setas) pela própria rota `/p/<id>` com a API falsa; não existe rota só de teste no site.** Motivo: mede o caminho real (carregar, validar, desenhar, salvar) e não deixa nada de teste na produção.
 - 2026-11-27 · **Limites do teste de desempenho no CI: abrir em menos de 4 s, média de pelo menos 24 quadros por segundo no pan e no zoom e de 20 no arraste de um bloco; a meta do plano continua sendo 60.** Motivo: o runner não tem GPU nem sobra de CPU. Medido aqui (Chromium sem GPU, CPU livre): abre em cerca de 0,4 s, 56 a 60 quadros por segundo no pan e no zoom e 55 a 57 no arraste. Com o processador 2x mais lento (`E2E_PERF_CPU_THROTTLE=2`): 48 e 34; com 4x: 26 e 12. Os limites ficam abaixo do que uma máquina 2x mais lenta faz, para não falhar à toa, e ainda acusam um erro grande (por exemplo, algo quadrático no número de blocos). Cada rodada registra os números no relatório e no resumo do GitHub Actions; `E2E_PERF_OPEN_MS`, `E2E_PERF_CAMERA_FPS` e `E2E_PERF_DRAG_FPS` mudam os limites.
 - 2026-11-27 · **O CI ganhou o job `e2e` (instala o Chromium com `--with-deps`, constrói, roda os fluxos e depois o teste de 500 blocos, sozinho, e guarda `playwright-report/` e `test-results/` como artefato quando falha).** Motivo: o teste de desempenho roda depois dos fluxos e sem concorrência, senão eles disputariam a CPU e os quadros por segundo oscilariam.
+
+## Como o trabalho anda depois da Fase 1
+
+- 2026-11-27 · **Os portões das fases (uma semana de uso real na Fase 2, a fala de 2 minutos na Fase 3) não seguram mais o começo da fase seguinte: as fases andam em pacotes maiores, com agentes em paralelo, e os portões são conferidos no fim, na revisão e nos testes do Codex.** Motivo: pedido da pessoa dona do projeto ("pega tudo que falta… separou em coisas muito pequenas"). O plano não muda; só a ordem de conferir.
+- 2026-11-27 · **A etapa 4.2 (domínio, SPF e DKIM, Supabase Pro) fica para quando o projeto crescer, por decisão da pessoa dona: é paga.** Motivo: só planos grátis até lá.
 
 ## Etapa 2.5 — Configurações
 
