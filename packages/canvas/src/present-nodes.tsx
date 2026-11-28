@@ -3,10 +3,16 @@ import { cn } from '@trama/ui';
 import type { Node, NodeProps } from '@xyflow/react';
 import { BlockView } from './block-views';
 import { SideHandles } from './nodes';
-import type { NodeState } from './present';
+import { stepTag, type NodeState } from './present';
 
 /** Dados de um nó na apresentação: o bloco ou a moldura, e como ele aparece agora. */
-export type PresentNodeData = { block?: Block; frame?: Frame; state: NodeState };
+export type PresentNodeData = {
+  block?: Block;
+  frame?: Frame;
+  state: NodeState;
+  /** Este nó leva a etiqueta "Passo N" do passo dele (um por passo, veja `stepTagHolders`). */
+  tag?: boolean;
+};
 export type PresentNode = Node<PresentNodeData, 'pblock' | 'pframe'>;
 
 /** Altura (px) a partir da qual o quadro tracejado ganha o texto "Passo N · ainda oculto". */
@@ -41,6 +47,25 @@ function stateClass(state: NodeState, frame: boolean): string {
   }
 }
 
+const TAG_CLASS = 'text-[11px] font-semibold tracking-wider whitespace-nowrap uppercase';
+
+/** "Passo N · agora" acima do bloco que tem passo próprio (tela 2). */
+function StepTag({ state, show }: { state: NodeState; show: boolean }) {
+  const tag = show ? stepTag(state) : null;
+  if (!tag) return null;
+  return (
+    <span
+      className={cn(
+        'pointer-events-none absolute -top-6 left-0',
+        TAG_CLASS,
+        state.kind === 'current' ? 'text-text-strong' : 'text-text-muted',
+      )}
+    >
+      {tag}
+    </span>
+  );
+}
+
 /** Um bloco na apresentação: só leitura, sem alças nem barra de contexto. */
 export function PresentBlockNode({ data }: NodeProps<PresentNode>) {
   const { block, state } = data;
@@ -51,6 +76,7 @@ export function PresentBlockNode({ data }: NodeProps<PresentNode>) {
       data-state={state.kind}
       className={cn('relative size-full transition-opacity duration-150', stateClass(state, false))}
     >
+      <StepTag state={state} show={data.tag === true} />
       <BlockView block={block} editing={false} />
       <SideHandles visible={false} inert />
     </div>
@@ -63,6 +89,7 @@ export function PresentFrameNode({ data }: NodeProps<PresentNode>) {
   if (!frame) return null;
   if (state.kind === 'future')
     return <Placeholder step={state.step} height={frame.size.height} frame />;
+  const tag = data.tag ? stepTag(state) : null;
   return (
     <div
       data-state={state.kind}
@@ -71,8 +98,20 @@ export function PresentFrameNode({ data }: NodeProps<PresentNode>) {
         stateClass(state, true),
       )}
     >
-      <span className="absolute -top-8 left-0 block w-full min-w-48 truncate pt-1 text-[13px] font-medium text-text-muted">
-        {frame.title || 'Sem nome'}
+      <span className="absolute -top-8 left-0 flex w-full min-w-48 items-baseline gap-2 pt-1 text-[13px] font-medium text-text-muted">
+        <span className="truncate">{frame.title || 'Sem nome'}</span>
+        {/* Na moldura, a etiqueta do passo vem depois do nome. */}
+        {tag && (
+          <span
+            className={cn(
+              'shrink-0',
+              TAG_CLASS,
+              state.kind === 'current' ? 'text-text-strong' : 'text-text-muted',
+            )}
+          >
+            {tag}
+          </span>
+        )}
       </span>
       <SideHandles visible={false} inert />
     </div>

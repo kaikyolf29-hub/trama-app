@@ -12,24 +12,24 @@ export class ApiError extends Error {
   }
 }
 
-const OFFLINE = 'Sem conexão com o Trama. Suas mudanças ficam aqui e salvam quando voltar.';
+export const OFFLINE = 'Sem conexão com o Trama. Suas mudanças ficam aqui e salvam quando voltar.';
 const SIGNED_OUT = 'Entre na sua conta para continuar.';
 
-export interface ApiClientOptions {
-  baseUrl: string;
-  getToken: () => Promise<string | null>;
-  fetch?: typeof fetch;
-}
+export type Caller = <T>(path: string, schema: z.ZodType<T>, init?: RequestInit) => Promise<T>;
 
 /**
- * Um pedido à API do Trama: manda o token de login, traduz erro em `ApiError` e valida toda
- * resposta com um esquema do `@trama/core`, para a tela nunca receber dado fora do contrato.
+ * Chamada à API do Trama com o token de login. Toda resposta passa pelos esquemas do
+ * `@trama/core`: se a API mandar algo fora do contrato, a tela não recebe dado quebrado.
  */
 export function createCaller({
   baseUrl,
   getToken,
   fetch: fetcher = (...args) => fetch(...args),
-}: ApiClientOptions) {
+}: {
+  baseUrl: string;
+  getToken: () => Promise<string | null>;
+  fetch?: typeof fetch;
+}): Caller {
   const root = baseUrl.replace(/\/$/, '');
 
   return async function call<T>(

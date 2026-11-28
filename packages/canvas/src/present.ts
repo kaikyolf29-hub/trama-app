@@ -202,3 +202,33 @@ export function stepName(flow: FlowContent, step: PresentationStep): string {
   const shown = names.slice(0, 2).join(', ');
   return names.length > 2 ? `${shown} +${names.length - 2}` : shown;
 }
+
+/**
+ * A etiqueta acima do nó que tem passo próprio, como na tela 2: "Passo 1" nos que já passaram e
+ * "Passo 2 · agora" no de agora. Quem só acompanha a moldura não tem etiqueta.
+ */
+export function stepTag(state: NodeState): string | null {
+  if (state.kind === 'current' && state.own) return `Passo ${state.step} · agora`;
+  if (state.kind === 'past' && state.own) return `Passo ${state.step}`;
+  return null;
+}
+
+/**
+ * Quem leva a etiqueta de cada passo: só um nó por passo, o mais alto (e, empatado, o mais à
+ * esquerda), para a etiqueta não se repetir nem cobrir o bloco de cima.
+ */
+export function stepTagHolders(flow: FlowContent): Set<string> {
+  const holders = new Set<string>();
+  for (const step of flow.presentation) {
+    let best: { id: string; rect: Bounds } | null = null;
+    for (const id of step.targetIds) {
+      const rect = rectOf(flow, id);
+      if (!rect) continue;
+      if (!best || rect.y < best.rect.y || (rect.y === best.rect.y && rect.x < best.rect.x)) {
+        best = { id, rect };
+      }
+    }
+    if (best) holders.add(best.id);
+  }
+  return holders;
+}

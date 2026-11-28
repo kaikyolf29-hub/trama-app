@@ -10,9 +10,9 @@ import {
   type UpdateProjectRequest,
 } from '@trama/core';
 import { z } from 'zod';
-import { createCaller, type ApiClientOptions } from './http';
+import { ApiError, createCaller } from './http';
 
-export { ApiError } from './http';
+export { ApiError };
 
 /** O que as telas usam da API de projetos (apps/api). */
 export interface ProjectsApi {
@@ -33,8 +33,12 @@ export interface ProjectsApi {
  * Cliente da API de projetos. Toda resposta passa pelos esquemas do `@trama/core`: se a API
  * mandar algo fora do contrato, a tela não recebe dado quebrado.
  */
-export function createProjectsApi(options: ApiClientOptions): ProjectsApi {
-  const call = createCaller(options);
+export function createProjectsApi(config: {
+  baseUrl: string;
+  getToken: () => Promise<string | null>;
+  fetch?: typeof fetch;
+}): ProjectsApi {
+  const call = createCaller(config);
 
   return {
     list: () => call('/projects', z.array(projectSummarySchema)),

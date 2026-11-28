@@ -6,7 +6,7 @@ import {
   type InstantRange,
 } from '@trama/core';
 import { z } from 'zod';
-import { createCaller, type ApiClientOptions } from './http';
+import { createCaller } from './http';
 
 /** O que a tela Agenda usa da API (apps/api, rotas `/events`). */
 export interface AgendaApi {
@@ -19,8 +19,8 @@ export interface AgendaApi {
 }
 
 /** Cliente da Agenda. Toda resposta passa pelos esquemas do `@trama/core`. */
-export function createAgendaApi(options: ApiClientOptions): AgendaApi {
-  const call = createCaller(options);
+export function createAgendaApi(config: Parameters<typeof createCaller>[0]): AgendaApi {
+  const call = createCaller(config);
 
   return {
     list: ({ from, to }) =>
