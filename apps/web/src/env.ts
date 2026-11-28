@@ -1,4 +1,5 @@
 import { createAccountApi } from './api/account-api';
+import { createAiApi } from './api/ai-api';
 import { createDriveApi } from './api/drive-api';
 import { createProjectsApi } from './api/projects-api';
 import { createSupabaseAuthClient } from './auth/supabase-client';
@@ -41,6 +42,7 @@ export function createBackendFromEnv(): Backend {
       projects: api ? createProjectsApi(api) : null,
       drive: api ? createDriveApi(api) : null,
       account: api ? createAccountApi(api) : null,
+      ai: api ? createAiApi(api) : null,
       pickDriveFile:
         googleApiKey && googleAppId
           ? createPicker({ apiKey: googleApiKey, appId: googleAppId })
