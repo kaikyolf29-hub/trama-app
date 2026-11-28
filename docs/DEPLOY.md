@@ -95,7 +95,7 @@ No [Google Cloud Console](https://console.cloud.google.com), num projeto novo (p
 | ----------------------- | -------------------------------------------------------------------------------- | -------- |
 | `GOOGLE_CLIENT_ID`      | Worker da API (`wrangler secret put GOOGLE_CLIENT_ID`)                           | Segredo  |
 | `GOOGLE_CLIENT_SECRET`  | Worker da API (`wrangler secret put GOOGLE_CLIENT_SECRET`)                       | Segredo  |
-| `TOKEN_ENCRYPTION_KEY`  | Worker da API; gere com `openssl rand -base64 32`                                | Segredo  |
+| `TOKEN_ENCRYPTION_KEY`  | Worker da API; gere com `openssl rand -base64 32` (Drive e chaves de IA)         | Segredo  |
 | `RESEND_API_KEY`        | Worker da API (a mesma do SMTP do Supabase, ou outra)                            | Segredo  |
 | `EMAIL_FROM`            | Worker da API, ex.: `Trama <ola@seu-dominio>` (domínio no Resend com SPF e DKIM) | Segredo  |
 | `VITE_GOOGLE_CLIENT_ID` | GitHub (Settings > Variables > Actions): o mesmo ID do cliente                   | Variável |
@@ -103,8 +103,8 @@ No [Google Cloud Console](https://console.cloud.google.com), num projeto novo (p
 
 O site embute as duas `VITE_` no build (o `deploy.yml` já as repassa). O número do projeto, que o
 Picker pede como `appId`, vem do começo do ID do cliente (`VITE_GOOGLE_APP_ID` só se for preciso
-trocar). Guarde a `TOKEN_ENCRYPTION_KEY` num cofre: sem ela, os tokens do Drive já gravados não
-abrem e as pessoas precisam conectar de novo.
+trocar). Guarde a `TOKEN_ENCRYPTION_KEY` num cofre: sem ela, os tokens do Drive e as chaves de IA já
+gravados não abrem e as pessoas precisam conectar o Drive e colar as chaves de novo.
 
 No `pnpm dev`, os mesmos nomes vão em `apps/api/.dev.vars` (segredos) e `apps/web/.env.local`
 (`VITE_`), como no `.env.example`.
