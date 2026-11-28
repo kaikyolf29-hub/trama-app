@@ -11,11 +11,12 @@ Projeto **trama** no Supabase, plano grátis, região São Paulo (`sa-east-1`).
 
 ## Tabelas
 
-| Tabela     | Guarda                                                        | Quem lê e edita                        |
-| ---------- | ------------------------------------------------------------- | -------------------------------------- |
-| `profiles` | Nome, fuso (padrão America/Sao_Paulo), preferências de e-mail | Só a própria pessoa; nasce no cadastro |
-| `events`   | O que aconteceu e quando (Agenda); automáticos por gatilho    | Lê, anota à mão e apaga anotações      |
-| `lessons`  | Aulas dos cadernos: status, data estudada, data de revisão    | Só a própria pessoa, só em caderno     |
+| Tabela      | Guarda                                                         | Quem lê e edita                                |
+| ----------- | -------------------------------------------------------------- | ---------------------------------------------- |
+| `profiles`  | Nome, fuso (padrão America/Sao_Paulo), preferências de e-mail  | Só a própria pessoa; nasce no cadastro         |
+| `events`    | O que aconteceu e quando (Agenda); automáticos por gatilho     | Lê, anota à mão e apaga anotações              |
+| `lessons`   | Aulas dos cadernos: status, data estudada, data de revisão     | Só a própria pessoa, só em caderno             |
+| `email_log` | Resumos e lembretes já enviados (pessoa, tipo, dia; sem texto) | Ninguém pelo app; só funções da `service_role` |
 
 Toda tabela tem RLS. As funções internas (gatilhos) ficam no esquema `private`, fora da API.
 

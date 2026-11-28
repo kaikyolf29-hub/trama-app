@@ -22,6 +22,8 @@ interface EmailLayoutProps {
   siteUrl: string;
   /** Por que a pessoa recebeu este e-mail. */
   reason: string;
+  /** Link de descadastro (os e-mails de resumo e lembrete têm; os da conta não). */
+  unsubscribe?: { href: string; label: string };
   children: ReactNode;
 }
 
@@ -30,7 +32,7 @@ interface EmailLayoutProps {
  * Só estilos inline e tabelas (o que o React Email gera), que é o que os programas de
  * e-mail entendem.
  */
-export function EmailLayout({ preview, siteUrl, reason, children }: EmailLayoutProps) {
+export function EmailLayout({ preview, siteUrl, reason, unsubscribe, children }: EmailLayoutProps) {
   return (
     <Html lang="pt-BR" dir="ltr">
       <Head>
@@ -61,6 +63,14 @@ export function EmailLayout({ preview, siteUrl, reason, children }: EmailLayoutP
           <Section style={styles.card}>{children}</Section>
           <Text style={styles.footer}>
             {reason}
+            {unsubscribe ? (
+              <>
+                {' '}
+                <Link href={unsubscribe.href} style={styles.footerLink}>
+                  {unsubscribe.label}
+                </Link>
+              </>
+            ) : null}
             <br />
             Trama · o quadro visual para os seus fluxos, aulas e roteiros.
           </Text>
@@ -108,4 +118,5 @@ const styles = {
     lineHeight: '18px',
     color: colors.textMuted,
   },
+  footerLink: { color: colors.textMuted, textDecoration: 'underline' },
 } as const;

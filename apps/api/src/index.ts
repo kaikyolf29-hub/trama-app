@@ -4,6 +4,8 @@ import { cors } from 'hono/cors';
 import { aiRoutes } from './ai/routes';
 import { accountRoutes } from './account/routes';
 import { defaultDeps, type Deps } from './deps';
+import { runDigests } from './digest/run';
+import { unsubscribeRoutes } from './digest/unsubscribe';
 import { driveRoutes } from './drive/routes';
 import type { Env } from './env';
 import { allLessonsRoutes, notebookRoutes } from './organization/notebooks';
@@ -129,6 +131,8 @@ export function createApp(storeFor?: StoreFactory, overrides: Partial<Deps> = {}
   app.route('/lessons', allLessonsRoutes());
   app.route('/drive', driveRoutes());
   app.route('/account', accountRoutes());
+  // Pública: o link de descadastro dos e-mails chega do navegador, sem o token da pessoa.
+  app.route('/unsubscribe', unsubscribeRoutes());
   app.route('/ai', aiRoutes());
 
   app.notFound((c) => c.json({ error: 'Rota não encontrada.' }, 404));
@@ -146,4 +150,31 @@ export function createApp(storeFor?: StoreFactory, overrides: Partial<Deps> = {}
 
 export const app = createApp();
 
-export default app;
+/** O que o Cloudflare passa à tarefa agendada (só o que usamos). */
+interface ScheduledController {
+  /** A expressão do Cron Trigger que disparou, ex.: `0 * * * *`. */
+  cron: string;
+}
+interface Context {
+  waitUntil(promise: Promise<unknown>): void;
+}
+
+/**
+ * O Worker: as rotas (`fetch`) e a tarefa agendada (`scheduled`). O Cron Trigger de
+ * `wrangler.jsonc` roda de hora em hora; `runDigests` escolhe quem está nas 8h de segunda (resumo
+ * semanal) ou nas 8h de qualquer dia (lembrete de revisão), cada um no seu fuso.
+ */
+export default {
+  fetch: app.fetch,
+  scheduled(_controller: ScheduledController, env: Env, context: Context) {
+    context.waitUntil(
+      runDigests(env, defaultDeps()).catch((error: unknown) => {
+        // Sem dado pessoal: só a mensagem do erro.
+        console.error(
+          'e-mails de estudo: a tarefa falhou',
+          error instanceof Error ? error.message : 'erro',
+        );
+      }),
+    );
+  },
+};

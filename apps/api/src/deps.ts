@@ -12,6 +12,8 @@ import { createVault, type Vault } from './drive/vault';
 import type { Env } from './env';
 import type { OrganizationStore } from './organization/store';
 import { createSupabaseOrganizationStore } from './organization/supabase-store';
+import { createSupabaseDigestStore } from './digest/supabase-store';
+import type { DigestStore } from './digest/store';
 import { createResendMailer, type Mailer } from './mail';
 import { createSupabaseStore } from './projects/supabase-store';
 import type { ProjectStore } from './projects/store';
@@ -38,6 +40,11 @@ export interface Deps {
   /** null quando falta a TOKEN_ENCRYPTION_KEY. */
   vault(env: Env): Promise<Vault | null>;
   mailer(env: Env): Mailer;
+  /**
+   * O que a tarefa agendada de e-mails e o descadastro usam, com a chave secreta do Supabase
+   * (sem token de pessoa). null quando falta a SUPABASE_SECRET_KEY.
+   */
+  digest(env: Env): DigestStore | null;
   now(): Date;
 }
 
@@ -99,6 +106,10 @@ export function defaultDeps(fetcher: typeof fetch = (...args) => fetch(...args))
       return vault;
     },
     mailer: (env) => createResendMailer(env, fetcher),
+    digest(env) {
+      if (!env.SUPABASE_URL || !env.SUPABASE_SECRET_KEY) return null;
+      return createSupabaseDigestStore(env.SUPABASE_URL, env.SUPABASE_SECRET_KEY);
+    },
     now: () => new Date(),
   };
 }

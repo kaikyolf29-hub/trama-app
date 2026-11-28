@@ -1,5 +1,5 @@
 // A API do Trama no Cloudflare Workers (plano grátis): https://trama-api.<subdomínio>.workers.dev
-// Segredos (RESEND_API_KEY, EMAIL_FROM, GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, TOKEN_ENCRYPTION_KEY) nunca aqui: `wrangler secret put` (docs/DEPLOY.md).
+// Segredos (RESEND_API_KEY, EMAIL_FROM, GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, TOKEN_ENCRYPTION_KEY, SUPABASE_SECRET_KEY) nunca aqui: `wrangler secret put` (docs/DEPLOY.md).
 {
   "$schema": "./node_modules/wrangler/config-schema.json",
   "name": "trama-api",
@@ -8,6 +8,9 @@
   "workers_dev": true,
   "preview_urls": true,
   "observability": { "enabled": true },
+  // Resumo semanal e lembrete de revisão por e-mail (etapa 2.6): roda de hora em hora e escolhe
+  // quem está nas 8h (segunda, para o resumo) no fuso de cada pessoa. Plano grátis: até 5 gatilhos.
+  "triggers": { "crons": ["0 * * * *"] },
   // Valores públicos (os mesmos do apps/web/.env): com o token da pessoa, o banco aplica a RLS.
   "vars": {
     "SUPABASE_URL": "https://jebksiyftodpbvhndoqf.supabase.co",
